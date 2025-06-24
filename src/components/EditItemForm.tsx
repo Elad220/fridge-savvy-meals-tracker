@@ -7,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { FoodItem } from '@/types';
-import { X } from 'lucide-react';
 
 interface EditItemFormProps {
   item: FoodItem;
@@ -61,12 +60,7 @@ export const EditItemForm = ({ item, onSubmit, onClose }: EditItemFormProps) => 
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>Edit Food Item</DialogTitle>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
+          <DialogTitle>Edit Food Item</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">

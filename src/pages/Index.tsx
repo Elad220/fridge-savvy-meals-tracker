@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { InventoryDashboard } from '@/components/InventoryDashboard';
 import { AddItemForm } from '@/components/AddItemForm';
+import { EditItemForm } from '@/components/EditItemForm';
 import { MealPlanning } from '@/components/MealPlanning';
 import { AuthModal } from '@/components/AuthModal';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ const Index = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const [activeTab, setActiveTab] = useState<'inventory' | 'meals'>('inventory');
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
@@ -65,6 +67,13 @@ const Index = () => {
     
     setFoodItems(prev => [...prev, newItem]);
     setShowAddForm(false);
+  };
+
+  const handleEditFoodItem = (updatedItem: FoodItem) => {
+    setFoodItems(prev => prev.map(item => 
+      item.id === updatedItem.id ? updatedItem : item
+    ));
+    setEditingItem(null);
   };
 
   const handleRemoveItem = (id: string) => {
@@ -142,13 +151,13 @@ const Index = () => {
       />
       
       <main className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <h2 className="text-2xl font-bold text-gray-900">
             {activeTab === 'inventory' ? 'Food Inventory' : 'Meal Planning'}
           </h2>
           <Button 
             onClick={() => setShowAddForm(true)}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" />
             {activeTab === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
@@ -159,6 +168,7 @@ const Index = () => {
           <InventoryDashboard 
             foodItems={foodItems} 
             onRemoveItem={handleRemoveItem}
+            onEditItem={setEditingItem}
           />
         ) : (
           <MealPlanning 
@@ -173,6 +183,14 @@ const Index = () => {
             type={activeTab}
             onSubmit={activeTab === 'inventory' ? handleAddFoodItem : handleAddMealPlan}
             onClose={() => setShowAddForm(false)}
+          />
+        )}
+
+        {editingItem && (
+          <EditItemForm
+            item={editingItem}
+            onSubmit={handleEditFoodItem}
+            onClose={() => setEditingItem(null)}
           />
         )}
       </main>

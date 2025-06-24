@@ -9,9 +9,10 @@ import { Search } from 'lucide-react';
 interface InventoryDashboardProps {
   foodItems: FoodItem[];
   onRemoveItem: (id: string) => void;
+  onEditItem: (item: FoodItem) => void;
 }
 
-export const InventoryDashboard = ({ foodItems, onRemoveItem }: InventoryDashboardProps) => {
+export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: InventoryDashboardProps) => {
   const [sortBy, setSortBy] = useState<'eatByDate' | 'name' | 'storageLocation'>('eatByDate');
   const [filterBy, setFilterBy] = useState<FreshnessStatus | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,22 +59,22 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem }: InventoryDashboa
   return (
     <div className="space-y-6">
       {/* Status Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg shadow-sm">
-          <div className="text-2xl font-bold text-gray-900">{foodItems.length}</div>
-          <div className="text-sm text-gray-600">Total Items</div>
+          <div className="text-xl md:text-2xl font-bold text-gray-900">{foodItems.length}</div>
+          <div className="text-xs md:text-sm text-gray-600">Total Items</div>
         </div>
         <div className="bg-green-50 p-4 rounded-lg shadow-sm">
-          <div className="text-2xl font-bold text-green-700">{statusCounts.fresh}</div>
-          <div className="text-sm text-green-600">Fresh Items</div>
+          <div className="text-xl md:text-2xl font-bold text-green-700">{statusCounts.fresh}</div>
+          <div className="text-xs md:text-sm text-green-600">Fresh Items</div>
         </div>
         <div className="bg-yellow-50 p-4 rounded-lg shadow-sm">
-          <div className="text-2xl font-bold text-yellow-700">{statusCounts['use-soon']}</div>
-          <div className="text-sm text-yellow-600">Use Soon</div>
+          <div className="text-xl md:text-2xl font-bold text-yellow-700">{statusCounts['use-soon']}</div>
+          <div className="text-xs md:text-sm text-yellow-600">Use Soon</div>
         </div>
         <div className="bg-red-50 p-4 rounded-lg shadow-sm">
-          <div className="text-2xl font-bold text-red-700">{statusCounts.expired}</div>
-          <div className="text-sm text-red-600">Expired</div>
+          <div className="text-xl md:text-2xl font-bold text-red-700">{statusCounts.expired}</div>
+          <div className="text-xs md:text-sm text-red-600">Expired</div>
         </div>
       </div>
 
@@ -133,6 +134,7 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem }: InventoryDashboa
               item={item}
               status={getFreshnessStatus(item.eatByDate)}
               onRemove={() => onRemoveItem(item.id)}
+              onEdit={() => onEditItem(item)}
             />
           ))}
         </div>

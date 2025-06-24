@@ -1,16 +1,17 @@
 
 import { FoodItem, FreshnessStatus } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Trash2, MapPin, Calendar, Package } from 'lucide-react';
+import { Trash2, MapPin, Calendar, Package, Edit } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface FoodItemCardProps {
   item: FoodItem;
   status: FreshnessStatus;
   onRemove: () => void;
+  onEdit: () => void;
 }
 
-export const FoodItemCard = ({ item, status, onRemove }: FoodItemCardProps) => {
+export const FoodItemCard = ({ item, status, onRemove, onEdit }: FoodItemCardProps) => {
   const statusConfig = {
     fresh: {
       bgColor: 'bg-green-50',
@@ -86,32 +87,44 @@ export const FoodItemCard = ({ item, status, onRemove }: FoodItemCardProps) => {
           Cooked: {item.dateCookedStored.toLocaleDateString()}
         </span>
         
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <Trash2 className="w-4 h-4 mr-1" />
-              Remove
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Remove Food Item</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to remove "{item.name}" from your inventory? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={onRemove} className="bg-red-600 hover:bg-red-700">
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onEdit}
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          >
+            <Edit className="w-4 h-4 mr-1" />
+            Edit
+          </Button>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
                 Remove
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Remove Food Item</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to remove "{item.name}" from your inventory? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={onRemove} className="bg-red-600 hover:bg-red-700">
+                  Remove
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
     </div>
   );

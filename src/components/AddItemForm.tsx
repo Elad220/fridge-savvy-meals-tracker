@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +22,8 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
     quantity: '',
     storageLocation: '',
     notes: '',
-    plannedDate: ''
+    plannedDate: '',
+    freshnessDays: '4' // Default to 4 days
   });
 
   const storageLocations = [
@@ -36,23 +38,19 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
     'Other'
   ];
 
-  const calculateEatByDate = (cookedDate: string, foodType: string) => {
+  const calculateEatByDate = (cookedDate: string, freshnessDays: number) => {
     const cooked = new Date(cookedDate);
-    const daysToAdd = foodType.toLowerCase().includes('rice') ? 3 :
-                     foodType.toLowerCase().includes('meat') || foodType.toLowerCase().includes('chicken') ? 3 :
-                     foodType.toLowerCase().includes('vegetable') ? 4 :
-                     foodType.toLowerCase().includes('soup') ? 3 : 4;
-    
     const eatBy = new Date(cooked);
-    eatBy.setDate(eatBy.getDate() + daysToAdd);
+    eatBy.setDate(eatBy.getDate() + freshnessDays);
     return eatBy.toISOString().split('T')[0];
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (type === 'inventory') {
-      const eatByDate = formData.eatByDate || calculateEatByDate(formData.dateCookedStored, formData.name);
+      const freshnessDays = parseInt(formData.freshnessDays) || 4;
+      const eatByDate = formData.eatByDate || calculateEatByDate(formData.dateCookedStored, freshnessDays);
       
       const foodItem: Omit<FoodItem, 'id' | 'userId'> = {
         name: formData.name,
@@ -61,16 +59,19 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
         quantity: formData.quantity,
         storageLocation: formData.storageLocation,
         notes: formData.notes || undefined,
+        freshnessDays: freshnessDays,
       };
       
-      onSubmit(foodItem);
+      await onSubmit(foodItem);
+      onClose(); // Close modal after successful submission
     } else {
       const mealPlan: Omit<MealPlan, 'id' | 'userId'> = {
         name: formData.name,
         plannedDate: formData.plannedDate ? new Date(formData.plannedDate) : undefined,
       };
       
-      onSubmit(mealPlan);
+      await onSubmit(mealPlan);
+      onClose(); // Close modal after successful submission
     }
   };
 
@@ -78,12 +79,11 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
       
-      // Auto-calculate eat by date when name or cooked date changes
-      if (type === 'inventory' && (field === 'name' || field === 'dateCookedStored') && !prev.eatByDate) {
-        updated.eatByDate = calculateEatByDate(
-          field === 'dateCookedStored' ? value : prev.dateCookedStored,
-          field === 'name' ? value : prev.name
-        );
+      // Auto-calculate eat by date when cooked date or freshness days change
+      if (type === 'inventory' && (field === 'dateCookedStored' || field === 'freshnessDays')) {
+        const freshnessDays = parseInt(field === 'freshnessDays' ? value : prev.freshnessDays) || 4;
+        const cookedDate = field === 'dateCookedStored' ? value : prev.dateCookedStored;
+        updated.eatByDate = calculateEatByDate(cookedDate, freshnessDays);
       }
       
       return updated;
@@ -127,15 +127,28 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="eatByDate">Eat By Date *</Label>
+                  <Label htmlFor="freshnessDays">Fresh for (days) *</Label>
                   <Input
-                    id="eatByDate"
-                    type="date"
-                    value={formData.eatByDate}
-                    onChange={(e) => handleInputChange('eatByDate', e.target.value)}
+                    id="freshnessDays"
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={formData.freshnessDays}
+                    onChange={(e) => handleInputChange('freshnessDays', e.target.value)}
                     required
                   />
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="eatByDate">Eat By Date *</Label>
+                <Input
+                  id="eatByDate"
+                  type="date"
+                  value={formData.eatByDate}
+                  onChange={(e) => handleInputChange('eatByDate', e.target.value)}
+                  required
+                />
               </div>
 
               <div>

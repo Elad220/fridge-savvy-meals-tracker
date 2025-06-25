@@ -14,6 +14,7 @@ export interface FoodItem {
   storageLocation: string;
   notes?: string;
   userId: string;
+  freshnessDays?: number; // Custom freshness period in days
 }
 
 export interface MealPlan {

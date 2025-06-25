@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FoodItem } from '@/types';
@@ -33,6 +32,7 @@ export const useFoodItems = (userId: string | undefined) => {
         storageLocation: item.storage_location,
         notes: item.notes || undefined,
         userId: item.user_id,
+        freshnessDays: item.freshness_days || 4, // Default to 4 if not set
       }));
 
       setFoodItems(transformedItems);
@@ -61,6 +61,7 @@ export const useFoodItems = (userId: string | undefined) => {
           quantity: item.quantity,
           storage_location: item.storageLocation,
           notes: item.notes || null,
+          freshness_days: item.freshnessDays || 4,
         })
         .select()
         .single();
@@ -76,6 +77,7 @@ export const useFoodItems = (userId: string | undefined) => {
         storageLocation: data.storage_location,
         notes: data.notes || undefined,
         userId: data.user_id,
+        freshnessDays: data.freshness_days || 4,
       };
 
       setFoodItems(prev => [...prev, newItem]);
@@ -104,6 +106,7 @@ export const useFoodItems = (userId: string | undefined) => {
           quantity: updatedItem.quantity,
           storage_location: updatedItem.storageLocation,
           notes: updatedItem.notes || null,
+          freshness_days: updatedItem.freshnessDays || 4,
           updated_at: new Date().toISOString(),
         })
         .eq('id', updatedItem.id);

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { FoodItem, MealPlan } from '@/types';
-import { X } from 'lucide-react';
 
 interface AddItemFormProps {
   type: 'inventory' | 'meals';
@@ -96,14 +94,9 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>
-              {type === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
-            </DialogTitle>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
+          <DialogTitle>
+            {type === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
+          </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">

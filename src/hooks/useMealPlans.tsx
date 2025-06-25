@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { MealPlan } from '@/types';
@@ -20,7 +19,7 @@ export const useMealPlans = (userId: string | undefined) => {
         .from('meal_plans')
         .select('*')
         .eq('user_id', userId)
-        .order('planned_date', { ascending: true, nullsLast: true });
+        .order('planned_date', { ascending: true, nullsFirst: false });
 
       if (error) throw error;
 

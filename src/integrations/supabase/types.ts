@@ -57,6 +57,7 @@ export type Database = {
           id: string
           name: string
           planned_date: string | null
+          destination_time: string | null
           user_id: string
         }
         Insert: {

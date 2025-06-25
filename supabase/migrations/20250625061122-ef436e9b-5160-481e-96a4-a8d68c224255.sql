@@ -1,4 +1,3 @@
-
 -- Create profiles table for user data
 CREATE TABLE public.profiles (
   id UUID NOT NULL REFERENCES auth.users ON DELETE CASCADE,
@@ -72,6 +71,8 @@ CREATE TABLE public.meal_plans (
   user_id UUID NOT NULL REFERENCES auth.users ON DELETE CASCADE,
   name TEXT NOT NULL,
   planned_date DATE,
+  destination_time TIME,
+  notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   PRIMARY KEY (id)
 );

@@ -1,14 +1,14 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { InventoryDashboard } from '@/components/InventoryDashboard';
 import { AddItemForm } from '@/components/AddItemForm';
 import { EditItemForm } from '@/components/EditItemForm';
+import { EditMealPlanForm } from '@/components/EditMealPlanForm';
 import { MealPlanning } from '@/components/MealPlanning';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { FoodItem } from '@/types';
+import { FoodItem, MealPlan } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useFoodItems } from '@/hooks/useFoodItems';
 import { useMealPlans } from '@/hooks/useMealPlans';
@@ -18,17 +18,17 @@ const Index = () => {
   const navigate = useNavigate();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
+  const [editingMealPlan, setEditingMealPlan] = useState<MealPlan | null>(null);
   const [activeTab, setActiveTab] = useState<'inventory' | 'meals'>('inventory');
 
   const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id);
-  const { mealPlans, loading: mealLoading, addMealPlan, removeMealPlan } = useMealPlans(user?.id);
+  const { mealPlans, loading: mealLoading, addMealPlan, updateMealPlan, removeMealPlan } = useMealPlans(user?.id);
 
   const handleLogout = async () => {
     await signOut();
     navigate('/auth');
   };
 
-  // Show loading spinner while checking authentication
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -40,7 +40,6 @@ const Index = () => {
     );
   }
 
-  // Redirect to auth if not logged in
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
@@ -69,7 +68,7 @@ const Index = () => {
                 <p className="text-sm text-gray-600">Plan future meals and organize your cooking schedule</p>
               </div>
             </div>
-            <Button 
+            <Button
               onClick={() => navigate('/auth')}
               className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
             >
@@ -81,7 +80,6 @@ const Index = () => {
     );
   }
 
-  // Create user object compatible with Header component
   const headerUser = {
     id: user.id,
     email: user.email || '',
@@ -93,21 +91,26 @@ const Index = () => {
     setEditingItem(null);
   };
 
+  const handleEditMealPlan = (updatedMealPlan: MealPlan) => {
+    updateMealPlan(updatedMealPlan);
+    setEditingMealPlan(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header 
-        user={headerUser} 
+      <Header
+        user={headerUser}
         onLogout={handleLogout}
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
-      
+
       <main className="container mx-auto px-4 py-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <h2 className="text-2xl font-bold text-gray-900">
             {activeTab === 'inventory' ? 'Food Inventory' : 'Meal Planning'}
           </h2>
-          <Button 
+          <Button
             onClick={() => setShowAddForm(true)}
             className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
           >
@@ -117,16 +120,17 @@ const Index = () => {
         </div>
 
         {activeTab === 'inventory' ? (
-          <InventoryDashboard 
-            foodItems={foodItems} 
+          <InventoryDashboard
+            foodItems={foodItems}
             onRemoveItem={removeFoodItem}
             onEditItem={setEditingItem}
           />
         ) : (
-          <MealPlanning 
+          <MealPlanning
             mealPlans={mealPlans}
             onRemoveMealPlan={removeMealPlan}
             onAddMealPlan={addMealPlan}
+            onEditMealPlan={setEditingMealPlan}
           />
         )}
 
@@ -143,6 +147,14 @@ const Index = () => {
             item={editingItem}
             onSubmit={handleEditFoodItem}
             onClose={() => setEditingItem(null)}
+          />
+        )}
+
+        {editingMealPlan && (
+          <EditMealPlanForm
+            item={editingMealPlan}
+            onSubmit={handleEditMealPlan}
+            onClose={() => setEditingMealPlan(null)}
           />
         )}
       </main>

@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   email: string;
@@ -21,6 +20,8 @@ export interface MealPlan {
   id: string;
   name: string;
   plannedDate?: Date;
+  destinationTime?: Date;
+  notes?: string;
   userId: string;
 }
 

@@ -27,6 +27,8 @@ export const useMealPlans = (userId: string | undefined) => {
         id: plan.id,
         name: plan.name,
         plannedDate: plan.planned_date ? new Date(plan.planned_date) : undefined,
+        destinationTime: plan.destination_time ? new Date(`${plan.planned_date}T${plan.destination_time}`) : undefined,
+        notes: plan.notes || undefined,
         userId: plan.user_id,
       }));
 
@@ -52,6 +54,8 @@ export const useMealPlans = (userId: string | undefined) => {
           user_id: userId,
           name: plan.name,
           planned_date: plan.plannedDate ? plan.plannedDate.toISOString().split('T')[0] : null,
+          destination_time: plan.destinationTime ? plan.destinationTime.toTimeString().slice(0, 8) : null,
+          notes: plan.notes || null,
         })
         .select()
         .single();
@@ -62,6 +66,8 @@ export const useMealPlans = (userId: string | undefined) => {
         id: data.id,
         name: data.name,
         plannedDate: data.planned_date ? new Date(data.planned_date) : undefined,
+        destinationTime: data.destination_time ? new Date(`${data.planned_date}T${data.destination_time}`) : undefined,
+        notes: data.notes || undefined,
         userId: data.user_id,
       };
 
@@ -79,6 +85,38 @@ export const useMealPlans = (userId: string | undefined) => {
       });
     }
   };
+
+  const updateMealPlan = async (updatedPlan: MealPlan) => {
+    try {
+      const { error } = await supabase
+        .from('meal_plans')
+        .update({
+          name: updatedPlan.name,
+          planned_date: updatedPlan.plannedDate ? updatedPlan.plannedDate.toISOString().split('T')[0] : null,
+          destination_time: updatedPlan.destinationTime ? updatedPlan.destinationTime.toTimeString().slice(0, 8) : null,
+          notes: updatedPlan.notes || null,
+        })
+        .eq('id', updatedPlan.id);
+
+      if (error) throw error;
+
+      setMealPlans(prev => prev.map(plan => 
+        plan.id === updatedPlan.id ? updatedPlan : plan
+      ));
+
+      toast({
+        title: 'Meal plan updated',
+        description: `${updatedPlan.name} has been updated.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error updating meal plan',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
 
   const removeMealPlan = async (id: string) => {
     try {
@@ -112,6 +150,7 @@ export const useMealPlans = (userId: string | undefined) => {
     mealPlans,
     loading,
     addMealPlan,
+    updateMealPlan,
     removeMealPlan,
     refetch: fetchMealPlans,
   };

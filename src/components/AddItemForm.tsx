@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,8 +21,9 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
     quantity: '',
     storageLocation: '',
     notes: '',
-    plannedDate: '',
-    freshnessDays: '4' // Default to 4 days
+    plannedDate: new Date().toISOString().split('T')[0],
+    destinationTime: '12:30',
+    freshnessDays: '4'
   });
 
   const storageLocations = [
@@ -47,11 +47,11 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (type === 'inventory') {
       const freshnessDays = parseInt(formData.freshnessDays) || 4;
       const eatByDate = formData.eatByDate || calculateEatByDate(formData.dateCookedStored, freshnessDays);
-      
+
       const foodItem: Omit<FoodItem, 'id' | 'userId'> = {
         name: formData.name,
         dateCookedStored: new Date(formData.dateCookedStored),
@@ -61,31 +61,32 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
         notes: formData.notes || undefined,
         freshnessDays: freshnessDays,
       };
-      
+
       await onSubmit(foodItem);
-      onClose(); // Close modal after successful submission
+      onClose();
     } else {
       const mealPlan: Omit<MealPlan, 'id' | 'userId'> = {
         name: formData.name,
         plannedDate: formData.plannedDate ? new Date(formData.plannedDate) : undefined,
+        destinationTime: formData.destinationTime ? new Date(`${formData.plannedDate}T${formData.destinationTime}`) : undefined,
+        notes: formData.notes || undefined,
       };
-      
+
       await onSubmit(mealPlan);
-      onClose(); // Close modal after successful submission
+      onClose();
     }
   };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
-      
-      // Auto-calculate eat by date when cooked date or freshness days change
+
       if (type === 'inventory' && (field === 'dateCookedStored' || field === 'freshnessDays')) {
         const freshnessDays = parseInt(field === 'freshnessDays' ? value : prev.freshnessDays) || 4;
         const cookedDate = field === 'dateCookedStored' ? value : prev.dateCookedStored;
         updated.eatByDate = calculateEatByDate(cookedDate, freshnessDays);
       }
-      
+
       return updated;
     });
   };
@@ -98,7 +99,7 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
             {type === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
           </DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="name">
@@ -179,6 +180,7 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
               </div>
             </>
           ) : (
+            <>
             <div>
               <Label htmlFor="plannedDate">Planned Date (Optional)</Label>
               <Input
@@ -188,6 +190,16 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
                 onChange={(e) => handleInputChange('plannedDate', e.target.value)}
               />
             </div>
+            <div>
+              <Label htmlFor="destinationTime">Destination Time (Optional)</Label>
+              <Input
+                id="destinationTime"
+                type="time"
+                value={formData.destinationTime}
+                onChange={(e) => handleInputChange('destinationTime', e.target.value)}
+              />
+            </div>
+            </>
           )}
 
           <div>

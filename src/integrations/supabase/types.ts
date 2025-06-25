@@ -14,6 +14,7 @@ export type Database = {
           created_at: string | null
           date_cooked_stored: string
           eat_by_date: string
+          freshness_days: number | null
           id: string
           name: string
           notes: string | null
@@ -26,6 +27,7 @@ export type Database = {
           created_at?: string | null
           date_cooked_stored: string
           eat_by_date: string
+          freshness_days?: number | null
           id?: string
           name: string
           notes?: string | null
@@ -38,6 +40,7 @@ export type Database = {
           created_at?: string | null
           date_cooked_stored?: string
           eat_by_date?: string
+          freshness_days?: number | null
           id?: string
           name?: string
           notes?: string | null

@@ -1,102 +1,47 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { InventoryDashboard } from '@/components/InventoryDashboard';
 import { AddItemForm } from '@/components/AddItemForm';
 import { EditItemForm } from '@/components/EditItemForm';
 import { MealPlanning } from '@/components/MealPlanning';
-import { AuthModal } from '@/components/AuthModal';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { FoodItem, MealPlan, User } from '@/types';
+import { FoodItem } from '@/types';
+import { useAuth } from '@/hooks/useAuth';
+import { useFoodItems } from '@/hooks/useFoodItems';
+import { useMealPlans } from '@/hooks/useMealPlans';
 
 const Index = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user, loading: authLoading, signOut } = useAuth();
+  const navigate = useNavigate();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const [activeTab, setActiveTab] = useState<'inventory' | 'meals'>('inventory');
-  const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
-  const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
 
-  // Load sample data for demo
-  useEffect(() => {
-    if (currentUser) {
-      setFoodItems([
-        {
-          id: '1',
-          name: 'Chicken Stir-fry',
-          dateCookedStored: new Date('2024-06-22'),
-          eatByDate: new Date('2024-06-25'),
-          quantity: '2 servings',
-          storageLocation: 'Fridge - Top Shelf',
-          notes: 'Contains bell peppers and broccoli',
-          userId: currentUser.id,
-        },
-        {
-          id: '2',
-          name: 'Leftover Rice',
-          dateCookedStored: new Date('2024-06-21'),
-          eatByDate: new Date('2024-06-24'),
-          quantity: 'Half a pot',
-          storageLocation: 'Fridge - Middle Shelf',
-          notes: 'Jasmine rice',
-          userId: currentUser.id,
-        },
-      ]);
+  const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id);
+  const { mealPlans, loading: mealLoading, addMealPlan, removeMealPlan } = useMealPlans(user?.id);
 
-      setMealPlans([
-        {
-          id: '1',
-          name: 'Beef Tacos',
-          plannedDate: new Date('2024-06-26'),
-          userId: currentUser.id,
-        }
-      ]);
-    }
-  }, [currentUser]);
-
-  const handleAddFoodItem = (item: Omit<FoodItem, 'id' | 'userId'>) => {
-    if (!currentUser) return;
-    
-    const newItem: FoodItem = {
-      ...item,
-      id: Date.now().toString(),
-      userId: currentUser.id,
-    };
-    
-    setFoodItems(prev => [...prev, newItem]);
-    setShowAddForm(false);
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth');
   };
 
-  const handleEditFoodItem = (updatedItem: FoodItem) => {
-    setFoodItems(prev => prev.map(item => 
-      item.id === updatedItem.id ? updatedItem : item
-    ));
-    setEditingItem(null);
-  };
+  // Show loading spinner while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const handleRemoveItem = (id: string) => {
-    setFoodItems(prev => prev.filter(item => item.id !== id));
-  };
-
-  const handleAddMealPlan = (meal: Omit<MealPlan, 'id' | 'userId'>) => {
-    if (!currentUser) return;
-    
-    const newMeal: MealPlan = {
-      ...meal,
-      id: Date.now().toString(),
-      userId: currentUser.id,
-    };
-    
-    setMealPlans(prev => [...prev, newMeal]);
-  };
-
-  const handleRemoveMealPlan = (id: string) => {
-    setMealPlans(prev => prev.filter(meal => meal.id !== id));
-  };
-
-  if (!currentUser) {
+  // Redirect to auth if not logged in
+  if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
         <div className="container mx-auto px-4 py-16">
@@ -125,27 +70,34 @@ const Index = () => {
               </div>
             </div>
             <Button 
-              onClick={() => setShowAuthModal(true)}
+              onClick={() => navigate('/auth')}
               className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
             >
               Get Started
             </Button>
           </div>
         </div>
-        <AuthModal 
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-          onAuthenticated={setCurrentUser}
-        />
       </div>
     );
   }
 
+  // Create user object compatible with Header component
+  const headerUser = {
+    id: user.id,
+    email: user.email || '',
+    name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+  };
+
+  const handleEditFoodItem = (updatedItem: FoodItem) => {
+    updateFoodItem(updatedItem);
+    setEditingItem(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header 
-        user={currentUser} 
-        onLogout={() => setCurrentUser(null)}
+        user={headerUser} 
+        onLogout={handleLogout}
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
@@ -167,21 +119,21 @@ const Index = () => {
         {activeTab === 'inventory' ? (
           <InventoryDashboard 
             foodItems={foodItems} 
-            onRemoveItem={handleRemoveItem}
+            onRemoveItem={removeFoodItem}
             onEditItem={setEditingItem}
           />
         ) : (
           <MealPlanning 
             mealPlans={mealPlans}
-            onRemoveMealPlan={handleRemoveMealPlan}
-            onAddMealPlan={handleAddMealPlan}
+            onRemoveMealPlan={removeMealPlan}
+            onAddMealPlan={addMealPlan}
           />
         )}
 
         {showAddForm && (
           <AddItemForm
             type={activeTab}
-            onSubmit={activeTab === 'inventory' ? handleAddFoodItem : handleAddMealPlan}
+            onSubmit={activeTab === 'inventory' ? addFoodItem : addMealPlan}
             onClose={() => setShowAddForm(false)}
           />
         )}

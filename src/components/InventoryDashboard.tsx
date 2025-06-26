@@ -60,29 +60,29 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: Inve
     <div className="space-y-6">
       {/* Status Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-        <div className="bg-white p-3 md:p-4 rounded-lg shadow-sm">
-          <div className="text-lg md:text-2xl font-bold text-gray-900">{foodItems.length}</div>
-          <div className="text-xs text-gray-600">Total Items</div>
+        <div className="bg-card p-3 md:p-4 rounded-lg shadow-sm border">
+          <div className="text-lg md:text-2xl font-bold text-foreground">{foodItems.length}</div>
+          <div className="text-xs text-muted-foreground">Total Items</div>
         </div>
-        <div className="bg-green-50 p-3 md:p-4 rounded-lg shadow-sm">
-          <div className="text-lg md:text-2xl font-bold text-green-700">{statusCounts.fresh}</div>
-          <div className="text-xs text-green-600">Fresh Items</div>
+        <div className="bg-green-50 dark:bg-green-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
+          <div className="text-lg md:text-2xl font-bold text-green-700 dark:text-green-400">{statusCounts.fresh}</div>
+          <div className="text-xs text-green-600 dark:text-green-500">Fresh Items</div>
         </div>
-        <div className="bg-yellow-50 p-3 md:p-4 rounded-lg shadow-sm">
-          <div className="text-lg md:text-2xl font-bold text-yellow-700">{statusCounts['use-soon']}</div>
-          <div className="text-xs text-yellow-600">Use Soon</div>
+        <div className="bg-yellow-50 dark:bg-yellow-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
+          <div className="text-lg md:text-2xl font-bold text-yellow-700 dark:text-yellow-400">{statusCounts['use-soon']}</div>
+          <div className="text-xs text-yellow-600 dark:text-yellow-500">Use Soon</div>
         </div>
-        <div className="bg-red-50 p-3 md:p-4 rounded-lg shadow-sm">
-          <div className="text-lg md:text-2xl font-bold text-red-700">{statusCounts.expired}</div>
-          <div className="text-xs text-red-600">Expired</div>
+        <div className="bg-red-50 dark:bg-red-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
+          <div className="text-lg md:text-2xl font-bold text-red-700 dark:text-red-400">{statusCounts.expired}</div>
+          <div className="text-xs text-red-600 dark:text-red-500">Expired</div>
         </div>
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white p-3 md:p-4 rounded-lg shadow-sm">
+      <div className="bg-card p-3 md:p-4 rounded-lg shadow-sm border">
         <div className="flex flex-col gap-3 md:flex-row md:gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               placeholder="Search food items..."
               value={searchTerm}
@@ -118,10 +118,10 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: Inve
 
       {/* Food Items Grid */}
       {filteredAndSortedItems.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-          <div className="text-gray-400 text-6xl mb-4">🍽️</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No food items found</h3>
-          <p className="text-gray-600">
+        <div className="text-center py-12 bg-card rounded-lg shadow-sm border">
+          <div className="text-muted-foreground text-6xl mb-4">🍽️</div>
+          <h3 className="text-lg font-medium text-foreground mb-2">No food items found</h3>
+          <p className="text-muted-foreground">
             {foodItems.length === 0 
               ? "Start by adding your first food item to track."
               : "Try adjusting your search or filter criteria."

@@ -54,23 +54,28 @@ export type Database = {
       meal_plans: {
         Row: {
           created_at: string | null
+          destination_time: string | null
           id: string
           name: string
+          notes: string | null
           planned_date: string | null
-          destination_time: string | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
+          destination_time?: string | null
           id?: string
           name: string
+          notes?: string | null
           planned_date?: string | null
           user_id: string
         }
         Update: {
           created_at?: string | null
+          destination_time?: string | null
           id?: string
           name?: string
+          notes?: string | null
           planned_date?: string | null
           user_id?: string
         }

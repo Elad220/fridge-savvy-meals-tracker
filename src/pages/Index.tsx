@@ -31,10 +31,10 @@ const Index = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -42,30 +42,30 @@ const Index = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center max-w-2xl mx-auto">
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">
+            <h1 className="text-5xl font-bold text-foreground mb-6">
               Food Prep & Fridge Manager
             </h1>
-            <p className="text-xl text-gray-600 mb-8">
+            <p className="text-xl text-muted-foreground mb-8">
               Track your cooked meals, manage expiration dates, and reduce food waste with our intelligent inventory system.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="p-6 bg-white rounded-lg shadow-sm">
+              <div className="p-6 bg-card rounded-lg shadow-sm border">
                 <div className="text-green-500 text-2xl mb-3">🥗</div>
-                <h3 className="font-semibold mb-2">Track Food Items</h3>
-                <p className="text-sm text-gray-600">Log cooked meals with expiration dates and storage locations</p>
+                <h3 className="font-semibold mb-2 text-foreground">Track Food Items</h3>
+                <p className="text-sm text-muted-foreground">Log cooked meals with expiration dates and storage locations</p>
               </div>
-              <div className="p-6 bg-white rounded-lg shadow-sm">
+              <div className="p-6 bg-card rounded-lg shadow-sm border">
                 <div className="text-yellow-500 text-2xl mb-3">⏰</div>
-                <h3 className="font-semibold mb-2">Smart Alerts</h3>
-                <p className="text-sm text-gray-600">Visual indicators for items that need to be eaten soon</p>
+                <h3 className="font-semibold mb-2 text-foreground">Smart Alerts</h3>
+                <p className="text-sm text-muted-foreground">Visual indicators for items that need to be eaten soon</p>
               </div>
-              <div className="p-6 bg-white rounded-lg shadow-sm">
+              <div className="p-6 bg-card rounded-lg shadow-sm border">
                 <div className="text-blue-500 text-2xl mb-3">📋</div>
-                <h3 className="font-semibold mb-2">Meal Planning</h3>
-                <p className="text-sm text-gray-600">Plan future meals and organize your cooking schedule</p>
+                <h3 className="font-semibold mb-2 text-foreground">Meal Planning</h3>
+                <p className="text-sm text-muted-foreground">Plan future meals and organize your cooking schedule</p>
               </div>
             </div>
             <Button
@@ -97,7 +97,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header
         user={headerUser}
         onLogout={handleLogout}
@@ -107,7 +107,7 @@ const Index = () => {
 
       <main className="container mx-auto px-4 py-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-foreground">
             {activeTab === 'inventory' ? 'Food Inventory' : 'Meal Planning'}
           </h2>
           <Button

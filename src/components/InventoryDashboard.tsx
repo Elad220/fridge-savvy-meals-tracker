@@ -67,12 +67,6 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: Inve
     <div className="space-y-6">
       {/* Status Overview */}
       <div className="space-y-4">
-        {/* Total Items Card - Full Width */}
-        <div className="bg-card p-4 rounded-lg shadow-sm border max-w-md mx-auto">
-          <div className="text-2xl md:text-3xl font-bold text-foreground text-center">{foodItems.length}</div>
-          <div className="text-sm text-muted-foreground text-center">Total Items</div>
-        </div>
-        
         {/* Status Cards - In a row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
           <div className="bg-green-50 dark:bg-green-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
@@ -91,6 +85,12 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: Inve
             <div className="text-lg md:text-2xl font-bold text-red-700 dark:text-red-400">{statusCounts.expired}</div>
             <div className="text-xs text-red-600 dark:text-red-500">Expired</div>
           </div>
+        </div>
+        
+        {/* Total Items Card - Full Width */}
+        <div className="bg-card p-4 rounded-lg shadow-sm border max-w-md mx-auto mt-4">
+          <div className="text-2xl md:text-3xl font-bold text-foreground text-center">{foodItems.length}</div>
+          <div className="text-sm text-muted-foreground text-center">Total Items</div>
         </div>
       </div>
 

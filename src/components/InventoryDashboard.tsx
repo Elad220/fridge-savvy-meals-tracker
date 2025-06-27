@@ -66,26 +66,31 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: Inve
   return (
     <div className="space-y-6">
       {/* Status Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4">
-        <div className="bg-card p-3 md:p-4 rounded-lg shadow-sm border">
-          <div className="text-lg md:text-2xl font-bold text-foreground">{foodItems.length}</div>
-          <div className="text-xs text-muted-foreground">Total Items</div>
+      <div className="space-y-4">
+        {/* Total Items Card - Full Width */}
+        <div className="bg-card p-4 rounded-lg shadow-sm border max-w-md mx-auto">
+          <div className="text-2xl md:text-3xl font-bold text-foreground text-center">{foodItems.length}</div>
+          <div className="text-sm text-muted-foreground text-center">Total Items</div>
         </div>
-        <div className="bg-green-50 dark:bg-green-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
-          <div className="text-lg md:text-2xl font-bold text-green-700 dark:text-green-400">{statusCounts.fresh}</div>
-          <div className="text-xs text-green-600 dark:text-green-500">Fresh</div>
-        </div>
-        <div className="bg-yellow-50 dark:bg-yellow-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
-          <div className="text-lg md:text-2xl font-bold text-yellow-700 dark:text-yellow-400">{statusCounts['use-soon']}</div>
-          <div className="text-xs text-yellow-600 dark:text-yellow-500">Use Soon</div>
-        </div>
-        <div className="bg-orange-50 dark:bg-orange-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
-          <div className="text-lg md:text-2xl font-bold text-orange-700 dark:text-orange-400">{statusCounts['use-or-throw']}</div>
-          <div className="text-xs text-orange-600 dark:text-orange-500">Use or Throw</div>
-        </div>
-        <div className="bg-red-50 dark:bg-red-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
-          <div className="text-lg md:text-2xl font-bold text-red-700 dark:text-red-400">{statusCounts.expired}</div>
-          <div className="text-xs text-red-600 dark:text-red-500">Expired</div>
+        
+        {/* Status Cards - In a row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+          <div className="bg-green-50 dark:bg-green-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
+            <div className="text-lg md:text-2xl font-bold text-green-700 dark:text-green-400">{statusCounts.fresh}</div>
+            <div className="text-xs text-green-600 dark:text-green-500">Fresh</div>
+          </div>
+          <div className="bg-yellow-50 dark:bg-yellow-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
+            <div className="text-lg md:text-2xl font-bold text-yellow-700 dark:text-yellow-400">{statusCounts['use-soon']}</div>
+            <div className="text-xs text-yellow-600 dark:text-yellow-500">Use Soon</div>
+          </div>
+          <div className="bg-orange-50 dark:bg-orange-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
+            <div className="text-lg md:text-2xl font-bold text-orange-700 dark:text-orange-400">{statusCounts['use-or-throw']}</div>
+            <div className="text-xs text-orange-600 dark:text-orange-500">Use or Throw</div>
+          </div>
+          <div className="bg-red-50 dark:bg-red-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
+            <div className="text-lg md:text-2xl font-bold text-red-700 dark:text-red-400">{statusCounts.expired}</div>
+            <div className="text-xs text-red-600 dark:text-red-500">Expired</div>
+          </div>
         </div>
       </div>
 

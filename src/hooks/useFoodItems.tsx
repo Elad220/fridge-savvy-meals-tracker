@@ -30,6 +30,7 @@ export const useFoodItems = (userId: string | undefined) => {
         eatByDate: new Date(item.eat_by_date),
         quantity: item.quantity,
         storageLocation: item.storage_location,
+        label: item.label || 'raw material', // Default to 'raw material' if not set
         notes: item.notes || undefined,
         userId: item.user_id,
         freshnessDays: item.freshness_days || 4, // Default to 4 if not set
@@ -60,6 +61,7 @@ export const useFoodItems = (userId: string | undefined) => {
           eat_by_date: item.eatByDate.toISOString().split('T')[0],
           quantity: item.quantity,
           storage_location: item.storageLocation,
+          label: item.label,
           notes: item.notes || null,
           freshness_days: item.freshnessDays || 4,
         })
@@ -75,6 +77,7 @@ export const useFoodItems = (userId: string | undefined) => {
         eatByDate: new Date(data.eat_by_date),
         quantity: data.quantity,
         storageLocation: data.storage_location,
+        label: data.label,
         notes: data.notes || undefined,
         userId: data.user_id,
         freshnessDays: data.freshness_days || 4,
@@ -105,6 +108,7 @@ export const useFoodItems = (userId: string | undefined) => {
           eat_by_date: updatedItem.eatByDate.toISOString().split('T')[0],
           quantity: updatedItem.quantity,
           storage_location: updatedItem.storageLocation,
+          label: updatedItem.label,
           notes: updatedItem.notes || null,
           freshness_days: updatedItem.freshnessDays || 4,
           updated_at: new Date().toISOString(),

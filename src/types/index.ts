@@ -4,6 +4,8 @@ export interface User {
   name: string;
 }
 
+export type FoodItemLabel = 'cooked meal' | 'raw material';
+
 export interface FoodItem {
   id: string;
   name: string;
@@ -11,6 +13,7 @@ export interface FoodItem {
   eatByDate: Date;
   quantity: string;
   storageLocation: string;
+  label: FoodItemLabel;
   notes?: string;
   userId: string;
   freshnessDays?: number; // Custom freshness period in days

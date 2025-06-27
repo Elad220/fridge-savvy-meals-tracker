@@ -16,6 +16,7 @@ export type Database = {
           eat_by_date: string
           freshness_days: number | null
           id: string
+          label: 'cooked meal' | 'raw material' | null
           name: string
           notes: string | null
           quantity: string
@@ -29,6 +30,7 @@ export type Database = {
           eat_by_date: string
           freshness_days?: number | null
           id?: string
+          label?: 'cooked meal' | 'raw material' | null
           name: string
           notes?: string | null
           quantity: string
@@ -42,6 +44,7 @@ export type Database = {
           eat_by_date?: string
           freshness_days?: number | null
           id?: string
+          label?: 'cooked meal' | 'raw material' | null
           name?: string
           notes?: string | null
           quantity?: string
@@ -144,7 +147,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      food_item_label: 'cooked meal' | 'raw material'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -259,6 +262,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      food_item_label: ['cooked meal', 'raw material'] as const,
+    },
   },
 } as const
+
+export type FoodItemLabel = 'cooked meal' | 'raw material'

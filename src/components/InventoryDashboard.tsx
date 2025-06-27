@@ -15,6 +15,7 @@ interface InventoryDashboardProps {
 export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: InventoryDashboardProps) => {
   const [sortBy, setSortBy] = useState<'eatByDate' | 'name' | 'storageLocation'>('eatByDate');
   const [filterBy, setFilterBy] = useState<FreshnessStatus | 'all'>('all');
+  const [foodTypeFilter, setFoodTypeFilter] = useState<'all' | 'cooked meal' | 'raw material'>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
   const getFreshnessStatus = (eatByDate: Date): FreshnessStatus => {
@@ -38,10 +39,13 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: Inve
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            item.storageLocation.toLowerCase().includes(searchTerm.toLowerCase());
       
-      if (filterBy === 'all') return matchesSearch;
+      // Apply freshness filter
+      const matchesFreshness = filterBy === 'all' || getFreshnessStatus(item.eatByDate) === filterBy;
       
-      const status = getFreshnessStatus(item.eatByDate);
-      return matchesSearch && status === filterBy;
+      // Apply food type filter
+      const matchesFoodType = foodTypeFilter === 'all' || item.label === foodTypeFilter;
+      
+      return matchesSearch && matchesFreshness && matchesFoodType;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -127,6 +131,16 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: Inve
                 <SelectItem value="use-soon">Use Soon</SelectItem>
                 <SelectItem value="use-or-throw">Use or Throw</SelectItem>
                 <SelectItem value="expired">Expired</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={foodTypeFilter} onValueChange={(value: any) => setFoodTypeFilter(value)}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Food Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="cooked meal">Cooked Meals</SelectItem>
+                <SelectItem value="raw material">Raw Materials</SelectItem>
               </SelectContent>
             </Select>
           </div>

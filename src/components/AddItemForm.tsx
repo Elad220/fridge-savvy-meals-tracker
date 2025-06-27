@@ -20,6 +20,7 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
     eatByDate: '',
     quantity: '',
     storageLocation: '',
+    label: 'raw material' as const,
     notes: '',
     plannedDate: new Date().toISOString().split('T')[0],
     destinationTime: '12:30',
@@ -58,6 +59,7 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
         eatByDate: new Date(eatByDate),
         quantity: formData.quantity,
         storageLocation: formData.storageLocation,
+        label: formData.label,
         notes: formData.notes || undefined,
         freshnessDays: freshnessDays,
       };
@@ -161,6 +163,22 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
                   placeholder="e.g., 2 servings, Half a pot, Small container"
                   required
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="label">Food Type *</Label>
+                <Select 
+                  value={formData.label} 
+                  onValueChange={(value: 'cooked meal' | 'raw material') => handleInputChange('label', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select food type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="raw material">Raw Material</SelectItem>
+                    <SelectItem value="cooked meal">Cooked Meal</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>

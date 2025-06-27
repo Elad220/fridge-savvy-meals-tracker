@@ -1,7 +1,7 @@
 
 import { FoodItem, FreshnessStatus } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Trash2, MapPin, Calendar, Package, Edit } from 'lucide-react';
+import { Trash2, MapPin, Calendar, Package, Edit, Utensils, Carrot } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface FoodItemCardProps {
@@ -84,6 +84,16 @@ export const FoodItemCard = ({ item, onRemove, onEdit }: FoodItemCardProps) => {
       </div>
 
       <div className="space-y-2 mb-4">
+        <div className="flex items-center text-sm text-muted-foreground">
+          {item.label === 'cooked meal' ? (
+            <Utensils className="w-4 h-4 mr-2 text-amber-600" />
+          ) : (
+            <Carrot className="w-4 h-4 mr-2 text-green-600" />
+          )}
+          <span className="font-medium">
+            {item.label === 'cooked meal' ? 'Cooked Meal' : 'Raw Material'}
+          </span>
+        </div>
         <div className="flex items-center text-sm text-muted-foreground">
           <Calendar className="w-4 h-4 mr-2" />
           <span>

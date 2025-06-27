@@ -132,6 +132,7 @@ const Index = () => {
         ) : (
           <MealPlanning
             mealPlans={mealPlans}
+            foodItems={foodItems}
             onRemoveMealPlan={removeMealPlan}
             onAddMealPlan={addMealPlan}
             onEditMealPlan={setEditingMealPlan}

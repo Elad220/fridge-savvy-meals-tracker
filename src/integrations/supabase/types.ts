@@ -102,12 +102,46 @@ export type Database = {
         }
         Relationships: []
       }
+      user_api_tokens: {
+        Row: {
+          created_at: string
+          encrypted_token: string
+          id: string
+          token_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          encrypted_token: string
+          id?: string
+          token_name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          encrypted_token?: string
+          id?: string
+          token_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      encrypt_api_token: {
+        Args: { token: string }
+        Returns: string
+      }
+      store_api_token: {
+        Args: { token_name: string; api_token: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

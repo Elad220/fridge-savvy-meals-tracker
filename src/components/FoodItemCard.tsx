@@ -6,13 +6,20 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 interface FoodItemCardProps {
   item: FoodItem;
-  status: FreshnessStatus;
   onRemove: () => void;
   onEdit: () => void;
 }
 
-export const FoodItemCard = ({ item, status, onRemove, onEdit }: FoodItemCardProps) => {
-  const statusConfig = {
+export const FoodItemCard = ({ item, onRemove, onEdit }: FoodItemCardProps) => {
+  type StatusConfig = {
+    bgColor: string;
+    borderColor: string;
+    textColor: string;
+    badgeColor: string;
+    label: string;
+  };
+
+  const statusConfig: Record<FreshnessStatus, StatusConfig> = {
     fresh: {
       bgColor: 'bg-green-50 dark:bg-green-950/30',
       borderColor: 'border-green-200 dark:border-green-800',
@@ -27,17 +34,45 @@ export const FoodItemCard = ({ item, status, onRemove, onEdit }: FoodItemCardPro
       badgeColor: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
       label: 'Use Soon'
     },
+    'use-or-throw': {
+      bgColor: 'bg-orange-50 dark:bg-orange-950/30',
+      borderColor: 'border-orange-300 dark:border-orange-700',
+      textColor: 'text-orange-700 dark:text-orange-300',
+      badgeColor: 'bg-orange-100 text-orange-800 dark:bg-orange-900/80 dark:text-orange-200',
+      label: 'Use or Throw'
+    },
     expired: {
       bgColor: 'bg-red-50 dark:bg-red-950/30',
-      borderColor: 'border-red-200 dark:border-red-800',
-      textColor: 'text-red-700 dark:text-red-300',
-      badgeColor: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+      borderColor: 'border-red-200 dark:border-red-900',
+      textColor: 'text-red-600 dark:text-red-400',
+      badgeColor: 'bg-red-100 text-red-800 dark:bg-red-900/70 dark:text-red-200',
       label: 'Expired'
     }
   };
 
+  // Calculate days until expiry (negative if already expired)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const expiryDate = new Date(item.eatByDate);
+  expiryDate.setHours(0, 0, 0, 0);
+  
+  const timeDiff = expiryDate.getTime() - today.getTime();
+  const daysUntilExpiry = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+  
+  // Determine status based on days until expiry
+  let status: FreshnessStatus;
+  if (daysUntilExpiry < 0) {
+    status = 'expired';
+  } else if (daysUntilExpiry === 0) {
+    status = 'use-or-throw';
+  } else if (daysUntilExpiry <= 2) {  // Changed from 3 to 2 to make 'fresh' start at 3+ days
+    status = 'use-soon';
+  } else {
+    status = 'fresh';
+  }
+  
   const config = statusConfig[status];
-  const daysUntilExpiry = Math.ceil((item.eatByDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
 
   return (
     <div className={`${config.bgColor} ${config.borderColor} border-2 rounded-lg p-4 transition-all hover:shadow-md dark:hover:shadow-lg`}>

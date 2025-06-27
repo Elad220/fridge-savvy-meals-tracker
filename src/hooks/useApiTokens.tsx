@@ -43,9 +43,10 @@ export const useApiTokens = () => {
     if (!user) return false;
 
     try {
+      // The token will be hashed by the database function
       const { error } = await supabase.rpc('store_api_token', {
-        token_name: 'gemini',
-        api_token: token,
+        p_token_name: 'gemini',
+        p_api_token: token,
       });
 
       if (error) throw error;
@@ -79,7 +80,7 @@ export const useApiTokens = () => {
         .maybeSingle();
 
       if (error) throw error;
-      return data?.encrypted_token || null;
+      return data?.encrypted_token ? '•••••••••••••••••••••••••••••••••••••••••••••' : null;
     } catch (error: any) {
       console.error('Error getting token:', error);
       return null;

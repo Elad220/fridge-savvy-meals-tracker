@@ -23,7 +23,7 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
     notes: '',
     plannedDate: new Date().toISOString().split('T')[0],
     destinationTime: '12:30',
-    freshnessDays: '4'
+    freshnessDays: '3'
   });
 
   const storageLocations = [

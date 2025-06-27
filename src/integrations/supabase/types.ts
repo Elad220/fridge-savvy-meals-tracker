@@ -139,7 +139,7 @@ export type Database = {
         Returns: string
       }
       store_api_token: {
-        Args: { token_name: string; api_token: string }
+        Args: { p_token_name: string; p_api_token: string }
         Returns: string
       }
     }

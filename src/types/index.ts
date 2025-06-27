@@ -25,4 +25,4 @@ export interface MealPlan {
   userId: string;
 }
 
-export type FreshnessStatus = 'fresh' | 'use-soon' | 'expired';
+export type FreshnessStatus = 'fresh' | 'use-soon' | 'use-or-throw' | 'expired';

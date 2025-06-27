@@ -19,11 +19,17 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: Inve
 
   const getFreshnessStatus = (eatByDate: Date): FreshnessStatus => {
     const today = new Date();
-    const diffTime = eatByDate.getTime() - today.getTime();
+    today.setHours(0, 0, 0, 0);
+    
+    const expiryDate = new Date(eatByDate);
+    expiryDate.setHours(0, 0, 0, 0);
+    
+    const diffTime = expiryDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays < 0) return 'expired';
-    if (diffDays <= 2) return 'use-soon';
+    if (diffDays === 0) return 'use-or-throw';
+    if (diffDays <= 3) return 'use-soon';
     return 'fresh';
   };
 
@@ -53,24 +59,29 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: Inve
   const statusCounts = {
     fresh: foodItems.filter(item => getFreshnessStatus(item.eatByDate) === 'fresh').length,
     'use-soon': foodItems.filter(item => getFreshnessStatus(item.eatByDate) === 'use-soon').length,
+    'use-or-throw': foodItems.filter(item => getFreshnessStatus(item.eatByDate) === 'use-or-throw').length,
     expired: foodItems.filter(item => getFreshnessStatus(item.eatByDate) === 'expired').length,
   };
 
   return (
     <div className="space-y-6">
       {/* Status Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4">
         <div className="bg-card p-3 md:p-4 rounded-lg shadow-sm border">
           <div className="text-lg md:text-2xl font-bold text-foreground">{foodItems.length}</div>
           <div className="text-xs text-muted-foreground">Total Items</div>
         </div>
         <div className="bg-green-50 dark:bg-green-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
           <div className="text-lg md:text-2xl font-bold text-green-700 dark:text-green-400">{statusCounts.fresh}</div>
-          <div className="text-xs text-green-600 dark:text-green-500">Fresh Items</div>
+          <div className="text-xs text-green-600 dark:text-green-500">Fresh</div>
         </div>
         <div className="bg-yellow-50 dark:bg-yellow-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
           <div className="text-lg md:text-2xl font-bold text-yellow-700 dark:text-yellow-400">{statusCounts['use-soon']}</div>
           <div className="text-xs text-yellow-600 dark:text-yellow-500">Use Soon</div>
+        </div>
+        <div className="bg-orange-50 dark:bg-orange-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
+          <div className="text-lg md:text-2xl font-bold text-orange-700 dark:text-orange-400">{statusCounts['use-or-throw']}</div>
+          <div className="text-xs text-orange-600 dark:text-orange-500">Use or Throw</div>
         </div>
         <div className="bg-red-50 dark:bg-red-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
           <div className="text-lg md:text-2xl font-bold text-red-700 dark:text-red-400">{statusCounts.expired}</div>
@@ -109,6 +120,7 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: Inve
                 <SelectItem value="all">All Items</SelectItem>
                 <SelectItem value="fresh">Fresh</SelectItem>
                 <SelectItem value="use-soon">Use Soon</SelectItem>
+                <SelectItem value="use-or-throw">Use or Throw</SelectItem>
                 <SelectItem value="expired">Expired</SelectItem>
               </SelectContent>
             </Select>
@@ -134,7 +146,6 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: Inve
             <FoodItemCard
               key={item.id}
               item={item}
-              status={getFreshnessStatus(item.eatByDate)}
               onRemove={() => onRemoveItem(item.id)}
               onEdit={() => onEditItem(item)}
             />

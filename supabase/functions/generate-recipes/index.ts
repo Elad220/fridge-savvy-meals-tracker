@@ -30,7 +30,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get the user's API token
+    // Get the user's API token (now stored as plain text)
     const { data: tokenData, error: tokenError } = await supabase
       .from('user_api_tokens')
       .select('encrypted_token')
@@ -39,13 +39,16 @@ serve(async (req) => {
       .maybeSingle();
 
     if (tokenError || !tokenData) {
+      console.error('Token error:', tokenError);
       return new Response(
         JSON.stringify({ error: 'Invalid or missing API token.' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
     }
 
+    // Use the token directly (it's now stored as plain text)
     const apiToken = tokenData.encrypted_token;
+    console.log('Using API token for Gemini request');
 
     // Create the prompt for Gemini
     const prompt = `Given these ingredients: ${ingredients.join(', ')}, 
@@ -93,6 +96,8 @@ serve(async (req) => {
     }
 
     const geminiData = await geminiResponse.json();
+    console.log('Gemini response received successfully');
+    
     const generatedText = geminiData.candidates[0]?.content?.parts[0]?.text;
 
     if (!generatedText) {

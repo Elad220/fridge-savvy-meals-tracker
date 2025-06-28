@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { FoodItem } from '@/types';
+import { FoodItem, FoodItemLabel } from '@/types';
 import { toast } from '@/hooks/use-toast';
 
 export const useFoodItems = (userId: string | undefined) => {
@@ -30,7 +30,7 @@ export const useFoodItems = (userId: string | undefined) => {
         eatByDate: new Date(item.eat_by_date),
         quantity: item.quantity,
         storageLocation: item.storage_location,
-        label: item.label || 'raw material', // Default to 'raw material' if not set
+        label: (item.label || 'raw material') as FoodItemLabel, // Type assertion to FoodItemLabel
         notes: item.notes || undefined,
         userId: item.user_id,
         freshnessDays: item.freshness_days || 4, // Default to 4 if not set
@@ -77,7 +77,7 @@ export const useFoodItems = (userId: string | undefined) => {
         eatByDate: new Date(data.eat_by_date),
         quantity: data.quantity,
         storageLocation: data.storage_location,
-        label: data.label,
+        label: data.label as FoodItemLabel, // Type assertion to FoodItemLabel
         notes: data.notes || undefined,
         userId: data.user_id,
         freshnessDays: data.freshness_days || 4,

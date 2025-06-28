@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,17 +15,30 @@ interface AddItemFormProps {
 }
 
 export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    dateCookedStored: new Date().toISOString().split('T')[0],
-    eatByDate: '',
-    quantity: '',
-    storageLocation: '',
-    label: 'raw material' as const,
-    notes: '',
-    plannedDate: new Date().toISOString().split('T')[0],
-    destinationTime: '12:30',
-    freshnessDays: '3'
+  const calculateEatByDate = (cookedDate: string, freshnessDays: number) => {
+    const cooked = new Date(cookedDate);
+    const eatBy = new Date(cooked);
+    eatBy.setDate(eatBy.getDate() + freshnessDays);
+    return eatBy.toISOString().split('T')[0];
+  };
+
+  const [formData, setFormData] = useState(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const defaultFreshnessDays = 3;
+    const eatByDate = calculateEatByDate(today, defaultFreshnessDays);
+    
+    return {
+      name: '',
+      dateCookedStored: today,
+      eatByDate: eatByDate,
+      quantity: '',
+      storageLocation: '',
+      label: 'raw material' as const,
+      notes: '',
+      plannedDate: today,
+      destinationTime: '12:30',
+      freshnessDays: defaultFreshnessDays.toString()
+    };
   });
 
   const storageLocations = [
@@ -39,43 +53,46 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
     'Other'
   ];
 
-  const calculateEatByDate = (cookedDate: string, freshnessDays: number) => {
-    const cooked = new Date(cookedDate);
-    const eatBy = new Date(cooked);
-    eatBy.setDate(eatBy.getDate() + freshnessDays);
-    return eatBy.toISOString().split('T')[0];
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (type === 'inventory') {
-      const freshnessDays = parseInt(formData.freshnessDays) || 4;
-      const eatByDate = formData.eatByDate || calculateEatByDate(formData.dateCookedStored, freshnessDays);
+    try {
+      if (type === 'inventory') {
+        const freshnessDays = parseInt(formData.freshnessDays) || 4;
+        const eatByDate = formData.eatByDate || calculateEatByDate(formData.dateCookedStored, freshnessDays);
 
-      const foodItem: Omit<FoodItem, 'id' | 'userId'> = {
-        name: formData.name,
-        dateCookedStored: new Date(formData.dateCookedStored),
-        eatByDate: new Date(eatByDate),
-        quantity: formData.quantity,
-        storageLocation: formData.storageLocation,
-        label: formData.label,
-        notes: formData.notes || undefined,
-        freshnessDays: freshnessDays,
-      };
+        const foodItem: Omit<FoodItem, 'id' | 'userId'> = {
+          name: formData.name,
+          dateCookedStored: new Date(formData.dateCookedStored),
+          eatByDate: new Date(eatByDate),
+          quantity: formData.quantity,
+          storageLocation: formData.storageLocation,
+          label: formData.label,
+          notes: formData.notes || undefined,
+          freshnessDays: freshnessDays,
+        };
 
-      await onSubmit(foodItem);
+        await onSubmit(foodItem);
+      } else {
+        const mealPlan: Omit<MealPlan, 'id' | 'userId'> = {
+          name: formData.name,
+          plannedDate: formData.plannedDate ? new Date(formData.plannedDate) : undefined,
+          destinationTime: formData.destinationTime ? new Date(`${formData.plannedDate}T${formData.destinationTime}`) : undefined,
+          notes: formData.notes || undefined,
+        };
+
+        await onSubmit(mealPlan);
+      }
       onClose();
-    } else {
-      const mealPlan: Omit<MealPlan, 'id' | 'userId'> = {
-        name: formData.name,
-        plannedDate: formData.plannedDate ? new Date(formData.plannedDate) : undefined,
-        destinationTime: formData.destinationTime ? new Date(`${formData.plannedDate}T${formData.destinationTime}`) : undefined,
-        notes: formData.notes || undefined,
-      };
-
-      await onSubmit(mealPlan);
-      onClose();
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save item. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -199,50 +216,55 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
             </>
           ) : (
             <>
-            <div>
-              <Label htmlFor="plannedDate">Planned Date (Optional)</Label>
-              <Input
-                id="plannedDate"
-                type="date"
-                value={formData.plannedDate}
-                onChange={(e) => handleInputChange('plannedDate', e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="destinationTime">Destination Time (Optional)</Label>
-              <Input
-                id="destinationTime"
-                type="time"
-                value={formData.destinationTime}
-                onChange={(e) => handleInputChange('destinationTime', e.target.value)}
-              />
-            </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="plannedDate">Planned Date</Label>
+                  <Input
+                    id="plannedDate"
+                    type="date"
+                    value={formData.plannedDate}
+                    onChange={(e) => handleInputChange('plannedDate', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="destinationTime">Time</Label>
+                  <Input
+                    id="destinationTime"
+                    type="time"
+                    value={formData.destinationTime}
+                    onChange={(e) => handleInputChange('destinationTime', e.target.value)}
+                  />
+                </div>
+              </div>
             </>
           )}
 
-          <div>
-            <Label htmlFor="notes">
-              {type === 'inventory' ? 'Notes (Optional)' : 'Description (Optional)'}
-            </Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => handleInputChange('notes', e.target.value)}
-              placeholder={type === 'inventory' ? 'Additional details about the food...' : 'Additional details about the meal...'}
-              rows={3}
-            />
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
-              {type === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
-            </Button>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="notes">
+                {type === 'inventory' ? 'Notes (Optional)' : 'Description (Optional)'}
+              </Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => handleInputChange('notes', e.target.value)}
+                placeholder={type === 'inventory' ? 'Additional details about the food...' : 'Additional details about the meal...'}
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+                Cancel
+              </Button>
+              <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
+                {type === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
     </Dialog>
   );
 };
+
+export default AddItemForm;

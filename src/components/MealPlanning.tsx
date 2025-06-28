@@ -1,3 +1,4 @@
+
 import { MealPlan } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Trash2, Calendar, Edit, Clock } from 'lucide-react';
@@ -13,7 +14,7 @@ interface MealPlanningProps {
   onEditMealPlan: (meal: MealPlan) => void;
 }
 
-export const MealPlanning = ({ mealPlans, foodItems, onRemoveMealPlan, onEditMealPlan }: MealPlanningProps) => {
+export const MealPlanning = ({ mealPlans, foodItems, onRemoveMealPlan, onAddMealPlan, onEditMealPlan }: MealPlanningProps) => {
   const sortedMealPlans = [...mealPlans].sort((a, b) => {
     if (!a.plannedDate && !b.plannedDate) return 0;
     if (!a.plannedDate) return 1;
@@ -32,7 +33,7 @@ export const MealPlanning = ({ mealPlans, foodItems, onRemoveMealPlan, onEditMea
   return (
     <div className="space-y-6">
       {/* Recipe Generator */}
-      <RecipeGenerator foodItems={foodItems} />
+      <RecipeGenerator foodItems={foodItems} onAddMealPlan={onAddMealPlan} />
 
       {/* Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

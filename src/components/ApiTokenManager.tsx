@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Key, Shield } from 'lucide-react';
+import { Key, Shield, Trash2 } from 'lucide-react';
 import { useApiTokens } from '@/hooks/useApiTokens';
 
 interface ApiTokenManagerProps {
@@ -13,10 +14,11 @@ interface ApiTokenManagerProps {
 }
 
 export const ApiTokenManager = ({ onTokenSaved }: ApiTokenManagerProps) => {
-  const { hasGeminiToken, saveToken } = useApiTokens();
+  const { hasGeminiToken, saveToken, removeToken } = useApiTokens();
   const [token, setToken] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   const handleSaveToken = async () => {
     if (!token.trim()) return;
@@ -30,6 +32,16 @@ export const ApiTokenManager = ({ onTokenSaved }: ApiTokenManagerProps) => {
       onTokenSaved?.();
     }
     setIsSaving(false);
+  };
+
+  const handleRemoveToken = async () => {
+    setIsRemoving(true);
+    const success = await removeToken();
+    
+    if (success) {
+      onTokenSaved?.();
+    }
+    setIsRemoving(false);
   };
 
   return (
@@ -89,6 +101,35 @@ export const ApiTokenManager = ({ onTokenSaved }: ApiTokenManagerProps) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {hasGeminiToken && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Remove Token
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remove API Token</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to remove your Gemini API token? This will disable recipe generation until you add a new token.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleRemoveToken}
+                disabled={isRemoving}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isRemoving ? 'Removing...' : 'Remove Token'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 };

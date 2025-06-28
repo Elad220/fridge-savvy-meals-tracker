@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChefHat, Clock, Star, Utensils } from 'lucide-react';
-import { FoodItem } from '@/types';
+import { ChefHat, Clock, Star, Utensils, Plus } from 'lucide-react';
+import { FoodItem, MealPlan } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useApiTokens } from '@/hooks/useApiTokens';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,9 +22,10 @@ interface Recipe {
 
 interface RecipeGeneratorProps {
   foodItems: FoodItem[];
+  onAddMealPlan?: (meal: Omit<MealPlan, 'id' | 'userId'>) => void;
 }
 
-export const RecipeGenerator = ({ foodItems }: RecipeGeneratorProps) => {
+export const RecipeGenerator = ({ foodItems, onAddMealPlan }: RecipeGeneratorProps) => {
   const { user } = useAuth();
   const { hasGeminiToken } = useApiTokens();
   const [isOpen, setIsOpen] = useState(false);
@@ -101,6 +102,27 @@ export const RecipeGenerator = ({ foodItems }: RecipeGeneratorProps) => {
     } finally {
       setIsLoadingDetails(false);
     }
+  };
+
+  const addRecipeToMealPlan = () => {
+    if (!selectedRecipe || !onAddMealPlan) return;
+
+    const newMealPlan: Omit<MealPlan, 'id' | 'userId'> = {
+      name: selectedRecipe.name,
+      notes: `Generated recipe: ${selectedRecipe.description}\n\nIngredients: ${selectedRecipe.ingredients.join(', ')}\n\nDifficulty: ${selectedRecipe.difficulty}\nCooking Time: ${selectedRecipe.cookingTime}`,
+    };
+
+    onAddMealPlan(newMealPlan);
+    
+    toast({
+      title: 'Recipe added to meal plan!',
+      description: `${selectedRecipe.name} has been added to your meal plans.`,
+    });
+
+    // Close the dialog
+    setIsOpen(false);
+    setSelectedRecipe(null);
+    setRecipeDetails(null);
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -209,11 +231,23 @@ export const RecipeGenerator = ({ foodItems }: RecipeGeneratorProps) => {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <Button variant="outline" size="sm" onClick={() => setSelectedRecipe(null)}>
-                    ← Back to Recipes
-                  </Button>
-                  <h4 className="font-medium">{selectedRecipe.name}</h4>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setSelectedRecipe(null)}>
+                      ← Back to Recipes
+                    </Button>
+                    <h4 className="font-medium">{selectedRecipe.name}</h4>
+                  </div>
+                  {onAddMealPlan && (
+                    <Button 
+                      onClick={addRecipeToMealPlan}
+                      className="bg-green-600 hover:bg-green-700"
+                      size="sm"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add to Meal Plan
+                    </Button>
+                  )}
                 </div>
 
                 {isLoadingDetails ? (

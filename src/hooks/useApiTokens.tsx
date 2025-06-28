@@ -43,7 +43,7 @@ export const useApiTokens = () => {
     if (!user) return false;
 
     try {
-      // The token will be hashed by the database function
+      // The token will be encrypted by the database function
       const { error } = await supabase.rpc('store_api_token', {
         p_token_name: 'gemini',
         p_api_token: token,
@@ -61,6 +61,35 @@ export const useApiTokens = () => {
       console.error('Error saving token:', error);
       toast({
         title: 'Error saving API token',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  const removeToken = async () => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('user_api_tokens')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('token_name', 'gemini');
+
+      if (error) throw error;
+
+      setHasGeminiToken(false);
+      toast({
+        title: 'API token removed',
+        description: 'Your Gemini API token has been removed.',
+      });
+      return true;
+    } catch (error: any) {
+      console.error('Error removing token:', error);
+      toast({
+        title: 'Error removing API token',
         description: error.message,
         variant: 'destructive',
       });
@@ -95,6 +124,7 @@ export const useApiTokens = () => {
     hasGeminiToken,
     loading,
     saveToken,
+    removeToken,
     getToken,
     refreshTokenStatus: checkForToken,
   };

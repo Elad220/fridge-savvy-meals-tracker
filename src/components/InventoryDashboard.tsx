@@ -30,7 +30,7 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: Inve
     
     if (diffDays < 0) return 'expired';
     if (diffDays === 0) return 'use-or-throw';
-    if (diffDays <= 3) return 'use-soon';
+    if (diffDays <= 2) return 'use-soon';
     return 'fresh';
   };
 

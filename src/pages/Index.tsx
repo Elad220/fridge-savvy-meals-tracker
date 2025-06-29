@@ -114,6 +114,14 @@ const Index = () => {
     setEditingMealPlan(null);
   };
 
+  const handleMoveToInventory = (meal: MealPlan, foodItem: Omit<FoodItem, 'id' | 'userId'>) => {
+    // Add the food item to inventory
+    addFoodItem(foodItem);
+    
+    // Remove from meal plans
+    removeMealPlan(meal.id);
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'inventory':
@@ -149,6 +157,7 @@ const Index = () => {
             onAddMealPlan={addMealPlan}
             onEditMealPlan={setEditingMealPlan}
             onNavigateToSettings={() => setActiveTab('settings')}
+            onMoveToInventory={handleMoveToInventory}
           />
         );
       case 'settings':

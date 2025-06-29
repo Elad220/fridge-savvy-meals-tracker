@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { MealPlan, FoodItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Trash2, Calendar, Edit, Clock } from 'lucide-react';
+import { Trash2, Calendar, Edit, Clock, PackagePlus } from 'lucide-react';
+import { MoveToInventoryModal } from './MoveToInventoryModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { RecipeGenerator } from './RecipeGenerator';
 
@@ -11,9 +13,33 @@ interface MealPlanningProps {
   onAddMealPlan: (meal: Omit<MealPlan, 'id' | 'userId'>) => void;
   onEditMealPlan: (meal: MealPlan) => void;
   onNavigateToSettings: () => void;
+  onMoveToInventory: (meal: MealPlan, foodItem: Omit<FoodItem, 'id' | 'userId'>) => void;
 }
 
-export const MealPlanning = ({ mealPlans, foodItems, onRemoveMealPlan, onAddMealPlan, onEditMealPlan, onNavigateToSettings }: MealPlanningProps) => {
+export const MealPlanning = ({ 
+  mealPlans, 
+  foodItems, 
+  onRemoveMealPlan, 
+  onAddMealPlan, 
+  onEditMealPlan, 
+  onNavigateToSettings,
+  onMoveToInventory 
+}: MealPlanningProps) => {
+  const [moveToInventoryModalOpen, setMoveToInventoryModalOpen] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<MealPlan | null>(null);
+
+  const handleMoveToInventoryInit = (meal: MealPlan) => {
+    setSelectedMeal(meal);
+    setMoveToInventoryModalOpen(true);
+  };
+
+  const handleMoveToInventoryConfirm = (item: Omit<FoodItem, 'id' | 'userId'>) => {
+    if (selectedMeal) {
+      onMoveToInventory(selectedMeal, item);
+      setMoveToInventoryModalOpen(false);
+      setSelectedMeal(null);
+    }
+  };
   const sortedMealPlans = [...mealPlans].sort((a, b) => {
     if (!a.plannedDate && !b.plannedDate) return 0;
     if (!a.plannedDate) return 1;
@@ -99,7 +125,16 @@ export const MealPlanning = ({ mealPlans, foodItems, onRemoveMealPlan, onAddMeal
               )}
 
               <div className="flex justify-end gap-2">
-                 <Button
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleMoveToInventoryInit(meal)}
+                  className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-950/20"
+                >
+                  <PackagePlus className="w-4 h-4 mr-1" />
+                  To Inventory
+                </Button>
+                <Button
                   variant="outline"
                   size="sm"
                   onClick={() => onEditMealPlan(meal)}
@@ -138,6 +173,22 @@ export const MealPlanning = ({ mealPlans, foodItems, onRemoveMealPlan, onAddMeal
             </div>
           ))}
         </div>
+      )}
+
+      {selectedMeal && (
+        <MoveToInventoryModal
+          isOpen={moveToInventoryModalOpen}
+          onClose={() => {
+            setMoveToInventoryModalOpen(false);
+            setSelectedMeal(null);
+          }}
+          onSubmit={handleMoveToInventoryConfirm}
+          initialData={{
+            name: selectedMeal.name,
+            notes: selectedMeal.notes,
+            plannedDate: selectedMeal.plannedDate
+          }}
+        />
       )}
     </div>
   );

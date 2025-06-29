@@ -126,8 +126,8 @@ export const InventoryDashboard = ({
 
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
+    <div className="space-y-3">
+      <div className="space-y-1">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
           <div className="bg-green-50 dark:bg-green-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
             <div className="text-lg md:text-2xl font-bold text-green-700 dark:text-green-400">{statusCounts.fresh}</div>
@@ -147,13 +147,13 @@ export const InventoryDashboard = ({
           </div>
         </div>
         
-        <div className="bg-card p-4 rounded-lg shadow-sm border max-w-md mx-auto mt-4">
+        <div className="bg-card p-2 rounded-lg shadow-sm border max-w-md mx-auto -mb-2">
           <div className="text-2xl md:text-3xl font-bold text-foreground text-center">{foodItems.length}</div>
           <div className="text-sm text-muted-foreground text-center">Total Items</div>
         </div>
       </div>
 
-      <div className="text-center min-h-[40px] flex items-center justify-center">
+      <div className="text-center min-h-[28px] flex items-center justify-center -mt-1">
         {userId && onAddItem && (
           <PhotoAnalysisButton
             onOpen={handleOpenPhotoAnalysis}

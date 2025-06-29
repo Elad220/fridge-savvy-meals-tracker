@@ -9,6 +9,8 @@ import { EditMealPlanForm } from '@/components/EditMealPlanForm';
 import { MealPlanning } from '@/components/MealPlanning';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { PhotoAnalysisButton } from '@/components/PhotoAnalysisButton';
+import { PhotoAnalysis } from '@/components/PhotoAnalysis';
 import { FoodItem, MealPlan } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useFoodItems } from '@/hooks/useFoodItems';
@@ -20,6 +22,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showPhotoAnalysis, setShowPhotoAnalysis] = useState(false);
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlan | null>(null);
   const [activeTab, setActiveTab] = useState<'inventory' | 'meals' | 'settings'>('inventory');
@@ -115,14 +118,27 @@ const Index = () => {
     switch (activeTab) {
       case 'inventory':
         return (
-          <InventoryDashboard
-            foodItems={foodItems}
-            onRemoveItem={removeFoodItem}
-            onEditItem={setEditingItem}
-            onAddItem={addFoodItem}
-            userId={user.id}
-            onNavigateToSettings={() => setActiveTab('settings')}
-          />
+          <div className="space-y-6">
+            <InventoryDashboard
+              foodItems={foodItems}
+              onRemoveItem={removeFoodItem}
+              onEditItem={setEditingItem}
+              userId={user.id}
+              onNavigateToSettings={() => setActiveTab('settings')}
+            />
+            {showPhotoAnalysis && (
+              <PhotoAnalysis
+                key={`photo-analysis-${user.id || 'no-user'}`}
+                isOpen={showPhotoAnalysis}
+                onClose={() => setShowPhotoAnalysis(false)}
+                onAnalysisComplete={(item) => {
+                  addFoodItem(item);
+                  setShowPhotoAnalysis(false);
+                }}
+                userId={user.id}
+              />
+            )}
+          </div>
         );
       case 'meals':
         return (
@@ -153,17 +169,27 @@ const Index = () => {
 
       <main className="flex-1 container mx-auto px-4 py-6">
         {activeTab !== 'settings' && (
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <div className="space-y-4 mb-6">
             <h2 className="text-2xl font-bold text-foreground">
               {activeTab === 'inventory' ? 'Food Inventory' : 'Meal Planning'}
             </h2>
-            <Button
-              onClick={() => setShowAddForm(true)}
-              className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              {activeTab === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Button
+                onClick={() => setShowAddForm(true)}
+                className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                {activeTab === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
+              </Button>
+              {activeTab === 'inventory' && (
+                <PhotoAnalysisButton
+                  onOpen={() => setShowPhotoAnalysis(true)}
+                  onNavigateToSettings={() => setActiveTab('settings')}
+                  disabled={!user?.id}
+                  className="w-full sm:w-auto"
+                />
+              )}
+            </div>
           </div>
         )}
 

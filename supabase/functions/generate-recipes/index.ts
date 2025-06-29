@@ -24,10 +24,26 @@ serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client
+    // Get the authorization header from the request
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    // Initialize Supabase client with the user's token
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: {
+            authorization: authHeader,
+          },
+        },
+      }
     );
 
     // Get the decrypted API token using the new function
@@ -37,14 +53,14 @@ serve(async (req) => {
     if (tokenError || !tokenData) {
       console.error('Token error:', tokenError);
       return new Response(
-        JSON.stringify({ error: 'Invalid or missing API token.' }),
+        JSON.stringify({ error: 'Invalid or missing API token. Please add your Gemini API token in the settings.' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
     }
 
     // Use the decrypted token
     const apiToken = tokenData;
-    console.log('Using decrypted API token for Gemini request');
+    console.log('Successfully retrieved decrypted API token');
 
     // Create the prompt for Gemini
     const prompt = `Given these ingredients: ${ingredients.join(', ')}, 

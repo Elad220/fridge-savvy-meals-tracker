@@ -24,10 +24,26 @@ serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client
+    // Get the authorization header from the request
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    // Initialize Supabase client with the user's token
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: {
+            authorization: authHeader,
+          },
+        },
+      }
     );
 
     // Get the decrypted API token using the new function

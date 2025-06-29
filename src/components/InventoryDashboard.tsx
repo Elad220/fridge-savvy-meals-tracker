@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { FoodItem, FreshnessStatus } from '@/types';
 import { FoodItemCard } from '@/components/FoodItemCard';
 import { PhotoAnalysis } from '@/components/PhotoAnalysis';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PhotoAnalysisButton } from '@/components/PhotoAnalysisButton';
+import { Filter, Search as SearchIcon, SlidersHorizontal, X, Camera } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Camera } from 'lucide-react';
-import { useApiTokens } from '@/hooks/useApiTokens';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface InventoryDashboardProps {
   foodItems: FoodItem[];
@@ -17,13 +17,36 @@ interface InventoryDashboardProps {
   onNavigateToSettings: () => void;
 }
 
-export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem, onAddItem, userId, onNavigateToSettings }: InventoryDashboardProps) => {
+export const InventoryDashboard = ({
+  foodItems,
+  onRemoveItem,
+  onEditItem,
+  onAddItem,
+  userId,
+  onNavigateToSettings,
+}: InventoryDashboardProps) => {
   const [sortBy, setSortBy] = useState<'eatByDate' | 'name' | 'storageLocation'>('eatByDate');
   const [filterBy, setFilterBy] = useState<FreshnessStatus | 'all'>('all');
   const [foodTypeFilter, setFoodTypeFilter] = useState<'all' | 'cooked meal' | 'raw material'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showPhotoAnalysis, setShowPhotoAnalysis] = useState(false);
-  const { hasGeminiToken } = useApiTokens();
+  
+  // Ref for photo analysis
+  const isInitialRender = useRef(true);
+
+  // Memoize the callback to prevent unnecessary re-renders
+  const handleOpenPhotoAnalysis = useCallback(() => {
+    setShowPhotoAnalysis(true);
+  }, []);
+
+  // Handle the analysis completion
+  const handleAnalysisComplete = useCallback((item: Omit<FoodItem, 'id' | 'userId'>) => {
+    // The item is already in the correct format, just pass it through
+    if (onAddItem) {
+      onAddItem(item);
+    }
+    setShowPhotoAnalysis(false);
+  }, [onAddItem]);
 
   const getFreshnessStatus = (eatByDate: Date): FreshnessStatus => {
     const today = new Date();
@@ -52,7 +75,7 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem, onAddI
     const today = new Date();
     const eatByDate = analysisData.expiration_date 
       ? new Date(analysisData.expiration_date)
-      : new Date(today.getTime() + (4 * 24 * 60 * 60 * 1000)); // Default to 4 days from today
+      : new Date(today.getTime() + (4 * 24 * 60 * 60 * 1000));
 
     const newItem: Omit<FoodItem, 'id' | 'userId'> = {
       name: analysisData.suggested_name,
@@ -73,10 +96,8 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem, onAddI
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            item.storageLocation.toLowerCase().includes(searchTerm.toLowerCase());
       
-      // Apply freshness filter
       const matchesFreshness = filterBy === 'all' || getFreshnessStatus(item.eatByDate) === filterBy;
       
-      // Apply food type filter
       const matchesFoodType = foodTypeFilter === 'all' || item.label === foodTypeFilter;
       
       return matchesSearch && matchesFreshness && matchesFoodType;
@@ -94,18 +115,19 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem, onAddI
       }
     });
 
-  const statusCounts = {
+  const statusCounts = useMemo(() => ({
+    total: foodItems.length,
     fresh: foodItems.filter(item => getFreshnessStatus(item.eatByDate) === 'fresh').length,
     'use-soon': foodItems.filter(item => getFreshnessStatus(item.eatByDate) === 'use-soon').length,
     'use-or-throw': foodItems.filter(item => getFreshnessStatus(item.eatByDate) === 'use-or-throw').length,
     expired: foodItems.filter(item => getFreshnessStatus(item.eatByDate) === 'expired').length,
-  };
+  }), [foodItems]);
+
+
 
   return (
     <div className="space-y-6">
-      {/* Status Overview */}
       <div className="space-y-4">
-        {/* Status Cards - In a row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
           <div className="bg-green-50 dark:bg-green-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
             <div className="text-lg md:text-2xl font-bold text-green-700 dark:text-green-400">{statusCounts.fresh}</div>
@@ -125,48 +147,32 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem, onAddI
           </div>
         </div>
         
-        {/* Total Items Card - Full Width */}
         <div className="bg-card p-4 rounded-lg shadow-sm border max-w-md mx-auto mt-4">
           <div className="text-2xl md:text-3xl font-bold text-foreground text-center">{foodItems.length}</div>
           <div className="text-sm text-muted-foreground text-center">Total Items</div>
         </div>
       </div>
 
-      {/* AI Photo Analysis Button */}
-      {userId && onAddItem && (
-        <div className="text-center">
-          {hasGeminiToken ? (
-            <Button
-              onClick={() => setShowPhotoAnalysis(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Camera className="w-4 h-4 mr-2" />
-              Analyze Photo
-            </Button>
-          ) : (
-            <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 max-w-md mx-auto">
-              <p className="text-sm text-orange-700 dark:text-orange-400">
-                Add your Gemini API token in the{' '}
-                <button onClick={onNavigateToSettings} className="font-bold underline hover:text-orange-800 dark:hover:text-orange-300">
-                  settings page
-                </button>{' '}
-                to enable photo analysis.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+      <div className="text-center min-h-[40px] flex items-center justify-center">
+        {userId && onAddItem && (
+          <PhotoAnalysisButton
+            onOpen={handleOpenPhotoAnalysis}
+            onNavigateToSettings={onNavigateToSettings}
+            disabled={!userId || !onAddItem}
+          />
+        )}
+      </div>
 
-      {/* Filters and Search */}
       <div className="bg-card p-3 md:p-4 rounded-lg shadow-sm border">
         <div className="flex flex-col gap-3 md:flex-row md:gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search food items..."
+              type="search"
+              placeholder="Search items..."
+              className="w-full bg-background pl-8"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
             />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-2">
@@ -206,7 +212,6 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem, onAddI
         </div>
       </div>
 
-      {/* Food Items Grid */}
       {filteredAndSortedItems.length === 0 ? (
         <div className="text-center py-12 bg-card rounded-lg shadow-sm border">
           <div className="text-muted-foreground text-6xl mb-4">🍽️</div>
@@ -231,13 +236,13 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem, onAddI
         </div>
       )}
 
-      {/* Photo Analysis Dialog */}
-      {userId && (
+{showPhotoAnalysis && (
         <PhotoAnalysis
+          key={`photo-analysis-${userId || 'no-user'}`}
           isOpen={showPhotoAnalysis}
           onClose={() => setShowPhotoAnalysis(false)}
-          onAnalysisComplete={handlePhotoAnalysisComplete}
-          userId={userId}
+          onAnalysisComplete={handleAnalysisComplete}
+          userId={userId || ''}
         />
       )}
     </div>

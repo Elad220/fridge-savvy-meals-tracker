@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
@@ -9,7 +8,8 @@ export const useApiTokens = () => {
   const [hasGeminiToken, setHasGeminiToken] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const checkForToken = async () => {
+  const checkForToken = useCallback(async () => {
+    // Skip if no user
     if (!user) {
       setHasGeminiToken(false);
       setLoading(false);
@@ -17,33 +17,36 @@ export const useApiTokens = () => {
     }
 
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      const { data } = await supabase
         .from('user_api_tokens')
         .select('id')
         .eq('user_id', user.id)
         .eq('token_name', 'gemini')
-        .maybeSingle();
-
-      if (error) throw error;
+        .maybeSingle()
+        .throwOnError();
 
       setHasGeminiToken(!!data);
     } catch (error: any) {
       console.error('Error checking for token:', error);
-      toast({
-        title: 'Error checking API token',
-        description: error.message,
-        variant: 'destructive',
-      });
+      setHasGeminiToken(false);
+      // Only show error if we had a token before
+      if (hasGeminiToken) {
+        toast({
+          title: 'Error checking API token',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, hasGeminiToken]);
 
   const saveToken = async (token: string) => {
     if (!user) return false;
 
     try {
-      // The token will be encrypted by the database function
       const { error } = await supabase.rpc('store_api_token', {
         p_token_name: 'gemini',
         p_api_token: token,
@@ -116,16 +119,32 @@ export const useApiTokens = () => {
     }
   };
 
+  // Only check token when user.id changes
   useEffect(() => {
-    checkForToken();
-  }, [user]);
+    let isMounted = true;
+    const controller = new AbortController();
 
-  return {
+    const checkToken = async () => {
+      if (isMounted) {
+        await checkForToken();
+      }
+    };
+
+    checkToken();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [user?.id, checkForToken]);
+
+  // Memoize the returned object to prevent unnecessary re-renders
+  return useMemo(() => ({
     hasGeminiToken,
     loading,
     saveToken,
     removeToken,
     getToken,
     refreshTokenStatus: checkForToken,
-  };
+  }), [hasGeminiToken, loading, checkForToken]);
 };

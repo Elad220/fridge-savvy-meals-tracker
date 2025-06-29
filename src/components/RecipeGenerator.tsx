@@ -26,7 +26,7 @@ interface RecipeGeneratorProps {
 
 export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings }: RecipeGeneratorProps) => {
   const { user } = useAuth();
-  const { hasGeminiToken } = useApiTokens();
+  const { hasGeminiToken, loading: tokenLoading } = useApiTokens();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -92,7 +92,7 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
 
       setRecipeDetails(data);
     } catch (error: any) {
-      console.error('Error getting recipe details:', error);
+      console.error('Error loading recipe details:', error);
       toast({
         title: 'Error loading recipe details',
         description: error.message || 'Please try again later.',
@@ -118,7 +118,6 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
       description: `${selectedRecipe.name} has been added to your meal plans.`,
     });
 
-    // Close the dialog
     setIsOpen(false);
     setSelectedRecipe(null);
     setRecipeDetails(null);
@@ -135,14 +134,20 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
 
   const uniqueIngredients = [...new Set(foodItems.map(item => item.name))];
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <ChefHat className="w-5 h-5 text-green-600" />
-        <h3 className="text-lg font-semibold">AI Recipe Generator</h3>
-      </div>
+  const renderContent = () => {
+    if (tokenLoading) {
+      return (
+        <Button disabled className="w-full bg-green-600/50 hover:bg-green-600/50 cursor-not-allowed">
+          <div className="animate-pulse flex items-center justify-center w-full">
+            <ChefHat className="w-4 h-4 mr-2" />
+            Loading...
+          </div>
+        </Button>
+      );
+    }
 
-      {!hasGeminiToken ? (
+    if (!hasGeminiToken) {
+      return (
         <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
           <p className="text-sm text-orange-700 dark:text-orange-400">
             Add your Gemini API token in the{' '}
@@ -152,167 +157,179 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
             to generate recipes from your ingredients.
           </p>
         </div>
-      ) : (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-full bg-green-600 hover:bg-green-700">
-              <ChefHat className="w-4 h-4 mr-2" />
-              Generate Recipes from Ingredients
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Generate Recipes</DialogTitle>
-            </DialogHeader>
+      );
+    }
 
-            {!selectedRecipe ? (
-              <div className="space-y-6">
-                {uniqueIngredients.length === 0 ? (
-                  <p className="text-muted-foreground">No ingredients available. Add some food items first.</p>
-                ) : (
-                  <>
-                    <div>
-                      <h4 className="font-medium mb-3">Select ingredients:</h4>
-                      <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-                        {uniqueIngredients.map(ingredient => (
-                          <div key={ingredient} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={ingredient}
-                              checked={selectedIngredients.includes(ingredient)}
-                              onCheckedChange={() => handleIngredientToggle(ingredient)}
-                            />
-                            <label htmlFor={ingredient} className="text-sm cursor-pointer">
-                              {ingredient}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
+    return (
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button className="w-full bg-green-600 hover:bg-green-700">
+            <ChefHat className="w-4 h-4 mr-2" />
+            Generate Recipes from Ingredients
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Generate Recipes</DialogTitle>
+          </DialogHeader>
+
+          {!selectedRecipe ? (
+            <div className="space-y-6">
+              {uniqueIngredients.length === 0 ? (
+                <p className="text-muted-foreground">No ingredients available. Add some food items first.</p>
+              ) : (
+                <>
+                  <div>
+                    <h4 className="font-medium mb-3">Select ingredients:</h4>
+                    <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                      {uniqueIngredients.map(ingredient => (
+                        <div key={ingredient} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={ingredient}
+                            checked={selectedIngredients.includes(ingredient)}
+                            onCheckedChange={() => handleIngredientToggle(ingredient)}
+                          />
+                          <label htmlFor={ingredient} className="text-sm cursor-pointer">
+                            {ingredient}
+                          </label>
+                        </div>
+                      ))}
                     </div>
+                  </div>
 
-                    <Button
-                      onClick={generateRecipes}
-                      disabled={selectedIngredients.length === 0 || isGenerating}
-                      className="w-full"
-                    >
-                      {isGenerating ? 'Generating...' : `Generate Recipes (${selectedIngredients.length} ingredients)`}
-                    </Button>
+                  <Button
+                    onClick={generateRecipes}
+                    disabled={selectedIngredients.length === 0 || isGenerating}
+                    className="w-full"
+                  >
+                    {isGenerating ? 'Generating...' : `Generate Recipes (${selectedIngredients.length} ingredients)`}
+                  </Button>
 
-                    {recipes.length > 0 && (
-                      <div className="space-y-3">
-                        <h4 className="font-medium">Generated Recipes:</h4>
-                        {recipes.map((recipe, index) => (
-                          <div key={index} className="border rounded-lg p-4 hover:bg-muted/50 cursor-pointer" onClick={() => getRecipeDetails(recipe)}>
-                            <div className="flex items-start justify-between mb-2">
-                              <h5 className="font-medium">{recipe.name}</h5>
-                              <div className="flex gap-2">
-                                <Badge className={getDifficultyColor(recipe.difficulty)}>
-                                  {recipe.difficulty}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  <Clock className="w-3 h-3 mr-1" />
-                                  {recipe.cookingTime}
-                                </Badge>
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-2">{recipe.description}</p>
-                            <div className="flex flex-wrap gap-1">
-                              {recipe.ingredients.map((ing, i) => (
-                                <Badge key={i} variant="secondary" className="text-xs">
-                                  {ing}
-                                </Badge>
-                              ))}
+                  {recipes.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-medium">Generated Recipes:</h4>
+                      {recipes.map((recipe, index) => (
+                        <div key={index} className="border rounded-lg p-4 hover:bg-muted/50 cursor-pointer" onClick={() => getRecipeDetails(recipe)}>
+                          <div className="flex items-start justify-between mb-2">
+                            <h5 className="font-medium">{recipe.name}</h5>
+                            <div className="flex gap-2">
+                              <Badge className={getDifficultyColor(recipe.difficulty)}>
+                                {recipe.difficulty}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                <Clock className="w-3 h-3 mr-1" />
+                                {recipe.cookingTime}
+                              </Badge>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
+                          <p className="text-sm text-muted-foreground mb-2">{recipe.description}</p>
+                          <div className="flex flex-wrap gap-1">
+                            {recipe.ingredients.map((ing, i) => (
+                              <Badge key={i} variant="secondary" className="text-xs">
+                                {ing}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setSelectedRecipe(null)}>
+                    ← Back to Recipes
+                  </Button>
+                  <h4 className="font-medium">{selectedRecipe.name}</h4>
+                </div>
+                {onAddMealPlan && (
+                  <Button 
+                    onClick={addRecipeToMealPlan}
+                    className="bg-green-600 hover:bg-green-700"
+                    size="sm"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add to Meal Plan
+                  </Button>
                 )}
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setSelectedRecipe(null)}>
-                      ← Back to Recipes
-                    </Button>
-                    <h4 className="font-medium">{selectedRecipe.name}</h4>
-                  </div>
-                  {onAddMealPlan && (
-                    <Button 
-                      onClick={addRecipeToMealPlan}
-                      className="bg-green-600 hover:bg-green-700"
-                      size="sm"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add to Meal Plan
-                    </Button>
-                  )}
+
+              {isLoadingDetails ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading recipe details...</p>
                 </div>
-
-                {isLoadingDetails ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Loading recipe details...</p>
-                  </div>
-                ) : recipeDetails ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div>
-                        <div className="text-sm text-muted-foreground">Prep Time</div>
-                        <div className="font-medium">{recipeDetails.prepTime}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground">Cook Time</div>
-                        <div className="font-medium">{recipeDetails.cookTime}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground">Servings</div>
-                        <div className="font-medium">{recipeDetails.servings}</div>
-                      </div>
+              ) : recipeDetails ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-sm text-muted-foreground">Prep Time</div>
+                      <div className="font-medium">{recipeDetails.prepTime}</div>
                     </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Cook Time</div>
+                      <div className="font-medium">{recipeDetails.cookTime}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Servings</div>
+                      <div className="font-medium">{recipeDetails.servings}</div>
+                    </div>
+                  </div>
 
+                  <div>
+                    <h5 className="font-medium mb-2 flex items-center gap-2">
+                      <Utensils className="w-4 h-4" />
+                      Ingredients
+                    </h5>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      {recipeDetails.ingredients?.map((ingredient: string, index: number) => (
+                        <li key={index}>{ingredient}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h5 className="font-medium mb-2">Instructions</h5>
+                    <ol className="list-decimal list-inside space-y-2 text-sm">
+                      {recipeDetails.instructions?.map((step: string, index: number) => (
+                        <li key={index} className="leading-relaxed">{step}</li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  {recipeDetails.tips && recipeDetails.tips.length > 0 && (
                     <div>
                       <h5 className="font-medium mb-2 flex items-center gap-2">
-                        <Utensils className="w-4 h-4" />
-                        Ingredients
+                        <Star className="w-4 h-4" />
+                        Tips
                       </h5>
-                      <ul className="list-disc list-inside space-y-1 text-sm">
-                        {recipeDetails.ingredients?.map((ingredient: string, index: number) => (
-                          <li key={index}>{ingredient}</li>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                        {recipeDetails.tips.map((tip: string, index: number) => (
+                          <li key={index}>{tip}</li>
                         ))}
                       </ul>
                     </div>
-
-                    <div>
-                      <h5 className="font-medium mb-2">Instructions</h5>
-                      <ol className="list-decimal list-inside space-y-2 text-sm">
-                        {recipeDetails.instructions?.map((step: string, index: number) => (
-                          <li key={index} className="leading-relaxed">{step}</li>
-                        ))}
-                      </ol>
-                    </div>
-
-                    {recipeDetails.tips && recipeDetails.tips.length > 0 && (
-                      <div>
-                        <h5 className="font-medium mb-2 flex items-center gap-2">
-                          <Star className="w-4 h-4" />
-                          Tips
-                        </h5>
-                        <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                          {recipeDetails.tips.map((tip: string, index: number) => (
-                            <li key={index}>{tip}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      )}
+                  )}
+                </div>
+              ) : null}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    );
+  };
+  
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <ChefHat className="w-5 h-5 text-green-600" />
+        <h3 className="text-lg font-semibold">AI Recipe Generator</h3>
+      </div>
+      {renderContent()}
     </div>
   );
 };

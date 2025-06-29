@@ -1,22 +1,26 @@
-
 import { useState } from 'react';
 import { FoodItem, FreshnessStatus } from '@/types';
 import { FoodItemCard } from '@/components/FoodItemCard';
+import { PhotoAnalysis } from '@/components/PhotoAnalysis';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, Camera } from 'lucide-react';
 
 interface InventoryDashboardProps {
   foodItems: FoodItem[];
   onRemoveItem: (id: string) => void;
   onEditItem: (item: FoodItem) => void;
+  onAddItem?: (item: Omit<FoodItem, 'id' | 'userId'>) => void;
+  userId?: string;
 }
 
-export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: InventoryDashboardProps) => {
+export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem, onAddItem, userId }: InventoryDashboardProps) => {
   const [sortBy, setSortBy] = useState<'eatByDate' | 'name' | 'storageLocation'>('eatByDate');
   const [filterBy, setFilterBy] = useState<FreshnessStatus | 'all'>('all');
   const [foodTypeFilter, setFoodTypeFilter] = useState<'all' | 'cooked meal' | 'raw material'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showPhotoAnalysis, setShowPhotoAnalysis] = useState(false);
 
   const getFreshnessStatus = (eatByDate: Date): FreshnessStatus => {
     const today = new Date();
@@ -32,6 +36,33 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: Inve
     if (diffDays === 0) return 'use-or-throw';
     if (diffDays <= 2) return 'use-soon';
     return 'fresh';
+  };
+
+  const handlePhotoAnalysisComplete = (analysisData: {
+    suggested_name: string;
+    item_type: 'cooked_meal' | 'raw_material';
+    expiration_date: string | null;
+    confidence: string;
+  }) => {
+    if (!onAddItem) return;
+
+    const today = new Date();
+    const eatByDate = analysisData.expiration_date 
+      ? new Date(analysisData.expiration_date)
+      : new Date(today.getTime() + (4 * 24 * 60 * 60 * 1000)); // Default to 4 days from today
+
+    const newItem: Omit<FoodItem, 'id' | 'userId'> = {
+      name: analysisData.suggested_name,
+      dateCookedStored: today,
+      eatByDate: eatByDate,
+      quantity: '1',
+      storageLocation: 'Refrigerator',
+      label: analysisData.item_type === 'cooked_meal' ? 'cooked meal' : 'raw material',
+      notes: `AI analyzed with ${analysisData.confidence} confidence`,
+      freshnessDays: analysisData.expiration_date ? undefined : 4,
+    };
+
+    onAddItem(newItem);
   };
 
   const filteredAndSortedItems = foodItems
@@ -97,6 +128,19 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: Inve
           <div className="text-sm text-muted-foreground text-center">Total Items</div>
         </div>
       </div>
+
+      {/* AI Photo Analysis Button */}
+      {userId && onAddItem && (
+        <div className="flex justify-center">
+          <Button
+            onClick={() => setShowPhotoAnalysis(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Camera className="w-4 h-4 mr-2" />
+            Analyze Photo
+          </Button>
+        </div>
+      )}
 
       {/* Filters and Search */}
       <div className="bg-card p-3 md:p-4 rounded-lg shadow-sm border">
@@ -170,6 +214,16 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem }: Inve
             />
           ))}
         </div>
+      )}
+
+      {/* Photo Analysis Dialog */}
+      {userId && (
+        <PhotoAnalysis
+          isOpen={showPhotoAnalysis}
+          onClose={() => setShowPhotoAnalysis(false)}
+          onAnalysisComplete={handlePhotoAnalysisComplete}
+          userId={userId}
+        />
       )}
     </div>
   );

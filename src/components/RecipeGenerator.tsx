@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -10,7 +9,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useApiTokens } from '@/hooks/useApiTokens';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { ApiTokenManager } from './ApiTokenManager';
 
 interface Recipe {
   name: string;
@@ -23,9 +21,10 @@ interface Recipe {
 interface RecipeGeneratorProps {
   foodItems: FoodItem[];
   onAddMealPlan?: (meal: Omit<MealPlan, 'id' | 'userId'>) => void;
+  onNavigateToSettings: () => void;
 }
 
-export const RecipeGenerator = ({ foodItems, onAddMealPlan }: RecipeGeneratorProps) => {
+export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings }: RecipeGeneratorProps) => {
   const { user } = useAuth();
   const { hasGeminiToken } = useApiTokens();
   const [isOpen, setIsOpen] = useState(false);
@@ -138,18 +137,19 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan }: RecipeGeneratorPro
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ChefHat className="w-5 h-5 text-green-600" />
-          <h3 className="text-lg font-semibold">AI Recipe Generator</h3>
-        </div>
-        <ApiTokenManager />
+      <div className="flex items-center gap-2">
+        <ChefHat className="w-5 h-5 text-green-600" />
+        <h3 className="text-lg font-semibold">AI Recipe Generator</h3>
       </div>
 
       {!hasGeminiToken ? (
         <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
           <p className="text-sm text-orange-700 dark:text-orange-400">
-            Add your Gemini API token to generate recipes from your ingredients.
+            Add your Gemini API token in the{' '}
+            <button onClick={onNavigateToSettings} className="font-bold underline hover:text-orange-800 dark:hover:text-orange-300">
+              settings page
+            </button>{' '}
+            to generate recipes from your ingredients.
           </p>
         </div>
       ) : (

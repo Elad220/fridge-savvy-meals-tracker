@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Camera } from 'lucide-react';
+import { useApiTokens } from '@/hooks/useApiTokens';
 
 interface InventoryDashboardProps {
   foodItems: FoodItem[];
@@ -13,14 +14,16 @@ interface InventoryDashboardProps {
   onEditItem: (item: FoodItem) => void;
   onAddItem?: (item: Omit<FoodItem, 'id' | 'userId'>) => void;
   userId?: string;
+  onNavigateToSettings: () => void;
 }
 
-export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem, onAddItem, userId }: InventoryDashboardProps) => {
+export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem, onAddItem, userId, onNavigateToSettings }: InventoryDashboardProps) => {
   const [sortBy, setSortBy] = useState<'eatByDate' | 'name' | 'storageLocation'>('eatByDate');
   const [filterBy, setFilterBy] = useState<FreshnessStatus | 'all'>('all');
   const [foodTypeFilter, setFoodTypeFilter] = useState<'all' | 'cooked meal' | 'raw material'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showPhotoAnalysis, setShowPhotoAnalysis] = useState(false);
+  const { hasGeminiToken } = useApiTokens();
 
   const getFreshnessStatus = (eatByDate: Date): FreshnessStatus => {
     const today = new Date();
@@ -131,14 +134,26 @@ export const InventoryDashboard = ({ foodItems, onRemoveItem, onEditItem, onAddI
 
       {/* AI Photo Analysis Button */}
       {userId && onAddItem && (
-        <div className="flex justify-center">
-          <Button
-            onClick={() => setShowPhotoAnalysis(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <Camera className="w-4 h-4 mr-2" />
-            Analyze Photo
-          </Button>
+        <div className="text-center">
+          {hasGeminiToken ? (
+            <Button
+              onClick={() => setShowPhotoAnalysis(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Camera className="w-4 h-4 mr-2" />
+              Analyze Photo
+            </Button>
+          ) : (
+            <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 max-w-md mx-auto">
+              <p className="text-sm text-orange-700 dark:text-orange-400">
+                Add your Gemini API token in the{' '}
+                <button onClick={onNavigateToSettings} className="font-bold underline hover:text-orange-800 dark:hover:text-orange-300">
+                  settings page
+                </button>{' '}
+                to enable photo analysis.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

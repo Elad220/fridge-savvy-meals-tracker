@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,7 +44,7 @@ export const ApiTokenManager = ({ onTokenSaved }: ApiTokenManagerProps) => {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center justify-end gap-2">
       <div className="flex items-center gap-2">
         <Shield className="w-4 h-4 text-muted-foreground" />
         {hasGeminiToken ? (
@@ -59,77 +58,79 @@ export const ApiTokenManager = ({ onTokenSaved }: ApiTokenManagerProps) => {
         )}
       </div>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Key className="w-4 h-4 mr-2" />
-            {hasGeminiToken ? 'Update Token' : 'Add Token'}
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Gemini API Token</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="token">API Token</Label>
-              <Input
-                id="token"
-                type="password"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="Enter your Gemini API token..."
-              />
-              <p className="text-sm text-muted-foreground mt-1">
-                Your token will be stored securely and encrypted.
-              </p>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="flex-1">
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSaveToken} 
-                disabled={!token.trim() || isSaving}
-                className="flex-1 bg-green-600 hover:bg-green-700"
-              >
-                {isSaving ? 'Saving...' : 'Save Token'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {hasGeminiToken && (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-              <Trash2 className="w-4 h-4 mr-2" />
-              Remove Token
+      <div className="flex items-center gap-2">
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Key className="w-4 h-4 mr-2" />
+              {hasGeminiToken ? 'Update Token' : 'Add Token'}
             </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Remove API Token</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to remove your Gemini API token? This will disable recipe generation until you add a new token.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={handleRemoveToken}
-                disabled={isRemoving}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                {isRemoving ? 'Removing...' : 'Remove Token'}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Gemini API Token</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="token">API Token</Label>
+                <Input
+                  id="token"
+                  type="password"
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  placeholder="Enter your Gemini API token..."
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Your token will be stored securely and encrypted.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSaveToken} 
+                  disabled={!token.trim() || isSaving}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  {isSaving ? 'Saving...' : 'Save Token'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {hasGeminiToken && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Remove Token
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Remove API Token</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to remove your Gemini API token? This will disable recipe generation until you add a new token.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleRemoveToken}
+                  disabled={isRemoving}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {isRemoving ? 'Removing...' : 'Remove Token'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </div>
     </div>
   );
 };

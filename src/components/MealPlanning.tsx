@@ -1,10 +1,8 @@
-
-import { MealPlan } from '@/types';
+import { MealPlan, FoodItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Trash2, Calendar, Edit, Clock } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { RecipeGenerator } from './RecipeGenerator';
-import { FoodItem } from '@/types';
 
 interface MealPlanningProps {
   mealPlans: MealPlan[];
@@ -12,9 +10,10 @@ interface MealPlanningProps {
   onRemoveMealPlan: (id: string) => void;
   onAddMealPlan: (meal: Omit<MealPlan, 'id' | 'userId'>) => void;
   onEditMealPlan: (meal: MealPlan) => void;
+  onNavigateToSettings: () => void;
 }
 
-export const MealPlanning = ({ mealPlans, foodItems, onRemoveMealPlan, onAddMealPlan, onEditMealPlan }: MealPlanningProps) => {
+export const MealPlanning = ({ mealPlans, foodItems, onRemoveMealPlan, onAddMealPlan, onEditMealPlan, onNavigateToSettings }: MealPlanningProps) => {
   const sortedMealPlans = [...mealPlans].sort((a, b) => {
     if (!a.plannedDate && !b.plannedDate) return 0;
     if (!a.plannedDate) return 1;
@@ -33,7 +32,7 @@ export const MealPlanning = ({ mealPlans, foodItems, onRemoveMealPlan, onAddMeal
   return (
     <div className="space-y-6">
       {/* Recipe Generator */}
-      <RecipeGenerator foodItems={foodItems} onAddMealPlan={onAddMealPlan} />
+      <RecipeGenerator foodItems={foodItems} onAddMealPlan={onAddMealPlan} onNavigateToSettings={onNavigateToSettings} />
 
       {/* Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

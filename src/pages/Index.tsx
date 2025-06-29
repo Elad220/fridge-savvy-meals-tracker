@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { InventoryDashboard } from '@/components/InventoryDashboard';
@@ -13,17 +13,28 @@ import { FoodItem, MealPlan } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useFoodItems } from '@/hooks/useFoodItems';
 import { useMealPlans } from '@/hooks/useMealPlans';
+import Settings from '@/components/Settings'; // Import the new Settings component
 
 const Index = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlan | null>(null);
-  const [activeTab, setActiveTab] = useState<'inventory' | 'meals'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'meals' | 'settings'>('inventory');
 
   const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id);
   const { mealPlans, loading: mealLoading, addMealPlan, updateMealPlan, removeMealPlan } = useMealPlans(user?.id);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'meals') {
+      setActiveTab('meals');
+    } else {
+      setActiveTab('inventory');
+    }
+  }, [searchParams]);
 
   const handleLogout = async () => {
     await signOut();
@@ -100,6 +111,37 @@ const Index = () => {
     setEditingMealPlan(null);
   };
 
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'inventory':
+        return (
+          <InventoryDashboard
+            foodItems={foodItems}
+            onRemoveItem={removeFoodItem}
+            onEditItem={setEditingItem}
+            onAddItem={addFoodItem}
+            userId={user.id}
+            onNavigateToSettings={() => setActiveTab('settings')}
+          />
+        );
+      case 'meals':
+        return (
+          <MealPlanning
+            mealPlans={mealPlans}
+            foodItems={foodItems}
+            onRemoveMealPlan={removeMealPlan}
+            onAddMealPlan={addMealPlan}
+            onEditMealPlan={setEditingMealPlan}
+            onNavigateToSettings={() => setActiveTab('settings')}
+          />
+        );
+      case 'settings':
+        return <Settings />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header
@@ -110,36 +152,22 @@ const Index = () => {
       />
 
       <main className="flex-1 container mx-auto px-4 py-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <h2 className="text-2xl font-bold text-foreground">
-            {activeTab === 'inventory' ? 'Food Inventory' : 'Meal Planning'}
-          </h2>
-          <Button
-            onClick={() => setShowAddForm(true)}
-            className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            {activeTab === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
-          </Button>
-        </div>
-
-        {activeTab === 'inventory' ? (
-          <InventoryDashboard
-            foodItems={foodItems}
-            onRemoveItem={removeFoodItem}
-            onEditItem={setEditingItem}
-            onAddItem={addFoodItem}
-            userId={user.id}
-          />
-        ) : (
-          <MealPlanning
-            mealPlans={mealPlans}
-            foodItems={foodItems}
-            onRemoveMealPlan={removeMealPlan}
-            onAddMealPlan={addMealPlan}
-            onEditMealPlan={setEditingMealPlan}
-          />
+        {activeTab !== 'settings' && (
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <h2 className="text-2xl font-bold text-foreground">
+              {activeTab === 'inventory' ? 'Food Inventory' : 'Meal Planning'}
+            </h2>
+            <Button
+              onClick={() => setShowAddForm(true)}
+              className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              {activeTab === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
+            </Button>
+          </div>
         )}
+
+        {renderContent()}
 
         {showAddForm && (
           <AddItemForm

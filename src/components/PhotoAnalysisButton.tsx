@@ -19,7 +19,8 @@ export const PhotoAnalysisButton = ({
     return (
       <Button
         disabled
-        className="bg-blue-600 hover:bg-blue-700 text-white opacity-75 w-full max-w-xs"
+        variant="outline"
+        className="border-purple-300 text-purple-400 dark:border-purple-700 dark:text-purple-500 w-full max-w-xs cursor-not-allowed"
       >
         <Camera className="w-4 h-4 mr-2 animate-pulse" />
         Loading...
@@ -32,7 +33,8 @@ export const PhotoAnalysisButton = ({
       <Button
         onClick={onOpen}
         disabled={disabled}
-        className="bg-blue-600 hover:bg-blue-700 text-white transition-opacity duration-200 w-full max-w-xs"
+        variant="outline"
+        className="border-purple-500 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400 dark:hover:bg-purple-950/30 transition-colors duration-200 w-full max-w-xs"
       >
         <Camera className="w-4 h-4 mr-2" />
         Analyze Photo

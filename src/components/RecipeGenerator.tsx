@@ -137,9 +137,13 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
   const renderContent = () => {
     if (tokenLoading) {
       return (
-        <Button disabled className="w-full bg-green-600/50 hover:bg-green-600/50 cursor-not-allowed">
-          <div className="animate-pulse flex items-center justify-center w-full">
-            <ChefHat className="w-4 h-4 mr-2" />
+        <Button 
+          disabled 
+          variant="outline"
+          className="w-full border-purple-300 text-purple-400 dark:border-purple-700 dark:text-purple-500 cursor-not-allowed"
+        >
+          <div className="flex items-center justify-center w-full">
+            <ChefHat className="w-4 h-4 mr-2 animate-pulse" />
             Loading...
           </div>
         </Button>
@@ -163,9 +167,9 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
     return (
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-          <Button className="w-full bg-green-600 hover:bg-green-700">
+          <Button variant="outline" className="w-full sm:w-auto border-purple-500 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400 dark:hover:bg-purple-950/30">
             <ChefHat className="w-4 h-4 mr-2" />
-            Generate Recipes from Ingredients
+            Generate Recipes
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -324,12 +328,14 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
   };
   
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <ChefHat className="w-5 h-5 text-green-600" />
-        <h3 className="text-lg font-semibold">AI Recipe Generator</h3>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">AI Recipe Generator</h2>
+          <p className="text-sm text-muted-foreground">Generate recipes from your ingredients</p>
+        </div>
+        {renderContent()}
       </div>
-      {renderContent()}
     </div>
   );
 };

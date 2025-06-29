@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Camera, Upload, Loader2 } from 'lucide-react';
+import { Camera, Upload, Loader2, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { FoodItem } from '@/types';
@@ -18,7 +18,7 @@ interface PhotoAnalysisProps {
 
 export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: PhotoAnalysisProps) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<{id: string; url: string}[]>([]);
   const [analysisResult, setAnalysisResult] = useState<{
     suggested_name: string;
     item_type: 'cooked_meal' | 'raw_material';
@@ -28,22 +28,34 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
   const [showEditForm, setShowEditForm] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const newImages = Array.from(files).map(file => ({
+      id: Math.random().toString(36).substr(2, 9),
+      file
+    }));
+
+    // Convert files to data URLs and add to state
+    newImages.forEach(({ id, file }) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
-        setSelectedImage(result);
+        setSelectedImages(prev => [...prev, { id, url: result }]);
       };
       reader.readAsDataURL(file);
-    }
+    });
+  };
+
+  const removeImage = (id: string) => {
+    setSelectedImages(prev => prev.filter(img => img.id !== id));
   };
 
   const analyzePhoto = async () => {
-    if (!selectedImage) {
+    if (selectedImages.length === 0) {
       toast({
-        title: 'No image selected',
-        description: 'Please select or take a photo first.',
+        title: 'No images selected',
+        description: 'Please select or take at least one photo.',
         variant: 'destructive',
       });
       return;
@@ -52,9 +64,10 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
     setIsAnalyzing(true);
 
     try {
+      // Send all selected images for analysis
       const { data, error } = await supabase.functions.invoke('analyze-photo', {
         body: {
-          image: selectedImage,
+          images: selectedImages.map(img => img.url), // Send array of all image URLs
           userId: userId,
         },
       });
@@ -70,7 +83,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
       setShowEditForm(true);
       
       toast({
-        title: 'Photo analyzed successfully',
+        title: 'Analysis complete',
         description: `Detected: ${data.suggested_name}. Review and edit the details before adding.`,
       });
       
@@ -96,7 +109,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
   };
 
   const handleReset = () => {
-    setSelectedImage(null);
+    setSelectedImages([]);
     setAnalysisResult(null);
     setShowEditForm(false);
     setIsAnalyzing(false);
@@ -104,7 +117,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
   };
 
   const resetAnalysis = () => {
-    setSelectedImage(null);
+    setSelectedImages([]);
     setAnalysisResult(null);
     setShowEditForm(false);
     setIsAnalyzing(false);
@@ -119,7 +132,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
           </DialogHeader>
           
           <div className="space-y-4">
-            {!selectedImage ? (
+            {selectedImages.length === 0 ? (
               <div className="space-y-4">
                 <div className="text-sm text-muted-foreground">
                   Take or upload a photo of your food item for AI analysis
@@ -133,12 +146,13 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                     onChange={handleFileChange}
                     className="hidden"
                     id="camera-input"
+                    multiple
                   />
                   <label htmlFor="camera-input">
                     <Button variant="outline" className="w-full" asChild>
                       <span>
                         <Camera className="w-4 h-4 mr-2" />
-                        Take Photo
+                        Take Photos
                       </span>
                     </Button>
                   </label>
@@ -149,12 +163,13 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                     onChange={handleFileChange}
                     className="hidden"
                     id="upload-input"
+                    multiple
                   />
                   <label htmlFor="upload-input">
                     <Button variant="outline" className="w-full" asChild>
                       <span>
                         <Upload className="w-4 h-4 mr-2" />
-                        Upload Photo
+                        Upload Photos
                       </span>
                     </Button>
                   </label>
@@ -163,21 +178,36 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
             ) : (
               <div className="space-y-4">
                 <div className="text-sm text-muted-foreground">
-                  Photo selected. Click analyze to process with AI.
+                  {selectedImages.length} {selectedImages.length === 1 ? 'photo' : 'photos'} selected. All photos will be analyzed together to better identify the food item.
                 </div>
                 
-                <div className="border rounded-lg overflow-hidden">
-                  <img
-                    src={selectedImage}
-                    alt="Selected food item"
-                    className="w-full h-48 object-cover"
-                  />
+                <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-1">
+                  {selectedImages.map((img, index) => (
+                    <div key={img.id} className="relative group">
+                      <img
+                        src={img.url}
+                        alt={`Selected food item ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-md border"
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeImage(img.id);
+                        }}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                        aria-label="Remove image"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
                 </div>
                 
                 <div className="flex gap-2">
                   <Button
                     onClick={analyzePhoto}
-                    disabled={isAnalyzing}
+                    disabled={isAnalyzing || selectedImages.length === 0}
                     className="flex-1"
                   >
                     {isAnalyzing ? (
@@ -186,7 +216,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                         Analyzing...
                       </>
                     ) : (
-                      'Analyze Photo'
+                      `Analyze ${selectedImages.length > 1 ? 'All Photos' : 'Photo'}`
                     )}
                   </Button>
                   <Button
@@ -194,8 +224,24 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                     onClick={resetAnalysis}
                     disabled={isAnalyzing}
                   >
-                    Reset
+                    Reset All
                   </Button>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="add-more-input"
+                    multiple
+                  />
+                  <label htmlFor="add-more-input" className="flex-1">
+                    <Button variant="outline" className="w-full" asChild>
+                      <span>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add More
+                      </span>
+                    </Button>
+                  </label>
                 </div>
               </div>
             )}

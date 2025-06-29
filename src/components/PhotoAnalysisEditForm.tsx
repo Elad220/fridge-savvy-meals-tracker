@@ -42,7 +42,7 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
     storageLocation: 'Fridge - Middle Shelf',
     label: analysisData.item_type === 'cooked_meal' ? 'cooked meal' : 'raw material',
     notes: `AI Analysis Confidence: ${analysisData.confidence}`,
-    freshnessDays: '4',
+    freshnessDays: '3',
   });
 
   const storageLocations = [
@@ -75,7 +75,7 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
       storageLocation: formData.storageLocation,
       label: formData.label as 'cooked meal' | 'raw material',
       notes: formData.notes || undefined,
-      freshnessDays: parseInt(formData.freshnessDays) || 4,
+      freshnessDays: parseInt(formData.freshnessDays) || 3,
     };
     
     onSubmit(newItem);

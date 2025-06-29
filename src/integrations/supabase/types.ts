@@ -137,8 +137,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrypt_api_token: {
+        Args: { encrypted_token: string }
+        Returns: string
+      }
       encrypt_api_token: {
         Args: { token: string }
+        Returns: string
+      }
+      encrypt_api_token_test: {
+        Args: { token: string }
+        Returns: string
+      }
+      get_decrypted_api_token: {
+        Args: { p_token_name: string }
         Returns: string
       }
       store_api_token: {

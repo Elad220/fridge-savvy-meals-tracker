@@ -30,13 +30,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get the user's API token (now stored as plain text)
+    // Get the decrypted API token using the new function
     const { data: tokenData, error: tokenError } = await supabase
-      .from('user_api_tokens')
-      .select('encrypted_token')
-      .eq('user_id', userId)
-      .eq('token_name', 'gemini')
-      .maybeSingle();
+      .rpc('get_decrypted_api_token', { p_token_name: 'gemini' });
 
     if (tokenError || !tokenData) {
       console.error('Token error:', tokenError);
@@ -46,8 +42,8 @@ serve(async (req) => {
       );
     }
 
-    // Use the token directly (it's now stored as plain text)
-    const apiToken = tokenData.encrypted_token;
+    // Use the decrypted token
+    const apiToken = tokenData;
 
     // Create the detailed prompt for Gemini
     const prompt = `Please provide detailed cooking instructions for "${recipeName}" using these ingredients: ${ingredients.join(', ')}.

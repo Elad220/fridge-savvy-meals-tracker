@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -119,6 +120,48 @@ export const useApiTokens = () => {
     }
   };
 
+  const saveLanguage = async (language: string) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase.rpc('store_api_token', {
+        p_token_name: 'ai_language',
+        p_api_token: language,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Language preference saved',
+        description: `AI responses will now be in ${language}.`,
+      });
+      return true;
+    } catch (error: any) {
+      console.error('Error saving language:', error);
+      toast({
+        title: 'Error saving language preference',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  const getLanguage = async (): Promise<string | null> => {
+    if (!user) return null;
+
+    try {
+      const { data, error } = await supabase
+        .rpc('get_decrypted_api_token', { p_token_name: 'ai_language' });
+
+      if (error) throw error;
+      return data || 'English';
+    } catch (error: any) {
+      console.error('Error getting language:', error);
+      return 'English';
+    }
+  };
+
   // Only check token when user.id changes
   useEffect(() => {
     let isMounted = true;
@@ -145,6 +188,8 @@ export const useApiTokens = () => {
     saveToken,
     removeToken,
     getToken,
+    saveLanguage,
+    getLanguage,
     refreshTokenStatus: checkForToken,
   }), [hasGeminiToken, loading, checkForToken]);
 };

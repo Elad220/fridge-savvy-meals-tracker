@@ -1,17 +1,45 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Key, Shield, Trash2 } from 'lucide-react';
+import { Key, Shield, Trash2, Globe } from 'lucide-react';
 import { useApiTokens } from '@/hooks/useApiTokens';
 
 const Settings = () => {
-  const { hasGeminiToken, saveToken, removeToken } = useApiTokens();
+  const { hasGeminiToken, saveToken, removeToken, getLanguage, saveLanguage } = useApiTokens();
   const [token, setToken] = useState('');
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [isSaving, setIsSaving] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [isSavingLanguage, setIsSavingLanguage] = useState(false);
+
+  const languages = [
+    'English',
+    'Hebrew',
+    'Spanish',
+    'French',
+    'German',
+    'Italian',
+    'Portuguese',
+    'Russian',
+    'Chinese',
+    'Japanese',
+    'Korean',
+    'Arabic'
+  ];
+
+  // Load current language on component mount
+  useEffect(() => {
+    const loadLanguage = async () => {
+      const currentLanguage = await getLanguage();
+      setSelectedLanguage(currentLanguage || 'English');
+    };
+    loadLanguage();
+  }, [getLanguage]);
 
   const handleSaveToken = async () => {
     if (!token.trim()) return;
@@ -23,6 +51,12 @@ const Settings = () => {
     setIsSaving(false);
   };
 
+  const handleSaveLanguage = async () => {
+    setIsSavingLanguage(true);
+    await saveLanguage(selectedLanguage);
+    setIsSavingLanguage(false);
+  };
+
   const handleRemoveToken = async () => {
     setIsRemoving(true);
     await removeToken();
@@ -30,7 +64,40 @@ const Settings = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="bg-card p-6 rounded-lg shadow-sm border">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Globe className="w-5 h-5 text-muted-foreground" />
+            <h3 className="text-lg font-semibold">AI Response Language</h3>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Choose the language for AI photo analysis and recipe generation responses.
+          </p>
+          <div className="flex gap-2">
+            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                {languages.map(language => (
+                  <SelectItem key={language} value={language}>
+                    {language}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button 
+              onClick={handleSaveLanguage} 
+              disabled={isSavingLanguage}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isSavingLanguage ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-card p-6 rounded-lg shadow-sm border">
         <div className="space-y-4">
           <div className="flex items-center gap-2">

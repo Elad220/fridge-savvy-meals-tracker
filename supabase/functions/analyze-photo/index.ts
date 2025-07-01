@@ -1,25 +1,28 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
-const replyLanguage = 'Hebrew';
-const year = new Date().getFullYear()
-serve(async (req)=>{
+
+const year = new Date().getFullYear();
+
+serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       headers: corsHeaders
     });
   }
+
   try {
     const { images, image, userId } = await req.json();
     // Backward compatibility: handle both single image and multiple images
-    const imageArray = images || (image ? [
-      image
-    ] : []);
+    const imageArray = images || (image ? [image] : []);
+
     if (!userId || imageArray.length === 0) {
       return new Response(JSON.stringify({
         error: 'Missing required fields: userId and at least one image'
@@ -31,6 +34,7 @@ serve(async (req)=>{
         status: 400
       });
     }
+
     // Get the authorization header from the request
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
@@ -44,6 +48,7 @@ serve(async (req)=>{
         status: 401
       });
     }
+
     // Initialize Supabase client with the user's token
     const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
       global: {
@@ -52,10 +57,12 @@ serve(async (req)=>{
         }
       }
     });
-    // Get the decrypted API token using the new function
+
+    // Get the decrypted API token
     const { data: tokenData, error: tokenError } = await supabase.rpc('get_decrypted_api_token', {
       p_token_name: 'gemini'
     });
+
     if (tokenError || !tokenData) {
       console.error('Token error:', tokenError);
       return new Response(JSON.stringify({
@@ -68,10 +75,18 @@ serve(async (req)=>{
         status: 401
       });
     }
+
+    // Get the user's preferred language
+    const { data: languageData } = await supabase.rpc('get_decrypted_api_token', {
+      p_token_name: 'ai_language'
+    });
+    const replyLanguage = languageData || 'English';
+
     // Use the decrypted token
     const apiToken = tokenData;
     console.log('Successfully retrieved decrypted API token for photo analysis');
-    // Create the prompt for Gemini
+
+    // Create the prompt for Gemini with dynamic language
     const prompt = `Analyze these ${imageArray.length} photos of the same food item from different angles and provide the following information:
 
 1. Identify what food item this is and suggest a concise, descriptive name
@@ -93,6 +108,7 @@ Important notes:
 - Be conservative with expiration dates - only include if clearly visible and readable
 - You have been provided multiple photos of the same item from different angles - use all available images to make the most accurate determination possible
 - Write the item name in ${replyLanguage}`;
+
     // Prepare the request payload with all images
     const contents = [
       {
@@ -101,7 +117,7 @@ Important notes:
             text: prompt
           },
           // Add all images to the request
-          ...imageArray.map((img)=>{
+          ...imageArray.map((img) => {
             const imageData = img.replace(/^data:image\/[a-z]+;base64,/, '');
             return {
               inline_data: {
@@ -113,6 +129,7 @@ Important notes:
         ]
       }
     ];
+
     // Make request to Gemini API
     const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiToken}`, {
       method: 'POST',
@@ -123,6 +140,7 @@ Important notes:
         contents
       })
     });
+
     if (!geminiResponse.ok) {
       const errorText = await geminiResponse.text();
       console.error('Gemini API error:', errorText);
@@ -136,9 +154,12 @@ Important notes:
         status: 500
       });
     }
+
     const geminiData = await geminiResponse.json();
     console.log('Gemini photo analysis response received successfully');
+
     const generatedText = geminiData.candidates[0]?.content?.parts[0]?.text;
+
     if (!generatedText) {
       return new Response(JSON.stringify({
         error: 'No analysis generated'
@@ -150,6 +171,7 @@ Important notes:
         status: 500
       });
     }
+
     // Try to parse the JSON response
     let analysisResult;
     try {
@@ -168,6 +190,7 @@ Important notes:
         confidence: "low"
       };
     }
+
     return new Response(JSON.stringify(analysisResult), {
       headers: {
         ...corsHeaders,

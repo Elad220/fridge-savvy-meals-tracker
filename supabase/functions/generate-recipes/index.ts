@@ -58,11 +58,17 @@ serve(async (req) => {
       );
     }
 
+    // Get the user's preferred language
+    const { data: languageData } = await supabase.rpc('get_decrypted_api_token', {
+      p_token_name: 'ai_language'
+    });
+    const replyLanguage = languageData || 'English';
+
     // Use the decrypted token
     const apiToken = tokenData;
     console.log('Successfully retrieved decrypted API token');
 
-    // Create the prompt for Gemini
+    // Create the prompt for Gemini with dynamic language
     const prompt = `Given these ingredients: ${ingredients.join(', ')}, 
     suggest 3 different recipes that can be made using some or all of these ingredients. 
     For each recipe, provide:
@@ -83,7 +89,9 @@ serve(async (req) => {
           "difficulty": "Easy"
         }
       ]
-    }`;
+    }
+
+    Please write all recipe names, descriptions, and ingredient names in ${replyLanguage}.`;
 
     // Make request to Gemini API
     const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiToken}`, {

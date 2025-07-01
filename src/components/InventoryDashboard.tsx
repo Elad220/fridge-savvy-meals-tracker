@@ -153,15 +153,13 @@ export const InventoryDashboard = ({
         </div>
       </div>
 
-      <div className="text-center min-h-[28px] flex items-center justify-center -mt-1">
-        {userId && onAddItem && (
-          <PhotoAnalysisButton
-            onOpen={handleOpenPhotoAnalysis}
-            onNavigateToSettings={onNavigateToSettings}
-            disabled={!userId || !onAddItem}
-          />
-        )}
-      </div>
+      {userId && onAddItem && (
+        <PhotoAnalysisButton
+          onOpen={handleOpenPhotoAnalysis}
+          onNavigateToSettings={onNavigateToSettings}
+          disabled={!userId || !onAddItem}
+        />
+      )}
 
       <div className="bg-card p-3 md:p-4 rounded-lg shadow-sm border">
         <div className="flex flex-col gap-3 md:flex-row md:gap-4">

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,13 +8,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
+type AuthMode = 'login' | 'signup' | 'forgot-password';
+
 const Auth = () => {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     // Check if user is already logged in
@@ -24,8 +27,43 @@ const Auth = () => {
         navigate('/');
       }
     };
+
+    // Handle email confirmation
+    const handleEmailConfirmation = async () => {
+      const token_hash = searchParams.get('token_hash');
+      const type = searchParams.get('type');
+      
+      if (token_hash && type) {
+        try {
+          const { error } = await supabase.auth.verifyOtp({
+            token_hash,
+            type: type as any,
+          });
+          
+          if (error) throw error;
+          
+          if (type === 'email') {
+            toast({
+              title: 'Email confirmed!',
+              description: 'Your account has been verified. You can now sign in.',
+            });
+            // Clear URL parameters and show login form
+            window.history.replaceState({}, '', '/auth');
+            setMode('login');
+          }
+        } catch (error: any) {
+          toast({
+            title: 'Confirmation Error',
+            description: error.message,
+            variant: 'destructive',
+          });
+        }
+      }
+    };
+
     checkUser();
-  }, [navigate]);
+    handleEmailConfirmation();
+  }, [navigate, searchParams]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +75,7 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}/auth`,
             data: {
               name: name || email.split('@')[0],
             }
@@ -48,9 +86,13 @@ const Auth = () => {
 
         toast({
           title: 'Check your email',
-          description: 'We sent you a confirmation link to complete your registration.',
+          description: 'We sent you a confirmation link to verify your account before you can sign in.',
         });
-      } else {
+        
+        // Switch to login mode after signup
+        setMode('login');
+        
+      } else if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -64,6 +106,20 @@ const Auth = () => {
         });
 
         navigate('/');
+        
+      } else if (mode === 'forgot-password') {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth?mode=reset-password`,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: 'Password reset email sent',
+          description: 'Check your email for a link to reset your password. The link will expire in 1 hour.',
+        });
+        
+        setMode('login');
       }
     } catch (error: any) {
       toast({
@@ -76,6 +132,23 @@ const Auth = () => {
     }
   };
 
+  const getTitle = () => {
+    switch (mode) {
+      case 'signup': return 'Create your account';
+      case 'forgot-password': return 'Reset your password';
+      default: return 'Welcome back!';
+    }
+  };
+
+  const getButtonText = () => {
+    if (loading) return 'Please wait...';
+    switch (mode) {
+      case 'signup': return 'Sign Up';
+      case 'forgot-password': return 'Send Reset Link';
+      default: return 'Sign In';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -84,7 +157,7 @@ const Auth = () => {
             Food Prep Manager
           </CardTitle>
           <CardDescription>
-            {mode === 'login' ? 'Welcome back!' : 'Create your account'}
+            {getTitle()}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -114,38 +187,73 @@ const Auth = () => {
               />
             </div>
 
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-                minLength={6}
-              />
-            </div>
+            {mode !== 'forgot-password' && (
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                  minLength={6}
+                />
+              </div>
+            )}
 
             <Button 
               type="submit" 
               className="w-full bg-green-600 hover:bg-green-700"
               disabled={loading}
             >
-              {loading ? 'Please wait...' : (mode === 'login' ? 'Sign In' : 'Sign Up')}
+              {getButtonText()}
             </Button>
 
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-            >
-              {mode === 'login' 
-                ? "Don't have an account? Sign up" 
-                : 'Already have an account? Sign in'
-              }
-            </Button>
+            <div className="space-y-2">
+              {mode === 'login' && (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    onClick={() => setMode('signup')}
+                  >
+                    Don't have an account? Sign up
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full text-sm"
+                    onClick={() => setMode('forgot-password')}
+                  >
+                    Forgot your password?
+                  </Button>
+                </>
+              )}
+
+              {mode === 'signup' && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => setMode('login')}
+                >
+                  Already have an account? Sign in
+                </Button>
+              )}
+
+              {mode === 'forgot-password' && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => setMode('login')}
+                >
+                  Back to sign in
+                </Button>
+              )}
+            </div>
           </form>
         </CardContent>
       </Card>

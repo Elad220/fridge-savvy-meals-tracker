@@ -204,7 +204,7 @@ const Index = () => {
 
         {renderContent()}
 
-        {showAddForm && (
+        {showAddForm && activeTab !== 'settings' && (
           <AddItemForm
             type={activeTab}
             onSubmit={activeTab === 'inventory' ? addFoodItem : addMealPlan}

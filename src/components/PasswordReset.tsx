@@ -58,8 +58,8 @@ export const PasswordReset = () => {
         description: 'Your password has been successfully updated. You can now sign in with your new password.',
       });
 
-      // Redirect to login
-      navigate('/auth');
+      // Use window.location.href for a complete page refresh and redirect
+      window.location.href = '/auth';
     } catch (error: any) {
       toast({
         title: 'Password Reset Error',

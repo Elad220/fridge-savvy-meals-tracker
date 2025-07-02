@@ -3,10 +3,11 @@ import { FoodItem, FreshnessStatus } from '@/types';
 import { FoodItemCard } from '@/components/FoodItemCard';
 import { PhotoAnalysis } from '@/components/PhotoAnalysis';
 import { PhotoAnalysisButton } from '@/components/PhotoAnalysisButton';
-import { Filter, Search as SearchIcon, SlidersHorizontal, X, Camera } from 'lucide-react';
+import { Filter, Search as SearchIcon, SlidersHorizontal, X, Camera, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface InventoryDashboardProps {
   foodItems: FoodItem[];
@@ -30,6 +31,8 @@ export const InventoryDashboard = ({
   const [foodTypeFilter, setFoodTypeFilter] = useState<'all' | 'cooked meal' | 'raw material'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showPhotoAnalysis, setShowPhotoAnalysis] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [isSelecting, setIsSelecting] = useState(false);
   
   // Ref for photo analysis
   const isInitialRender = useRef(true);
@@ -123,7 +126,39 @@ export const InventoryDashboard = ({
     expired: foodItems.filter(item => getFreshnessStatus(item.eatByDate) === 'expired').length,
   }), [foodItems]);
 
+  const handleItemSelect = (itemId: string, checked: boolean) => {
+    const newSelectedItems = new Set(selectedItems);
+    if (checked) {
+      newSelectedItems.add(itemId);
+    } else {
+      newSelectedItems.delete(itemId);
+    }
+    setSelectedItems(newSelectedItems);
+  };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allItemIds = new Set(filteredAndSortedItems.map(item => item.id));
+      setSelectedItems(allItemIds);
+    } else {
+      setSelectedItems(new Set());
+    }
+  };
+
+  const handleBulkDelete = () => {
+    selectedItems.forEach(itemId => {
+      onRemoveItem(itemId);
+    });
+    setSelectedItems(new Set());
+    setIsSelecting(false);
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelecting(!isSelecting);
+    if (isSelecting) {
+      setSelectedItems(new Set());
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -160,6 +195,45 @@ export const InventoryDashboard = ({
           disabled={!userId || !onAddItem}
         />
       )}
+
+      {/* Bulk selection controls */}
+      <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleSelectionMode}
+            className="flex items-center gap-2"
+          >
+            <Checkbox checked={isSelecting} />
+            {isSelecting ? 'Cancel Selection' : 'Select Items'}
+          </Button>
+          
+          {isSelecting && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleSelectAll(selectedItems.size !== filteredAndSortedItems.length)}
+              >
+                {selectedItems.size === filteredAndSortedItems.length ? 'Deselect All' : 'Select All'}
+              </Button>
+              
+              {selectedItems.size > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleBulkDelete}
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Selected ({selectedItems.size})
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
 
       <div className="bg-card p-3 md:p-4 rounded-lg shadow-sm border">
         <div className="flex flex-col gap-3 md:flex-row md:gap-4">
@@ -224,17 +298,27 @@ export const InventoryDashboard = ({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredAndSortedItems.map((item) => (
-            <FoodItemCard
-              key={item.id}
-              item={item}
-              onRemove={() => onRemoveItem(item.id)}
-              onEdit={() => onEditItem(item)}
-            />
+            <div key={item.id} className="relative">
+              {isSelecting && (
+                <div className="absolute top-2 left-2 z-10">
+                  <Checkbox
+                    checked={selectedItems.has(item.id)}
+                    onCheckedChange={(checked) => handleItemSelect(item.id, checked as boolean)}
+                    className="bg-white border-2 border-gray-300 shadow-sm"
+                  />
+                </div>
+              )}
+              <FoodItemCard
+                item={item}
+                onRemove={() => onRemoveItem(item.id)}
+                onEdit={() => onEditItem(item)}
+              />
+            </div>
           ))}
         </div>
       )}
 
-{showPhotoAnalysis && (
+      {showPhotoAnalysis && (
         <PhotoAnalysis
           key={`photo-analysis-${userId || 'no-user'}`}
           isOpen={showPhotoAnalysis}

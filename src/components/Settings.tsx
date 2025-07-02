@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from '@/components/ui/badge';
 import { Key, Shield, Trash2, Globe } from 'lucide-react';
 import { useApiTokens } from '@/hooks/useApiTokens';
+import UserProfile from './UserProfile';
 
 const Settings = () => {
   const { hasGeminiToken, saveToken, removeToken, getLanguage, saveLanguage } = useApiTokens();
@@ -65,6 +65,8 @@ const Settings = () => {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <UserProfile />
+      
       <div className="bg-card p-6 rounded-lg shadow-sm border">
         <div className="space-y-4">
           <div className="flex items-center gap-2">

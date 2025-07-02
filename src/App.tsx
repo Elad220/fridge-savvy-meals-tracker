@@ -1,40 +1,31 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from '@/components/ui/toaster';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { Toaster } from '@/components/ui/toaster';
 import Index from '@/pages/Index';
 import Auth from '@/pages/Auth';
+import PasswordReset from '@/pages/PasswordReset';
 import NotFound from '@/pages/NotFound';
-import { PasswordReset } from '@/components/PasswordReset';
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="food-prep-theme">
-      <Router>
-        <div className="App">
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+        <Router>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<AuthWrapper />} />
-            <Route path="/404" element={<NotFound />} />
-            <Route path="*" element={<Navigate to="/404" replace />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/password-reset" element={<PasswordReset />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
-          <Toaster />
-        </div>
-      </Router>
-    </ThemeProvider>
+        </Router>
+        <Toaster />
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
-
-// Wrapper component to handle different auth modes
-const AuthWrapper = () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const mode = urlParams.get('mode');
-  
-  if (mode === 'reset-password') {
-    return <PasswordReset />;
-  }
-  
-  return <Auth />;
-};
 
 export default App;

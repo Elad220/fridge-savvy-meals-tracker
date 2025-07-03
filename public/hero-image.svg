@@ -1,0 +1,128 @@
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4ade80;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#22d3ee" />
+    </linearGradient>
+    <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f97316;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#facc15" />
+    </linearGradient>
+    <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ec4899" />
+    </linearGradient>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f0fdf4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ecfeff" />
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="10" stdDeviation="20" flood-color="#000" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#bgGradient)"/>
+  
+  <!-- Floating Elements -->
+  <g transform="translate(50,50)">
+    <!-- Phone/App Interface -->
+    <g transform="translate(500,100)" filter="url(#shadow)">
+      <rect x="0" y="0" width="200" height="350" rx="25" fill="#fff" stroke="#e5e7eb" stroke-width="2"/>
+      <rect x="15" y="15" width="170" height="320" rx="15" fill="#f9fafb"/>
+      
+      <!-- App Header -->
+      <rect x="25" y="25" width="150" height="40" rx="8" fill="url(#gradient1)"/>
+      <text x="100" y="48" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Food Manager</text>
+      
+      <!-- Food Items List -->
+      <g transform="translate(25,80)">
+        <rect x="0" y="0" width="150" height="35" rx="6" fill="#fff" stroke="#e5e7eb"/>
+        <circle cx="15" cy="17.5" r="8" fill="url(#gradient2)"/>
+        <text x="30" y="20" fill="#374151" font-family="Arial, sans-serif" font-size="10">🥗 Mixed Salad</text>
+        
+        <rect x="0" y="45" width="150" height="35" rx="6" fill="#fff" stroke="#e5e7eb"/>
+        <circle cx="15" cy="62.5" r="8" fill="url(#gradient3)"/>
+        <text x="30" y="65" fill="#374151" font-family="Arial, sans-serif" font-size="10">🍝 Pasta Bowl</text>
+        
+        <rect x="0" y="90" width="150" height="35" rx="6" fill="#fff" stroke="#e5e7eb"/>
+        <circle cx="15" cy="107.5" r="8" fill="url(#gradient1)"/>
+        <text x="30" y="110" fill="#374151" font-family="Arial, sans-serif" font-size="10">🥙 Veggie Wrap</text>
+      </g>
+    </g>
+
+    <!-- 3D Food Elements -->
+    <!-- Orange/Carrot -->
+    <g transform="translate(100,200)" filter="url(#shadow)">
+      <ellipse cx="0" cy="20" rx="35" ry="12" fill="#f97316" opacity="0.3"/>
+      <rect x="-25" y="-10" width="50" height="40" rx="25" fill="url(#gradient2)" transform="rotate(-15)"/>
+      <path d="M -5,-15 L 0,-25 L 5,-15 Z" fill="#22c55e"/>
+    </g>
+
+    <!-- Green Vegetable/Broccoli -->
+    <g transform="translate(300,150)" filter="url(#shadow)">
+      <ellipse cx="0" cy="25" rx="30" ry="10" fill="#22c55e" opacity="0.3"/>
+      <circle cx="-10" cy="0" r="15" fill="url(#gradient1)" transform="rotate(10)"/>
+      <circle cx="10" cy="-5" r="12" fill="url(#gradient1)" transform="rotate(-10)"/>
+      <circle cx="0" cy="10" r="18" fill="url(#gradient1)"/>
+      <rect x="-3" y="15" width="6" height="20" fill="#65a30d"/>
+    </g>
+
+    <!-- Purple Eggplant -->
+    <g transform="translate(200,350)" filter="url(#shadow)">
+      <ellipse cx="0" cy="25" rx="25" ry="8" fill="#8b5cf6" opacity="0.3"/>
+      <ellipse cx="0" cy="0" rx="20" ry="35" fill="url(#gradient3)" transform="rotate(20)"/>
+      <path d="M -5,-30 L 0,-40 L 5,-30 Q 0,-25 -5,-30 Z" fill="#22c55e"/>
+    </g>
+
+    <!-- Floating Cubes -->
+    <g transform="translate(400,50)" filter="url(#shadow)">
+      <polygon points="0,0 30,0 40,10 10,10" fill="#4ade80"/>
+      <polygon points="30,0 40,10 40,40 30,30" fill="#22d3ee"/>
+      <polygon points="0,0 10,10 10,40 0,30" fill="#16a34a"/>
+    </g>
+
+    <g transform="translate(150,100)" filter="url(#shadow)">
+      <polygon points="0,0 20,0 25,5 5,5" fill="#f97316"/>
+      <polygon points="20,0 25,5 25,25 20,20" fill="#ea580c"/>
+      <polygon points="0,0 5,5 5,25 0,20" fill="#fb923c"/>
+    </g>
+
+    <!-- Calendar/Planning Icon -->
+    <g transform="translate(350,300)" filter="url(#shadow)">
+      <rect x="0" y="10" width="60" height="50" rx="5" fill="#fff" stroke="#e5e7eb" stroke-width="2"/>
+      <rect x="0" y="0" width="60" height="20" rx="5" fill="url(#gradient1)"/>
+      <circle cx="12" cy="-5" r="3" fill="#9ca3af"/>
+      <circle cx="48" cy="-5" r="3" fill="#9ca3af"/>
+      
+      <!-- Calendar grid -->
+      <g transform="translate(5,20)">
+        <rect x="0" y="0" width="10" height="8" fill="#f3f4f6"/>
+        <rect x="15" y="0" width="10" height="8" fill="#22d3ee"/>
+        <rect x="30" y="0" width="10" height="8" fill="#f3f4f6"/>
+        <rect x="45" y="0" width="5" height="8" fill="#f3f4f6"/>
+        
+        <rect x="0" y="12" width="10" height="8" fill="#4ade80"/>
+        <rect x="15" y="12" width="10" height="8" fill="#f3f4f6"/>
+        <rect x="30" y="12" width="10" height="8" fill="#f97316"/>
+        <rect x="45" y="12" width="5" height="8" fill="#f3f4f6"/>
+      </g>
+    </g>
+
+    <!-- Sparkle effects -->
+    <g transform="translate(450,200)">
+      <path d="M0,-8 L2,0 L0,8 L-2,0 Z" fill="#facc15" opacity="0.8"/>
+      <path d="M-8,0 L0,2 L8,0 L0,-2 Z" fill="#facc15" opacity="0.8"/>
+    </g>
+    
+    <g transform="translate(250,80)">
+      <path d="M0,-6 L1.5,0 L0,6 L-1.5,0 Z" fill="#ec4899" opacity="0.7"/>
+      <path d="M-6,0 L0,1.5 L6,0 L0,-1.5 Z" fill="#ec4899" opacity="0.7"/>
+    </g>
+    
+    <g transform="translate(120,300)">
+      <path d="M0,-5 L1.2,0 L0,5 L-1.2,0 Z" fill="#22d3ee" opacity="0.9"/>
+      <path d="M-5,0 L0,1.2 L5,0 L0,-1.2 Z" fill="#22d3ee" opacity="0.9"/>
+    </g>
+  </g>
+</svg>

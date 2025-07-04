@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { StorageLocationSelect } from '@/components/StorageLocationSelect';
 import { FoodItem } from '@/types';
 
 interface MoveToInventoryModalProps {
@@ -24,21 +25,7 @@ export const MoveToInventoryModal = ({
   onSubmit,
   initialData,
 }: MoveToInventoryModalProps) => {
-  const storageLocations = [
-    'Fridge - Top Shelf',
-    'Fridge - Middle Shelf',
-    'Fridge - Bottom Shelf',
-    'Fridge - Crisper Drawer',
-    'Freezer - Top Left',
-    'Freezer - Top Right',
-    'Freezer - Middle Left',
-    'Freezer - Middle Right',
-    'Freezer - Bottom Left',
-    'Freezer - Bottom Right',
-    'Pantry',
-    'Counter',
-    'Other'
-  ];
+
 
   const calculateEatByDate = (cookedDate: string, freshnessDays: number) => {
     const cooked = new Date(cookedDate);
@@ -175,24 +162,11 @@ export const MoveToInventoryModal = ({
             </Select>
           </div>
 
-          <div>
-            <Label htmlFor="storageLocation">Storage Location *</Label>
-            <Select 
-              value={formData.storageLocation} 
-              onValueChange={(value) => handleInputChange('storageLocation', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select storage location" />
-              </SelectTrigger>
-              <SelectContent>
-                {storageLocations.map((location) => (
-                  <SelectItem key={location} value={location}>
-                    {location}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <StorageLocationSelect
+            value={formData.storageLocation}
+            onValueChange={(value) => handleInputChange('storageLocation', value)}
+            required
+          />
 
           <div className="space-y-4">
             <div>

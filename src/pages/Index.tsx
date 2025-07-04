@@ -42,48 +42,97 @@ const Index = () => {
   // Scroll animations and parallax effects
   useEffect(() => {
     if (!user) { // Only run on landing page
-      const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -100px 0px'
-      };
+      // Use a timeout to ensure DOM is fully rendered
+      const setupAnimations = () => {
+        // Intersection Observer for scroll-triggered animations
+        const observerOptions = {
+          threshold: 0.15,
+          rootMargin: '0px 0px -50px 0px'
+        };
 
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('in-view');
-          }
-        });
-      }, observerOptions);
-
-      const animatedElements = document.querySelectorAll('.animate-on-scroll');
-      animatedElements.forEach((el) => observer.observe(el));
-
-      const handleScroll = () => {
-        const scrolled = window.pageYOffset;
-        const parallaxBg = document.querySelector('.parallax-bg');
-        if (parallaxBg) {
-          const speed = 0.3;
-          const yPos = -(scrolled * speed);
-          (parallaxBg as HTMLElement).style.transform = `translate3d(0, ${yPos}px, 0)`;
-        }
-      };
-
-      let ticking = false;
-      const scrollHandler = () => {
-        if (!ticking) {
-          requestAnimationFrame(() => {
-            handleScroll();
-            ticking = false;
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('in-view');
+              // Also trigger immediate visibility for debugging
+              const element = entry.target as HTMLElement;
+              element.style.opacity = '1';
+              element.style.transform = 'translateY(0px)';
+            }
           });
-          ticking = true;
-        }
+        }, observerOptions);
+
+        // Find and observe animated elements
+        const animatedElements = document.querySelectorAll('.animate-on-scroll');
+        console.log(`Found ${animatedElements.length} elements to animate`);
+        animatedElements.forEach((el) => {
+          observer.observe(el);
+          // Set initial state
+          const element = el as HTMLElement;
+          element.style.opacity = '0';
+          element.style.transform = 'translateY(50px)';
+          element.style.transition = 'all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        });
+
+        // Parallax scrolling effect
+        const handleScroll = () => {
+          const scrolled = window.pageYOffset;
+          const parallaxBg = document.querySelector('.parallax-bg');
+          
+          if (parallaxBg) {
+            const speed = 0.5;
+            const yPos = -(scrolled * speed);
+            (parallaxBg as HTMLElement).style.transform = `translate3d(0, ${yPos}px, 0)`;
+          }
+
+          // Additional floating elements parallax
+          const floatingElements = document.querySelectorAll('.float-parallax');
+          floatingElements.forEach((element, index) => {
+            const speed = 0.2 + (index * 0.1);
+            const yPos = -(scrolled * speed);
+            (element as HTMLElement).style.transform = `translate3d(0, ${yPos}px, 0)`;
+          });
+        };
+
+        // Throttled scroll handler
+        let ticking = false;
+        const scrollHandler = () => {
+          if (!ticking) {
+            requestAnimationFrame(() => {
+              handleScroll();
+              ticking = false;
+            });
+            ticking = true;
+          }
+        };
+
+        window.addEventListener('scroll', scrollHandler, { passive: true });
+
+        // Initial call to set parallax position
+        handleScroll();
+
+        return () => {
+          observer.disconnect();
+          window.removeEventListener('scroll', scrollHandler);
+        };
       };
 
-      window.addEventListener('scroll', scrollHandler, { passive: true });
-
+      // Delay to ensure DOM is ready
+      const timeoutId = setTimeout(setupAnimations, 100);
+      
+      // Backup: trigger immediate animations after a delay
+      const backupTimeoutId = setTimeout(() => {
+        const elements = document.querySelectorAll('.animate-on-scroll');
+        elements.forEach((el, index) => {
+          setTimeout(() => {
+            el.classList.add('animate-slide-up');
+          }, index * 200);
+        });
+      }, 1000);
+      
       return () => {
-        observer.disconnect();
-        window.removeEventListener('scroll', scrollHandler);
+        clearTimeout(timeoutId);
+        clearTimeout(backupTimeoutId);
       };
     }
   }, [user]);
@@ -106,7 +155,15 @@ const Index = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50/50 to-blue-50/50 dark:from-green-950/20 dark:to-blue-950/20">
+      <div className="min-h-screen bg-gradient-to-br from-green-50/50 to-blue-50/50 dark:from-green-950/20 dark:to-blue-950/20 relative overflow-hidden">
+        {/* Floating background elements for parallax */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="float-parallax absolute top-20 left-10 w-32 h-32 bg-green-200/20 rounded-full blur-3xl"></div>
+          <div className="float-parallax absolute top-40 right-20 w-24 h-24 bg-blue-200/20 rounded-full blur-2xl"></div>
+          <div className="float-parallax absolute bottom-32 left-1/4 w-40 h-40 bg-purple-200/15 rounded-full blur-3xl"></div>
+          <div className="float-parallax absolute bottom-20 right-1/3 w-28 h-28 bg-orange-200/20 rounded-full blur-2xl"></div>
+        </div>
+
         {/* Hero Section */}
         <section className="relative overflow-hidden">
           <div className="container mx-auto px-4 py-20 lg:py-32">
@@ -123,6 +180,10 @@ const Index = () => {
                     Go to Waste
                   </span>
                 </h1>
+                {/* Test animation element */}
+                <div className="animate-on-scroll mb-4 p-2 bg-green-100 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
+                  <p className="text-sm text-green-700 dark:text-green-300">✨ This should fade in when scrolled into view</p>
+                </div>
                 <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed">
                   Track your meals, manage expiration dates, and plan ahead with our intelligent food inventory system. Save money and reduce waste.
                 </p>
@@ -168,10 +229,15 @@ const Index = () => {
               {/* Right Content - Hero Image */}
               <div className="relative">
                 {/* Floating elements */}
-                <div className="absolute -top-4 -left-4 w-12 h-12 bg-green-500/20 rounded-full blur-sm float-animation"></div>
-                <div className="absolute top-1/3 -right-6 w-8 h-8 bg-blue-500/20 rounded-full blur-sm float-animation-delayed"></div>
-                <div className="absolute bottom-1/4 -left-8 w-6 h-6 bg-purple-500/20 rounded-full blur-sm float-animation"></div>
-                <div className="absolute -bottom-6 right-1/3 w-10 h-10 bg-orange-500/20 rounded-full blur-sm float-animation-delayed"></div>
+                <div className="absolute -top-4 -left-4 w-12 h-12 bg-green-500/40 rounded-full float-animation shadow-lg"></div>
+                <div className="absolute top-1/3 -right-6 w-8 h-8 bg-blue-500/40 rounded-full float-animation-delayed shadow-lg"></div>
+                <div className="absolute bottom-1/4 -left-8 w-6 h-6 bg-purple-500/40 rounded-full float-animation shadow-lg"></div>
+                <div className="absolute -bottom-6 right-1/3 w-10 h-10 bg-orange-500/40 rounded-full float-animation-delayed shadow-lg"></div>
+                
+                {/* Test floating element - more visible */}
+                <div className="absolute top-10 right-10 w-16 h-16 bg-green-500 rounded-full float-animation flex items-center justify-center text-white font-bold shadow-2xl">
+                  🚀
+                </div>
                 
                 <div className="relative z-10 hover-lift">
                   <img 
@@ -330,14 +396,23 @@ const Index = () => {
 
         {/* Parallax Meal Planning Section */}
         <section className="relative py-32 overflow-hidden">
-          <div 
-            className="parallax-bg absolute inset-0 bg-cover bg-center opacity-30 parallax-smooth"
-            style={{
-              backgroundImage: "url('/meal-planning-parallax.svg')",
-              transform: "translateZ(0)", // Enable GPU acceleration for smooth parallax
-            }}
-          ></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-green-900/80 to-blue-900/80"></div>
+          {/* Parallax background with animated elements */}
+          <div className="absolute inset-0">
+            <div 
+              className="parallax-bg absolute inset-0 bg-cover bg-center opacity-40"
+              style={{
+                backgroundImage: "url('/meal-planning-parallax.svg')",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+              }}
+            ></div>
+            {/* Additional floating elements for parallax depth */}
+            <div className="float-parallax absolute top-10 left-16 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
+            <div className="float-parallax absolute bottom-20 right-12 w-16 h-16 bg-green-500/20 rounded-full blur-lg"></div>
+            <div className="float-parallax absolute top-1/3 right-1/4 w-12 h-12 bg-blue-500/20 rounded-full blur-md"></div>
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-green-900/70 to-blue-900/70"></div>
           <div className="relative z-10 container mx-auto px-4 text-center text-white">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
               Smart Meal Planning with AI

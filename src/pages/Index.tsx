@@ -39,6 +39,55 @@ const Index = () => {
     }
   }, [searchParams]);
 
+  // Scroll animations and parallax effects
+  useEffect(() => {
+    if (!user) { // Only run on landing page
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -100px 0px'
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+          }
+        });
+      }, observerOptions);
+
+      const animatedElements = document.querySelectorAll('.animate-on-scroll');
+      animatedElements.forEach((el) => observer.observe(el));
+
+      const handleScroll = () => {
+        const scrolled = window.pageYOffset;
+        const parallaxBg = document.querySelector('.parallax-bg');
+        if (parallaxBg) {
+          const speed = 0.3;
+          const yPos = -(scrolled * speed);
+          (parallaxBg as HTMLElement).style.transform = `translate3d(0, ${yPos}px, 0)`;
+        }
+      };
+
+      let ticking = false;
+      const scrollHandler = () => {
+        if (!ticking) {
+          requestAnimationFrame(() => {
+            handleScroll();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      };
+
+      window.addEventListener('scroll', scrollHandler, { passive: true });
+
+      return () => {
+        observer.disconnect();
+        window.removeEventListener('scroll', scrollHandler);
+      };
+    }
+  }, [user]);
+
   const handleLogout = async () => {
     await signOut();
     navigate('/auth');
@@ -70,7 +119,7 @@ const Index = () => {
                 </div>
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 leading-tight">
                   Never Let Food
-                  <span className="text-transparent bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text block">
+                  <span className="gradient-text block">
                     Go to Waste
                   </span>
                 </h1>
@@ -118,7 +167,13 @@ const Index = () => {
 
               {/* Right Content - Hero Image */}
               <div className="relative">
-                <div className="relative z-10">
+                {/* Floating elements */}
+                <div className="absolute -top-4 -left-4 w-12 h-12 bg-green-500/20 rounded-full blur-sm float-animation"></div>
+                <div className="absolute top-1/3 -right-6 w-8 h-8 bg-blue-500/20 rounded-full blur-sm float-animation-delayed"></div>
+                <div className="absolute bottom-1/4 -left-8 w-6 h-6 bg-purple-500/20 rounded-full blur-sm float-animation"></div>
+                <div className="absolute -bottom-6 right-1/3 w-10 h-10 bg-orange-500/20 rounded-full blur-sm float-animation-delayed"></div>
+                
+                <div className="relative z-10 hover-lift">
                   <img 
                     src="/hero-image.svg" 
                     alt="Food Management App Interface"
@@ -126,7 +181,7 @@ const Index = () => {
                   />
                 </div>
                 {/* Background decoration */}
-                <div className="absolute -inset-4 bg-gradient-to-r from-green-200 to-blue-200 dark:from-green-800/20 dark:to-blue-800/20 rounded-3xl opacity-20 blur-xl"></div>
+                <div className="absolute -inset-4 bg-gradient-to-r from-green-200 to-blue-200 dark:from-green-800/20 dark:to-blue-800/20 rounded-3xl opacity-20 blur-xl pulse-slow"></div>
               </div>
             </div>
           </div>
@@ -143,13 +198,29 @@ const Index = () => {
                 Watch how our intelligent system scans, analyzes, and organizes your food automatically
               </p>
               <div className="flex justify-center">
-                <div className="relative max-w-2xl w-full">
-                  <img 
-                    src="/food-tracking-animation.svg" 
-                    alt="AI Food Tracking Animation"
-                    className="w-full h-auto rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700"
-                  />
-                  <div className="absolute -inset-4 bg-gradient-to-r from-green-200 to-blue-200 dark:from-green-800/20 dark:to-blue-800/20 rounded-3xl opacity-20 blur-xl"></div>
+                <div className="relative max-w-2xl w-full animate-on-scroll">
+                  {/* Floating AI elements */}
+                  <div className="absolute -top-8 left-8 w-6 h-6 bg-purple-500/30 rounded-full blur-sm float-animation opacity-60"></div>
+                  <div className="absolute -top-4 right-12 w-4 h-4 bg-green-500/30 rounded-full blur-sm float-animation-delayed opacity-60"></div>
+                  <div className="absolute bottom-8 -left-6 w-8 h-8 bg-blue-500/30 rounded-full blur-sm float-animation opacity-60"></div>
+                  <div className="absolute bottom-4 -right-8 w-5 h-5 bg-orange-500/30 rounded-full blur-sm float-animation-delayed opacity-60"></div>
+                  
+                  <div className="hover-lift">
+                    <img 
+                      src="/food-tracking-animation.svg" 
+                      alt="AI Food Tracking Animation"
+                      className="w-full h-auto rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700"
+                    />
+                  </div>
+                  <div className="absolute -inset-4 bg-gradient-to-r from-green-200 to-blue-200 dark:from-green-800/20 dark:to-blue-800/20 rounded-3xl opacity-20 blur-xl pulse-slow"></div>
+                  
+                  {/* AI Badge */}
+                  <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">AI Powered</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -260,7 +331,7 @@ const Index = () => {
         {/* Parallax Meal Planning Section */}
         <section className="relative py-32 overflow-hidden">
           <div 
-            className="absolute inset-0 bg-cover bg-center bg-fixed opacity-30"
+            className="parallax-bg absolute inset-0 bg-cover bg-center opacity-30 parallax-smooth"
             style={{
               backgroundImage: "url('/meal-planning-parallax.svg')",
               transform: "translateZ(0)", // Enable GPU acceleration for smooth parallax

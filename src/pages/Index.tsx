@@ -39,6 +39,55 @@ const Index = () => {
     }
   }, [searchParams]);
 
+  // Scroll animations and parallax effects
+  useEffect(() => {
+    if (!user) { // Only run on landing page
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -100px 0px'
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+          }
+        });
+      }, observerOptions);
+
+      const animatedElements = document.querySelectorAll('.animate-on-scroll');
+      animatedElements.forEach((el) => observer.observe(el));
+
+      const handleScroll = () => {
+        const scrolled = window.pageYOffset;
+        const parallaxBg = document.querySelector('.parallax-bg');
+        if (parallaxBg) {
+          const speed = 0.3;
+          const yPos = -(scrolled * speed);
+          (parallaxBg as HTMLElement).style.transform = `translate3d(0, ${yPos}px, 0)`;
+        }
+      };
+
+      let ticking = false;
+      const scrollHandler = () => {
+        if (!ticking) {
+          requestAnimationFrame(() => {
+            handleScroll();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      };
+
+      window.addEventListener('scroll', scrollHandler, { passive: true });
+
+      return () => {
+        observer.disconnect();
+        window.removeEventListener('scroll', scrollHandler);
+      };
+    }
+  }, [user]);
+
   const handleLogout = async () => {
     await signOut();
     navigate('/auth');
@@ -70,7 +119,7 @@ const Index = () => {
                 </div>
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 leading-tight">
                   Never Let Food
-                  <span className="text-transparent bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text block">
+                  <span className="gradient-text block">
                     Go to Waste
                   </span>
                 </h1>
@@ -118,7 +167,13 @@ const Index = () => {
 
               {/* Right Content - Hero Image */}
               <div className="relative">
-                <div className="relative z-10">
+                {/* Floating elements */}
+                <div className="absolute -top-4 -left-4 w-12 h-12 bg-green-500/20 rounded-full blur-sm float-animation"></div>
+                <div className="absolute top-1/3 -right-6 w-8 h-8 bg-blue-500/20 rounded-full blur-sm float-animation-delayed"></div>
+                <div className="absolute bottom-1/4 -left-8 w-6 h-6 bg-purple-500/20 rounded-full blur-sm float-animation"></div>
+                <div className="absolute -bottom-6 right-1/3 w-10 h-10 bg-orange-500/20 rounded-full blur-sm float-animation-delayed"></div>
+                
+                <div className="relative z-10 hover-lift">
                   <img 
                     src="/hero-image.svg" 
                     alt="Food Management App Interface"
@@ -126,14 +181,54 @@ const Index = () => {
                   />
                 </div>
                 {/* Background decoration */}
-                <div className="absolute -inset-4 bg-gradient-to-r from-green-200 to-blue-200 dark:from-green-800/20 dark:to-blue-800/20 rounded-3xl opacity-20 blur-xl"></div>
+                <div className="absolute -inset-4 bg-gradient-to-r from-green-200 to-blue-200 dark:from-green-800/20 dark:to-blue-800/20 rounded-3xl opacity-20 blur-xl pulse-slow"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* AI Demo Section */}
+        <section className="py-20 bg-white/50 dark:bg-gray-900/50">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                See AI Food Tracking in Action
+              </h2>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-12">
+                Watch how our intelligent system scans, analyzes, and organizes your food automatically
+              </p>
+              <div className="flex justify-center">
+                <div className="relative max-w-2xl w-full animate-on-scroll">
+                  {/* Floating AI elements */}
+                  <div className="absolute -top-8 left-8 w-6 h-6 bg-purple-500/30 rounded-full blur-sm float-animation opacity-60"></div>
+                  <div className="absolute -top-4 right-12 w-4 h-4 bg-green-500/30 rounded-full blur-sm float-animation-delayed opacity-60"></div>
+                  <div className="absolute bottom-8 -left-6 w-8 h-8 bg-blue-500/30 rounded-full blur-sm float-animation opacity-60"></div>
+                  <div className="absolute bottom-4 -right-8 w-5 h-5 bg-orange-500/30 rounded-full blur-sm float-animation-delayed opacity-60"></div>
+                  
+                  <div className="hover-lift">
+                    <img 
+                      src="/food-tracking-animation.svg" 
+                      alt="AI Food Tracking Animation"
+                      className="w-full h-auto rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700"
+                    />
+                  </div>
+                  <div className="absolute -inset-4 bg-gradient-to-r from-green-200 to-blue-200 dark:from-green-800/20 dark:to-blue-800/20 rounded-3xl opacity-20 blur-xl pulse-slow"></div>
+                  
+                  {/* AI Badge */}
+                  <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">AI Powered</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         {/* Features Section */}
-        <section className="py-20 bg-white/50 dark:bg-gray-900/50">
+        <section className="py-20 bg-gradient-to-br from-green-50/80 to-blue-50/80 dark:from-green-950/30 dark:to-blue-950/30">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -146,8 +241,8 @@ const Index = () => {
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Feature 1 */}
-              <div className="group p-8 bg-card rounded-2xl shadow-sm border hover:shadow-lg transition-all duration-300 hover:-translate-y-2">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="feature-card group p-8 bg-card rounded-2xl shadow-sm border hover-lift animate-on-scroll">
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 float-animation">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
@@ -156,12 +251,12 @@ const Index = () => {
                 <p className="text-muted-foreground mb-4">
                   Log cooked meals with expiration dates, storage locations, and nutritional information to keep everything organized.
                 </p>
-                <div className="text-green-600 font-medium">Learn more →</div>
+                <div className="text-green-600 font-medium group-hover:text-green-500 transition-colors">Learn more →</div>
               </div>
 
               {/* Feature 2 */}
-              <div className="group p-8 bg-card rounded-2xl shadow-sm border hover:shadow-lg transition-all duration-300 hover:-translate-y-2">
-                <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="feature-card group p-8 bg-card rounded-2xl shadow-sm border hover-lift animate-on-scroll">
+                <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 float-animation-delayed">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -170,12 +265,12 @@ const Index = () => {
                 <p className="text-muted-foreground mb-4">
                   Get intelligent notifications when food is approaching expiration, helping you consume items before they spoil.
                 </p>
-                <div className="text-amber-600 font-medium">Learn more →</div>
+                <div className="text-amber-600 font-medium group-hover:text-amber-500 transition-colors">Learn more →</div>
               </div>
 
               {/* Feature 3 */}
-              <div className="group p-8 bg-card rounded-2xl shadow-sm border hover:shadow-lg transition-all duration-300 hover:-translate-y-2">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="feature-card group p-8 bg-card rounded-2xl shadow-sm border hover-lift animate-on-scroll">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 float-animation">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
@@ -184,12 +279,12 @@ const Index = () => {
                 <p className="text-muted-foreground mb-4">
                   Plan your meals in advance, organize your cooking schedule, and ensure you use ingredients efficiently.
                 </p>
-                <div className="text-blue-600 font-medium">Learn more →</div>
+                <div className="text-blue-600 font-medium group-hover:text-blue-500 transition-colors">Learn more →</div>
               </div>
 
               {/* Feature 4 */}
-              <div className="group p-8 bg-card rounded-2xl shadow-sm border hover:shadow-lg transition-all duration-300 hover:-translate-y-2">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="feature-card group p-8 bg-card rounded-2xl shadow-sm border hover-lift animate-on-scroll">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 float-animation-delayed">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -199,12 +294,12 @@ const Index = () => {
                 <p className="text-muted-foreground mb-4">
                   Take photos of your meals and let AI automatically identify ingredients and suggest optimal storage methods.
                 </p>
-                <div className="text-purple-600 font-medium">Learn more →</div>
+                <div className="text-purple-600 font-medium group-hover:text-purple-500 transition-colors">Learn more →</div>
               </div>
 
               {/* Feature 5 */}
-              <div className="group p-8 bg-card rounded-2xl shadow-sm border hover:shadow-lg transition-all duration-300 hover:-translate-y-2">
-                <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="feature-card group p-8 bg-card rounded-2xl shadow-sm border hover-lift animate-on-scroll">
+                <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 float-animation">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
@@ -213,12 +308,12 @@ const Index = () => {
                 <p className="text-muted-foreground mb-4">
                   Track your food waste patterns and get insights on how to improve your consumption habits and save money.
                 </p>
-                <div className="text-indigo-600 font-medium">Learn more →</div>
+                <div className="text-indigo-600 font-medium group-hover:text-indigo-500 transition-colors">Learn more →</div>
               </div>
 
               {/* Feature 6 */}
-              <div className="group p-8 bg-card rounded-2xl shadow-sm border hover:shadow-lg transition-all duration-300 hover:-translate-y-2">
-                <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-green-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="feature-card group p-8 bg-card rounded-2xl shadow-sm border hover-lift animate-on-scroll">
+                <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-green-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 float-animation-delayed">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
@@ -227,31 +322,80 @@ const Index = () => {
                 <p className="text-muted-foreground mb-4">
                   Get personalized recipe recommendations based on ingredients you have, helping you create delicious meals.
                 </p>
-                <div className="text-teal-600 font-medium">Learn more →</div>
+                <div className="text-teal-600 font-medium group-hover:text-teal-500 transition-colors">Learn more →</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Parallax Meal Planning Section */}
+        <section className="relative py-32 overflow-hidden">
+          <div 
+            className="parallax-bg absolute inset-0 bg-cover bg-center opacity-30 parallax-smooth"
+            style={{
+              backgroundImage: "url('/meal-planning-parallax.svg')",
+              transform: "translateZ(0)", // Enable GPU acceleration for smooth parallax
+            }}
+          ></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-green-900/80 to-blue-900/80"></div>
+          <div className="relative z-10 container mx-auto px-4 text-center text-white">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Smart Meal Planning with AI
+            </h2>
+            <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed">
+              Our AI analyzes your inventory, suggests recipes, creates shopping lists, and helps you plan nutritious meals that minimize waste and maximize flavor.
+            </p>
+            <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <div className="text-3xl mb-4">🧠</div>
+                <h3 className="text-xl font-bold mb-2">AI Recipe Matching</h3>
+                <p className="text-white/80">Intelligent suggestions based on your ingredients and preferences</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <div className="text-3xl mb-4">📱</div>
+                <h3 className="text-xl font-bold mb-2">Photo Analysis</h3>
+                <p className="text-white/80">Snap photos to instantly identify and catalog your food items</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <div className="text-3xl mb-4">🎯</div>
+                <h3 className="text-xl font-bold mb-2">Smart Alerts</h3>
+                <p className="text-white/80">Never let food expire with intelligent timing notifications</p>
               </div>
             </div>
           </div>
         </section>
 
         {/* Stats Section */}
-        <section className="py-20">
+        <section className="py-20 bg-white dark:bg-gray-900">
           <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                Proven Results from Real Users
+              </h2>
+              <p className="text-xl text-muted-foreground">
+                Join thousands who have transformed their food management
+              </p>
+            </div>
             <div className="grid md:grid-cols-4 gap-8 text-center">
-              <div>
-                <div className="text-4xl font-bold text-green-600 mb-2">40%</div>
-                <div className="text-muted-foreground">Food waste reduction</div>
+              <div className="group hover:scale-105 transition-transform duration-300">
+                <div className="text-5xl font-bold text-green-600 mb-2 group-hover:text-green-500">40%</div>
+                <div className="text-muted-foreground font-medium">Food waste reduction</div>
+                <div className="text-sm text-green-600 mt-2">↗️ Significant impact</div>
               </div>
-              <div>
-                <div className="text-4xl font-bold text-green-600 mb-2">$200</div>
-                <div className="text-muted-foreground">Average monthly savings</div>
+              <div className="group hover:scale-105 transition-transform duration-300">
+                <div className="text-5xl font-bold text-green-600 mb-2 group-hover:text-green-500">$200</div>
+                <div className="text-muted-foreground font-medium">Average monthly savings</div>
+                <div className="text-sm text-green-600 mt-2">💰 Real money saved</div>
               </div>
-              <div>
-                <div className="text-4xl font-bold text-green-600 mb-2">50k+</div>
-                <div className="text-muted-foreground">Meals tracked</div>
+              <div className="group hover:scale-105 transition-transform duration-300">
+                <div className="text-5xl font-bold text-green-600 mb-2 group-hover:text-green-500">50k+</div>
+                <div className="text-muted-foreground font-medium">Meals tracked</div>
+                <div className="text-sm text-green-600 mt-2">📊 Growing community</div>
               </div>
-              <div>
-                <div className="text-4xl font-bold text-green-600 mb-2">2 min</div>
-                <div className="text-muted-foreground">Setup time</div>
+              <div className="group hover:scale-105 transition-transform duration-300">
+                <div className="text-5xl font-bold text-green-600 mb-2 group-hover:text-green-500">2 min</div>
+                <div className="text-muted-foreground font-medium">Setup time</div>
+                <div className="text-sm text-green-600 mt-2">⚡ Quick start</div>
               </div>
             </div>
           </div>

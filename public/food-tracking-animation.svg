@@ -1,0 +1,165 @@
+<svg width="600" height="400" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="heroGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10B981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="scanGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#22C55E;stop-opacity:0" />
+      <stop offset="50%" style="stop-color:#22C55E;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#22C55E;stop-opacity:0" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="600" height="400" fill="url(#heroGradient)" opacity="0.1"/>
+  
+  <!-- Phone Frame -->
+  <rect x="50" y="50" width="200" height="300" rx="20" fill="#1F2937" stroke="#374151" stroke-width="2">
+    <animateTransform attributeName="transform" type="translate" values="0,0; 0,-5; 0,0" dur="3s" repeatCount="indefinite"/>
+  </rect>
+  
+  <!-- Phone Screen -->
+  <rect x="60" y="80" width="180" height="240" rx="10" fill="#111827"/>
+  
+  <!-- App Interface -->
+  <rect x="70" y="90" width="160" height="30" rx="5" fill="#064E3B" opacity="0.8"/>
+  <text x="150" y="108" text-anchor="middle" fill="#10B981" font-family="Arial, sans-serif" font-size="12" font-weight="bold">Food Tracker AI</text>
+  
+  <!-- Food Items Container -->
+  <g id="foodItems">
+    <!-- Apple -->
+    <circle cx="120" cy="150" r="15" fill="#EF4444" opacity="0">
+      <animate attributeName="opacity" values="0;1;1;1" dur="4s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="translate" values="0,50; 0,0; 0,0; 0,0" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <rect x="115" y="145" width="10" height="2" fill="#22C55E" opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1" dur="4s" begin="1s" repeatCount="indefinite"/>
+    </rect>
+    
+    <!-- Bread -->
+    <ellipse cx="180" cy="170" rx="18" ry="12" fill="#F59E0B" opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="translate" values="50,30; 0,0; 0,0; 0,0" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+    </ellipse>
+    <rect x="175" y="165" width="10" height="2" fill="#22C55E" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;1" dur="4s" begin="1.5s" repeatCount="indefinite"/>
+    </rect>
+    
+    <!-- Milk Carton -->
+    <rect x="90" y="180" width="12" height="20" fill="#F3F4F6" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;1" dur="4s" begin="1s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="translate" values="-30,40; 0,0; 0,0; 0,0" dur="4s" begin="1s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="85" y="195" width="10" height="2" fill="#22C55E" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;0;1" dur="4s" begin="2s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+  
+  <!-- AI Scanning Line -->
+  <rect x="60" y="140" width="180" height="3" fill="url(#scanGradient)" opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1;0" dur="4s" begin="1s" repeatCount="indefinite"/>
+    <animateTransform attributeName="transform" type="translate" values="0,0; 0,80; 0,80; 0,0" dur="4s" begin="1s" repeatCount="indefinite"/>
+  </rect>
+  
+  <!-- AI Analysis Cloud -->
+  <g id="aiCloud" transform="translate(300, 100)">
+    <!-- Cloud shape -->
+    <ellipse cx="50" cy="40" rx="25" ry="15" fill="#E5E7EB" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;1;1;0" dur="4s" begin="2s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="35" cy="35" rx="15" ry="12" fill="#E5E7EB" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;1;1;0" dur="4s" begin="2s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="65" cy="35" rx="18" ry="12" fill="#E5E7EB" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;1;1;0" dur="4s" begin="2s" repeatCount="indefinite"/>
+    </ellipse>
+    
+    <!-- AI Brain Icon -->
+    <circle cx="50" cy="38" r="8" fill="#8B5CF6" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;1;1;0" dur="4s" begin="2.2s" repeatCount="indefinite"/>
+    </circle>
+    <path d="M45,35 Q50,30 55,35 Q50,40 45,35" fill="#A855F7" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;1;1;0" dur="4s" begin="2.2s" repeatCount="indefinite"/>
+    </path>
+    
+    <!-- Analysis text -->
+    <text x="50" y="60" text-anchor="middle" fill="#6B7280" font-family="Arial, sans-serif" font-size="8" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;1;1;0" dur="4s" begin="2.5s" repeatCount="indefinite"/>
+      Analyzing...
+    </text>
+  </g>
+  
+  <!-- Inventory Grid -->
+  <g id="inventoryGrid" transform="translate(350, 150)">
+    <!-- Grid Background -->
+    <rect x="0" y="0" width="200" height="200" rx="10" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="2"/>
+    <text x="100" y="20" text-anchor="middle" fill="#374151" font-family="Arial, sans-serif" font-size="12" font-weight="bold">Smart Inventory</text>
+    
+    <!-- Grid Slots -->
+    <rect x="20" y="40" width="50" height="50" rx="5" fill="#ECFDF5" stroke="#22C55E" stroke-width="1" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;0;1" dur="4s" begin="2.8s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="80" y="40" width="50" height="50" rx="5" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;0;1" dur="4s" begin="3s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="140" y="40" width="50" height="50" rx="5" fill="#F3F4F6" stroke="#6B7280" stroke-width="1" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;0;1" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+    </rect>
+    
+    <!-- Organized Items -->
+    <circle cx="45" cy="65" r="8" fill="#EF4444" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;0;1" dur="4s" begin="3s" repeatCount="indefinite"/>
+    </circle>
+    <ellipse cx="105" cy="65" rx="12" ry="8" fill="#F59E0B" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;0;1" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+    </ellipse>
+    <rect cx="165" cy="65" x="158" y="60" width="8" height="12" fill="#F3F4F6" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;0;1" dur="4s" begin="3.4s" repeatCount="indefinite"/>
+    </rect>
+    
+    <!-- Labels -->
+    <text x="45" y="105" text-anchor="middle" fill="#059669" font-family="Arial, sans-serif" font-size="8" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;0;1" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+      Fresh
+    </text>
+    <text x="105" y="105" text-anchor="middle" fill="#D97706" font-family="Arial, sans-serif" font-size="8" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;0;1" dur="4s" begin="3.4s" repeatCount="indefinite"/>
+      Expiring Soon
+    </text>
+    <text x="165" y="105" text-anchor="middle" fill="#6B7280" font-family="Arial, sans-serif" font-size="8" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;0;1" dur="4s" begin="3.6s" repeatCount="indefinite"/>
+      Dairy
+    </text>
+  </g>
+  
+  <!-- Success Checkmarks -->
+  <g id="successMarks">
+    <circle cx="520" cy="100" r="20" fill="#22C55E" opacity="0" filter="url(#glow)">
+      <animate attributeName="opacity" values="0;0;0;0;1;1;0" dur="4s" begin="3.5s" repeatCount="indefinite"/>
+    </circle>
+    <path d="M510,100 L518,108 L530,92" stroke="white" stroke-width="3" fill="none" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;0;1;1;0" dur="4s" begin="3.7s" repeatCount="indefinite"/>
+    </path>
+    
+    <circle cx="520" cy="140" r="20" fill="#22C55E" opacity="0" filter="url(#glow)">
+      <animate attributeName="opacity" values="0;0;0;0;0;1;0" dur="4s" begin="3.7s" repeatCount="indefinite"/>
+    </circle>
+    <path d="M510,140 L518,148 L530,132" stroke="white" stroke-width="3" fill="none" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;0;0;1;0" dur="4s" begin="3.9s" repeatCount="indefinite"/>
+    </path>
+  </g>
+  
+  <!-- Final message -->
+  <text x="300" y="360" text-anchor="middle" fill="#10B981" font-family="Arial, sans-serif" font-size="16" font-weight="bold" opacity="0">
+    <animate attributeName="opacity" values="0;0;0;0;0;1;1" dur="4s" begin="3.8s" repeatCount="indefinite"/>
+    Smart Food Management Complete!
+  </text>
+</svg>

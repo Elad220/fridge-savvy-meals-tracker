@@ -107,15 +107,19 @@
   .parallax-bg {
     will-change: transform;
     transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
   }
   
   .float-animation {
     animation: float 6s ease-in-out infinite;
+    will-change: transform;
   }
   
   .float-animation-delayed {
     animation: float 6s ease-in-out infinite;
     animation-delay: -2s;
+    will-change: transform;
   }
   
   .fade-in-up {
@@ -138,6 +142,7 @@
     transform: translate3d(0, 0, 0);
     backface-visibility: hidden;
     perspective: 1000px;
+    will-change: transform;
   }
   
   /* Enhanced hover effects */
@@ -151,13 +156,13 @@
   }
 }
 
-/* Keyframe animations */
+/* Enhanced keyframe animations */
 @keyframes float {
   0%, 100% {
-    transform: translateY(0px);
+    transform: translateY(0px) translateZ(0);
   }
   50% {
-    transform: translateY(-20px);
+    transform: translateY(-20px) translateZ(0);
   }
 }
 
@@ -170,32 +175,42 @@
   }
 }
 
-/* Intersection Observer triggered animations */
+/* Enhanced intersection observer triggered animations */
 .animate-on-scroll {
   opacity: 0;
-  transform: translateY(50px);
+  transform: translateY(50px) translateZ(0);
   transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: opacity, transform;
 }
 
 .animate-on-scroll.in-view {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) translateZ(0);
 }
+
+/* Staggered animation delays for elements */
+.animate-on-scroll:nth-child(1) { transition-delay: 0ms; }
+.animate-on-scroll:nth-child(2) { transition-delay: 100ms; }
+.animate-on-scroll:nth-child(3) { transition-delay: 200ms; }
+.animate-on-scroll:nth-child(4) { transition-delay: 300ms; }
+.animate-on-scroll:nth-child(5) { transition-delay: 400ms; }
+.animate-on-scroll:nth-child(6) { transition-delay: 500ms; }
 
 /* Feature card enhanced hover effects */
 .feature-card {
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   transform-style: preserve-3d;
+  backface-visibility: hidden;
 }
 
 .feature-card:hover {
-  transform: translateY(-12px) rotateX(5deg);
+  transform: translateY(-12px) rotateX(5deg) translateZ(0);
   box-shadow: 
     0 25px 50px rgba(0, 0, 0, 0.15),
     0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
-/* Gradient text animation */
+/* Enhanced gradient text animation */
 .gradient-text {
   background: linear-gradient(-45deg, #10B981, #3B82F6, #8B5CF6, #F59E0B);
   background-size: 400% 400%;
@@ -203,6 +218,7 @@
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+  will-change: background-position;
 }
 
 @keyframes gradientShift {
@@ -214,5 +230,29 @@
   }
   100% {
     background-position: 0% 50%;
+  }
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-on-scroll,
+  .float-animation,
+  .float-animation-delayed,
+  .pulse-slow,
+  .gradient-text,
+  .hover-lift,
+  .feature-card {
+    animation: none;
+    transition: none;
+  }
+  
+  .parallax-bg,
+  .parallax-smooth {
+    transform: none !important;
   }
 }

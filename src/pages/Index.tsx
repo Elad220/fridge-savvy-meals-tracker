@@ -39,54 +39,68 @@ const Index = () => {
     }
   }, [searchParams]);
 
-  // Scroll animations and parallax effects
+  // Enhanced scroll animations and parallax effects
   useEffect(() => {
-    if (!user) { // Only run on landing page
-      const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -100px 0px'
-      };
+    if (!user && !authLoading) { // Only run on landing page when auth is loaded
+      // Small delay to ensure DOM is fully rendered
+      const initAnimations = () => {
+        const observerOptions = {
+          threshold: 0.1,
+          rootMargin: '0px 0px -50px 0px'
+        };
 
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('in-view');
-          }
-        });
-      }, observerOptions);
-
-      const animatedElements = document.querySelectorAll('.animate-on-scroll');
-      animatedElements.forEach((el) => observer.observe(el));
-
-      const handleScroll = () => {
-        const scrolled = window.pageYOffset;
-        const parallaxBg = document.querySelector('.parallax-bg');
-        if (parallaxBg) {
-          const speed = 0.3;
-          const yPos = -(scrolled * speed);
-          (parallaxBg as HTMLElement).style.transform = `translate3d(0, ${yPos}px, 0)`;
-        }
-      };
-
-      let ticking = false;
-      const scrollHandler = () => {
-        if (!ticking) {
-          requestAnimationFrame(() => {
-            handleScroll();
-            ticking = false;
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('in-view');
+            }
           });
-          ticking = true;
-        }
+        }, observerOptions);
+
+        // Observe all animated elements
+        const animatedElements = document.querySelectorAll('.animate-on-scroll');
+        animatedElements.forEach((el) => {
+          observer.observe(el);
+        });
+
+        // Parallax scroll handler with better performance
+        let ticking = false;
+        const handleScroll = () => {
+          if (!ticking) {
+            requestAnimationFrame(() => {
+              const scrolled = window.pageYOffset;
+              const parallaxElements = document.querySelectorAll('.parallax-bg');
+              
+              parallaxElements.forEach((el) => {
+                const speed = 0.3;
+                const yPos = -(scrolled * speed);
+                (el as HTMLElement).style.transform = `translate3d(0, ${yPos}px, 0)`;
+              });
+              
+              ticking = false;
+            });
+            ticking = true;
+          }
+        };
+
+        // Add scroll listener with passive option for better performance
+        window.addEventListener('scroll', handleScroll, { passive: true });
+
+        // Cleanup function
+        return () => {
+          observer.disconnect();
+          window.removeEventListener('scroll', handleScroll);
+        };
       };
 
-      window.addEventListener('scroll', scrollHandler, { passive: true });
+      // Initialize animations after a small delay
+      const timeoutId = setTimeout(initAnimations, 100);
 
       return () => {
-        observer.disconnect();
-        window.removeEventListener('scroll', scrollHandler);
+        clearTimeout(timeoutId);
       };
     }
-  }, [user]);
+  }, [user, authLoading]); // Include authLoading in dependencies
 
   const handleLogout = async () => {
     await signOut();

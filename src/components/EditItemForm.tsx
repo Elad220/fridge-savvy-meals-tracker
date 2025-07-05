@@ -105,7 +105,7 @@ export const EditItemForm = ({ item, onSubmit, onClose }: EditItemFormProps) => 
                 id="freshnessDays"
                 type="number"
                 min="1"
-                max="30"
+                max="365"
                 value={formData.freshnessDays}
                 onChange={(e) => handleInputChange('freshnessDays', e.target.value)}
                 required

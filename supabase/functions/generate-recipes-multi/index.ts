@@ -269,10 +269,6 @@ class AIProviderFactory {
         throw new Error(`Unsupported AI provider: ${provider}`);
     }
   }
-
-  static getSupportedProviders(): AIProvider[] {
-    return ['gemini', 'openai', 'anthropic'];
-  }
 }
 
 // AI Service class
@@ -314,7 +310,7 @@ class AIService {
     }
   }
 
-  async getRecipeDetails(recipeName: string, ingredients: string[], replyLanguage: string): Promise<any> {
+  async generateRecipes(ingredients: string[], replyLanguage: string): Promise<any> {
     const provider = await this.getCurrentProvider();
     const credentials = await this.getProviderCredentials(provider);
 
@@ -324,39 +320,30 @@ class AIService {
 
     const providerInstance = AIProviderFactory.createProvider(provider, credentials);
 
-    // Create the detailed prompt for recipe generation with dynamic language
-    const prompt = `Please provide detailed cooking instructions for "${recipeName}" using these ingredients: ${ingredients.join(', ')}.
-
-    Include:
-    1. Complete ingredient list with quantities
-    2. Step-by-step cooking instructions
-    3. Preparation time and cooking time
-    4. Serving size
-    5. Difficulty level
-    6. Any helpful cooking tips
+    // Create the prompt for recipe generation with dynamic language
+    const prompt = `Given these ingredients: ${ingredients.join(', ')}, 
+    suggest 3 different recipes that can be made using some or all of these ingredients. 
+    For each recipe, provide:
+    1. Recipe name
+    2. Brief description (1-2 sentences)
+    3. Main ingredients needed from the list
+    4. Estimated cooking time
+    5. Difficulty level (Easy/Medium/Hard)
     
     Format the response as JSON with this structure:
     {
-      "name": "Recipe Name",
-      "prepTime": "15 minutes",
-      "cookTime": "30 minutes",
-      "servings": "4",
-      "difficulty": "Easy",
-      "ingredients": [
-        "1 cup ingredient1",
-        "2 tbsp ingredient2"
-      ],
-      "instructions": [
-        "Step 1: Do this...",
-        "Step 2: Do that..."
-      ],
-      "tips": [
-        "Tip 1: Helpful advice...",
-        "Tip 2: Another tip..."
+      "recipes": [
+        {
+          "name": "Recipe Name",
+          "description": "Brief description",
+          "ingredients": ["ingredient1", "ingredient2"],
+          "cookingTime": "30 minutes",
+          "difficulty": "Easy"
+        }
       ]
     }
 
-    Please write all text content (recipe name, ingredients, instructions, and tips) in ${replyLanguage}.`;
+    Please write all recipe names, descriptions, and ingredient names in ${replyLanguage}.`;
 
     const request: AIRequest = {
       prompt,
@@ -366,7 +353,7 @@ class AIService {
 
     const response = await providerInstance.generateText(request);
     
-    console.log(`Recipe details generated using ${provider} (${response.model})`);
+    console.log(`Recipe generated using ${provider} (${response.model})`);
     
     return {
       content: response.content,
@@ -384,11 +371,11 @@ serve(async (req) => {
   }
 
   try {
-    const { recipeName, ingredients, userId } = await req.json();
+    const { ingredients, userId } = await req.json();
 
-    if (!userId || !recipeName || !ingredients) {
+    if (!userId || !ingredients || !Array.isArray(ingredients)) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: userId, recipeName, and ingredients' }),
+        JSON.stringify({ error: 'Missing required fields: userId and ingredients array' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
@@ -424,35 +411,34 @@ serve(async (req) => {
     // Create AI service instance
     const aiService = new AIService(supabase);
 
-    // Get recipe details using the selected provider
-    const result = await aiService.getRecipeDetails(recipeName, ingredients, replyLanguage);
+    // Generate recipes using the selected provider
+    const result = await aiService.generateRecipes(ingredients, replyLanguage);
 
     // Try to parse the JSON response
-    let recipeDetails;
+    let recipes;
     try {
       // Clean the response text to extract JSON
       const jsonStart = result.content.indexOf('{');
       const jsonEnd = result.content.lastIndexOf('}') + 1;
       const jsonText = result.content.slice(jsonStart, jsonEnd);
-      recipeDetails = JSON.parse(jsonText);
+      recipes = JSON.parse(jsonText);
     } catch (parseError) {
       console.error('Failed to parse JSON:', parseError);
-      // Fallback: return structured data with the raw text
-      recipeDetails = {
-        name: recipeName,
-        prepTime: "15 minutes",
-        cookTime: "30 minutes",
-        servings: "4",
-        difficulty: "Medium",
-        ingredients: ingredients.map(ing => `1 cup ${ing}`),
-        instructions: [result.content],
-        tips: ["Check the generated instructions above for complete details."]
+      // Fallback: return the raw text
+      recipes = {
+        recipes: [{
+          name: "Generated Recipe",
+          description: result.content.substring(0, 200) + "...",
+          ingredients: ingredients.slice(0, 3),
+          cookingTime: "30 minutes",
+          difficulty: "Medium"
+        }]
       };
     }
 
     // Add metadata about the generation
     const response = {
-      ...recipeDetails,
+      ...recipes,
       metadata: {
         provider: result.provider,
         model: result.model,
@@ -465,7 +451,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in get-recipe-details function:', error);
+    console.error('Error in generate-recipes-multi function:', error);
     return new Response(
       JSON.stringify({ 
         error: 'An unexpected error occurred', 

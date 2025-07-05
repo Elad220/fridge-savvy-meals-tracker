@@ -13,7 +13,7 @@ interface AmountInputProps extends Omit<React.ComponentProps<"input">, "type" | 
 }
 
 const AmountInput = React.forwardRef<HTMLInputElement, AmountInputProps>(
-  ({ className, value, onChange, step = 0.1, min = 0.1, max, ...props }, ref) => {
+  ({ className, value, onChange, step = 1, min = 0, max, ...props }, ref) => {
     const handleIncrement = () => {
       const currentValue = parseFloat(value) || 0;
       const newValue = Math.max(min, currentValue + step);

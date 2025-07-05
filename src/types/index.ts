@@ -11,7 +11,8 @@ export interface FoodItem {
   name: string;
   dateCookedStored: Date;
   eatByDate: Date;
-  quantity: string;
+  amount: number;
+  unit: string;
   storageLocation: string;
   label: FoodItemLabel;
   notes?: string;
@@ -29,3 +30,19 @@ export interface MealPlan {
 }
 
 export type FreshnessStatus = 'fresh' | 'use-soon' | 'use-or-throw' | 'expired';
+
+// Common units for food items
+export const FOOD_UNITS = [
+  'pcs', 'pieces', 'item', 'items',
+  'small container', 'medium container', 'large container',
+  'small bowl', 'medium bowl', 'large bowl',
+  'small pot', 'medium pot', 'large pot',
+  'dozen', 'pack', 'packs', 'packet', 'packets',
+  'serving', 'servings', 'portion', 'portions',
+  'cup', 'cups', 'tbsp', 'tsp', 'ml', 'l', 'liter', 'liters',
+  'g', 'gr', 'gram', 'grams', 'kg', 'kilogram', 'kilograms',
+  'oz', 'ounce', 'ounces', 'lb', 'lbs', 'pound', 'pounds',
+  'slice', 'slices', 'half', 'quarter', 'third',
+  'bag', 'bags', 'box', 'boxes', 'bottle', 'bottles',
+  'can', 'cans', 'jar', 'jars', 'tube', 'tubes'
+] as const;

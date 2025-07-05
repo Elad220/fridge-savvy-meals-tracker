@@ -30,7 +30,8 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
         name: item.name,
         dateCookedStored: new Date(item.date_cooked_stored),
         eatByDate: new Date(item.eat_by_date),
-        quantity: item.quantity,
+        amount: item.amount || 1, // Default to 1 if not set
+        unit: item.unit || 'item', // Default to 'item' if not set
         storageLocation: item.storage_location,
         label: (item.label || 'raw material') as FoodItemLabel, // Type assertion to FoodItemLabel
         notes: item.notes || undefined,
@@ -61,7 +62,8 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
           name: item.name,
           date_cooked_stored: item.dateCookedStored.toISOString().split('T')[0],
           eat_by_date: item.eatByDate.toISOString().split('T')[0],
-          quantity: item.quantity,
+          amount: item.amount,
+          unit: item.unit,
           storage_location: item.storageLocation,
           label: item.label,
           notes: item.notes || null,
@@ -77,7 +79,8 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
         name: data.name,
         dateCookedStored: new Date(data.date_cooked_stored),
         eatByDate: new Date(data.eat_by_date),
-        quantity: data.quantity,
+        amount: data.amount,
+        unit: data.unit,
         storageLocation: data.storage_location,
         label: data.label as FoodItemLabel, // Type assertion to FoodItemLabel
         notes: data.notes || undefined,
@@ -89,7 +92,7 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
       
       // Log the add action
       await logAction('add', item.name, {
-        quantity: item.quantity,
+        quantity: `${item.amount} ${item.unit}`,
         storageLocation: item.storageLocation,
         label: item.label,
       });
@@ -121,7 +124,8 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
           name: updatedItem.name,
           date_cooked_stored: updatedItem.dateCookedStored.toISOString().split('T')[0],
           eat_by_date: updatedItem.eatByDate.toISOString().split('T')[0],
-          quantity: updatedItem.quantity,
+          amount: updatedItem.amount,
+          unit: updatedItem.unit,
           storage_location: updatedItem.storageLocation,
           label: updatedItem.label,
           notes: updatedItem.notes || null,
@@ -166,7 +170,7 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
       // Log the remove action
       if (itemToRemove) {
         await logAction('remove', itemToRemove.name, {
-          quantity: itemToRemove.quantity,
+          quantity: `${itemToRemove.amount} ${itemToRemove.unit}`,
           storageLocation: itemToRemove.storageLocation,
           label: itemToRemove.label,
         });

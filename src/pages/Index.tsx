@@ -476,6 +476,7 @@ const Index = () => {
               foodItems={foodItems}
               onRemoveItem={removeFoodItem}
               onEditItem={setEditingItem}
+              onAddItem={addFoodItem}
               userId={user.id}
               onNavigateToSettings={() => setActiveTab('settings')}
               recentActions={recentActions}

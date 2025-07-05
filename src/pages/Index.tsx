@@ -539,14 +539,6 @@ const Index = () => {
                 <Plus className="w-4 h-4 mr-2" />
                 {activeTab === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
               </Button>
-              {activeTab === 'inventory' && (
-                <PhotoAnalysisButton
-                  onOpen={() => setShowPhotoAnalysis(true)}
-                  onNavigateToSettings={() => setActiveTab('settings')}
-                  disabled={!user?.id}
-                  className="w-full sm:w-auto"
-                />
-              )}
             </div>
           </div>
         )}

@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AmountInput } from '@/components/ui/amount-input';
 import { StorageLocationSelect } from '@/components/StorageLocationSelect';
 import { FoodItem, FOOD_UNITS } from '@/types';
 import { toast } from '@/components/ui/use-toast';
@@ -138,13 +139,10 @@ export const EditItemForm = ({ item, onSubmit, onClose }: EditItemFormProps) => 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="amount">Amount *</Label>
-              <Input
+              <AmountInput
                 id="amount"
-                type="number"
-                step="0.1"
-                min="0.1"
                 value={formData.amount}
-                onChange={(e) => handleInputChange('amount', e.target.value)}
+                onChange={(value) => handleInputChange('amount', value)}
                 placeholder="e.g., 2"
                 required
               />

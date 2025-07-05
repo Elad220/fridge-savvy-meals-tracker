@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +7,7 @@ export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     // Set up auth state listener
@@ -21,9 +21,11 @@ export const useAuth = () => {
 
         // Handle specific auth events
         if (event === 'SIGNED_IN' && session?.user) {
-          // Only show welcome message for actual sign-ins, not email confirmations
+          // Only show welcome message for actual sign-ins, not session restoration or email confirmations
           const isEmailConfirmation = window.location.search.includes('token_hash');
-          if (!isEmailConfirmation) {
+          
+          // Don't show toast if this is the initial load (session restoration)
+          if (!isEmailConfirmation && !isInitialLoad) {
             toast({
               title: 'Welcome!',
               description: `Signed in as ${session.user.email}`,
@@ -35,6 +37,9 @@ export const useAuth = () => {
             description: 'You have been signed out successfully.',
           });
         }
+        
+        // Mark that initial load is complete
+        setIsInitialLoad(false);
       }
     );
 
@@ -43,6 +48,8 @@ export const useAuth = () => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      // Mark that initial load is complete after checking existing session
+      setIsInitialLoad(false);
     });
 
     return () => subscription.unsubscribe();

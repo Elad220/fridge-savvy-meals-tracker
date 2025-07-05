@@ -15,6 +15,7 @@ import { FoodItem, MealPlan } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useFoodItems } from '@/hooks/useFoodItems';
 import { useMealPlans } from '@/hooks/useMealPlans';
+import { useUserActions } from '@/hooks/useUserActions';
 import Settings from '@/components/Settings'; // Import the new Settings component
 
 const Index = () => {
@@ -29,6 +30,7 @@ const Index = () => {
 
   const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id);
   const { mealPlans, loading: mealLoading, addMealPlan, updateMealPlan, removeMealPlan } = useMealPlans(user?.id);
+  const { logUserAction } = useUserActions(user?.id);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -457,12 +459,32 @@ const Index = () => {
     setEditingMealPlan(null);
   };
 
-  const handleMoveToInventory = (meal: MealPlan, foodItem: Omit<FoodItem, 'id' | 'userId'>) => {
+  const handleMoveToInventory = async (meal: MealPlan, foodItem: Omit<FoodItem, 'id' | 'userId'>) => {
     // Add the food item to inventory
-    addFoodItem(foodItem);
+    await addFoodItem(foodItem);
     
     // Remove from meal plans
-    removeMealPlan(meal.id);
+    await removeMealPlan(meal.id);
+    
+    // Log the move action
+    await logUserAction(
+      'move',
+      'meal_plan',
+      meal.id,
+      meal.name,
+      {
+        plannedDate: meal.plannedDate?.toISOString(),
+        destinationTime: meal.destinationTime?.toISOString(),
+        movedTo: 'inventory',
+        newFoodItem: {
+          name: foodItem.name,
+          quantity: foodItem.quantity,
+          storageLocation: foodItem.storageLocation,
+          label: foodItem.label,
+        }
+      },
+      { source: 'move_to_inventory' }
+    );
   };
 
   const renderContent = () => {
@@ -479,7 +501,6 @@ const Index = () => {
             />
             {showPhotoAnalysis && (
               <PhotoAnalysis
-                key={`photo-analysis-${user.id || 'no-user'}`}
                 isOpen={showPhotoAnalysis}
                 onClose={() => setShowPhotoAnalysis(false)}
                 onAnalysisComplete={(item) => {

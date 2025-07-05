@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FoodItem, FoodItemLabel } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import { useUserActions } from '@/hooks/useUserActions';
 
 export const useFoodItems = (userId: string | undefined) => {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const { logUserAction } = useUserActions(userId);
 
   const fetchFoodItems = async () => {
     if (!userId) {
@@ -85,6 +87,23 @@ export const useFoodItems = (userId: string | undefined) => {
 
       setFoodItems(prev => [...prev, newItem]);
       
+      // Log the action for tracking
+      await logUserAction(
+        'add',
+        'food_item',
+        newItem.id,
+        newItem.name,
+        {
+          quantity: newItem.quantity,
+          storageLocation: newItem.storageLocation,
+          label: newItem.label,
+          freshnessDays: newItem.freshnessDays,
+          dateCookedStored: newItem.dateCookedStored.toISOString(),
+          eatByDate: newItem.eatByDate.toISOString(),
+        },
+        { source: 'manual_add' }
+      );
+      
       toast({
         title: 'Food item added',
         description: `${item.name} has been added to your inventory.`,
@@ -121,6 +140,23 @@ export const useFoodItems = (userId: string | undefined) => {
         item.id === updatedItem.id ? updatedItem : item
       ));
 
+      // Log the action for tracking
+      await logUserAction(
+        'update',
+        'food_item',
+        updatedItem.id,
+        updatedItem.name,
+        {
+          quantity: updatedItem.quantity,
+          storageLocation: updatedItem.storageLocation,
+          label: updatedItem.label,
+          freshnessDays: updatedItem.freshnessDays,
+          dateCookedStored: updatedItem.dateCookedStored.toISOString(),
+          eatByDate: updatedItem.eatByDate.toISOString(),
+        },
+        { source: 'manual_update' }
+      );
+
       toast({
         title: 'Food item updated',
         description: `${updatedItem.name} has been updated.`,
@@ -136,6 +172,9 @@ export const useFoodItems = (userId: string | undefined) => {
 
   const removeFoodItem = async (id: string) => {
     try {
+      // Get the item data before removing for logging
+      const itemToRemove = foodItems.find(item => item.id === id);
+      
       const { error } = await supabase
         .from('food_items')
         .delete()
@@ -144,6 +183,25 @@ export const useFoodItems = (userId: string | undefined) => {
       if (error) throw error;
 
       setFoodItems(prev => prev.filter(item => item.id !== id));
+      
+      // Log the action for tracking
+      if (itemToRemove) {
+        await logUserAction(
+          'remove',
+          'food_item',
+          itemToRemove.id,
+          itemToRemove.name,
+          {
+            quantity: itemToRemove.quantity,
+            storageLocation: itemToRemove.storageLocation,
+            label: itemToRemove.label,
+            freshnessDays: itemToRemove.freshnessDays,
+            dateCookedStored: itemToRemove.dateCookedStored.toISOString(),
+            eatByDate: itemToRemove.eatByDate.toISOString(),
+          },
+          { source: 'manual_remove' }
+        );
+      }
       
       toast({
         title: 'Food item removed',

@@ -7,10 +7,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from '@/components/ui/badge';
 import { Key, Shield, Trash2, Globe } from 'lucide-react';
 import { useApiTokens } from '@/hooks/useApiTokens';
+import { useAuth } from '@/hooks/useAuth';
 import UserProfile from './UserProfile';
+import { ActionHistory } from './ActionHistory';
 
 const Settings = () => {
   const { hasGeminiToken, saveToken, removeToken, getLanguage, saveLanguage } = useApiTokens();
+  const { user } = useAuth();
   const [token, setToken] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [isSaving, setIsSaving] = useState(false);
@@ -175,6 +178,10 @@ const Settings = () => {
           )}
         </div>
       </div>
+
+      {user?.id && (
+        <ActionHistory userId={user.id} />
+      )}
     </div>
   );
 };

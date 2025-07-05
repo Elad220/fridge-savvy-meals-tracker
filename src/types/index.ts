@@ -29,3 +29,36 @@ export interface MealPlan {
 }
 
 export type FreshnessStatus = 'fresh' | 'use-soon' | 'use-or-throw' | 'expired';
+
+// User Action History Types
+export type UserActionType = 'add' | 'remove' | 'update' | 'move';
+export type EntityType = 'food_item' | 'meal_plan';
+
+export interface UserAction {
+  id: string;
+  userId: string;
+  actionType: UserActionType;
+  entityType: EntityType;
+  entityId: string;
+  entityName: string;
+  entityData?: Record<string, any>;
+  actionContext?: Record<string, any>;
+  createdAt: Date;
+}
+
+export interface UserActionStats {
+  actionType: UserActionType;
+  entityType: EntityType;
+  actionCount: number;
+  mostRecentAction: Date;
+}
+
+export interface UserActionPattern {
+  entityName: string;
+  actionType: UserActionType;
+  actionCount: number;
+  avgDaysBetweenActions?: number;
+  mostCommonStorageLocation?: string;
+  mostCommonLabel?: string;
+  avgFreshnessDays?: number;
+}

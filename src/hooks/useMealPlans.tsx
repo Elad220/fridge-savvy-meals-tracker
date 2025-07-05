@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { MealPlan } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import { useUserActions } from '@/hooks/useUserActions';
 
 export const useMealPlans = (userId: string | undefined) => {
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
+  const { logUserAction } = useUserActions(userId);
 
   const fetchMealPlans = async () => {
     if (!userId) {
@@ -73,6 +75,19 @@ export const useMealPlans = (userId: string | undefined) => {
 
       setMealPlans(prev => [...prev, newPlan]);
       
+      // Log the action for tracking
+      await logUserAction(
+        'add',
+        'meal_plan',
+        newPlan.id,
+        newPlan.name,
+        {
+          plannedDate: newPlan.plannedDate?.toISOString(),
+          destinationTime: newPlan.destinationTime?.toISOString(),
+        },
+        { source: 'manual_add' }
+      );
+      
       toast({
         title: 'Meal plan added',
         description: `${plan.name} has been added to your meal plans.`,
@@ -104,6 +119,19 @@ export const useMealPlans = (userId: string | undefined) => {
         plan.id === updatedPlan.id ? updatedPlan : plan
       ));
 
+      // Log the action for tracking
+      await logUserAction(
+        'update',
+        'meal_plan',
+        updatedPlan.id,
+        updatedPlan.name,
+        {
+          plannedDate: updatedPlan.plannedDate?.toISOString(),
+          destinationTime: updatedPlan.destinationTime?.toISOString(),
+        },
+        { source: 'manual_update' }
+      );
+
       toast({
         title: 'Meal plan updated',
         description: `${updatedPlan.name} has been updated.`,
@@ -120,6 +148,9 @@ export const useMealPlans = (userId: string | undefined) => {
 
   const removeMealPlan = async (id: string) => {
     try {
+      // Get the plan data before removing for logging
+      const planToRemove = mealPlans.find(plan => plan.id === id);
+      
       const { error } = await supabase
         .from('meal_plans')
         .delete()
@@ -128,6 +159,21 @@ export const useMealPlans = (userId: string | undefined) => {
       if (error) throw error;
 
       setMealPlans(prev => prev.filter(plan => plan.id !== id));
+      
+      // Log the action for tracking
+      if (planToRemove) {
+        await logUserAction(
+          'remove',
+          'meal_plan',
+          planToRemove.id,
+          planToRemove.name,
+          {
+            plannedDate: planToRemove.plannedDate?.toISOString(),
+            destinationTime: planToRemove.destinationTime?.toISOString(),
+          },
+          { source: 'manual_remove' }
+        );
+      }
       
       toast({
         title: 'Meal plan removed',

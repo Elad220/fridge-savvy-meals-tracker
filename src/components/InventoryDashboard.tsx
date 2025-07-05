@@ -205,42 +205,40 @@ export const InventoryDashboard = ({
       )}
 
       {/* Bulk selection controls */}
-      <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleSelectionMode}
-            className="flex items-center gap-2"
-          >
-            <Checkbox checked={isSelecting} />
-            {isSelecting ? 'Cancel Selection' : 'Select Items'}
-          </Button>
-          
-          {isSelecting && (
-            <>
+      <div className="flex flex-wrap gap-2 items-center">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleSelectionMode}
+          className="flex items-center gap-2"
+        >
+          <Checkbox checked={isSelecting} />
+          {isSelecting ? 'Cancel Selection' : 'Select Items'}
+        </Button>
+        
+        {isSelecting && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleSelectAll(selectedItems.size !== filteredAndSortedItems.length)}
+            >
+              {selectedItems.size === filteredAndSortedItems.length ? 'Deselect All' : 'Select All'}
+            </Button>
+            
+            {selectedItems.size > 0 && (
               <Button
-                variant="outline"
+                variant="destructive"
                 size="sm"
-                onClick={() => handleSelectAll(selectedItems.size !== filteredAndSortedItems.length)}
+                onClick={handleBulkDelete}
+                className="flex items-center gap-2"
               >
-                {selectedItems.size === filteredAndSortedItems.length ? 'Deselect All' : 'Select All'}
+                <Trash2 className="w-4 h-4" />
+                Delete Selected ({selectedItems.size})
               </Button>
-              
-              {selectedItems.size > 0 && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleBulkDelete}
-                  className="flex items-center gap-2"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete Selected ({selectedItems.size})
-                </Button>
-              )}
-            </>
-          )}
-        </div>
+            )}
+          </>
+        )}
       </div>
 
       <div className="bg-card p-3 md:p-4 rounded-lg shadow-sm border">

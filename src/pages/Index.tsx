@@ -15,6 +15,7 @@ import { FoodItem, MealPlan } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useFoodItems } from '@/hooks/useFoodItems';
 import { useMealPlans } from '@/hooks/useMealPlans';
+import { useActionHistory } from '@/hooks/useActionHistory';
 import Settings from '@/components/Settings'; // Import the new Settings component
 
 const Index = () => {
@@ -27,7 +28,8 @@ const Index = () => {
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlan | null>(null);
   const [activeTab, setActiveTab] = useState<'inventory' | 'meals' | 'settings'>('inventory');
 
-  const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id);
+  const { refetch: refetchHistory } = useActionHistory(user?.id);
+  const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id, refetchHistory);
   const { mealPlans, loading: mealLoading, addMealPlan, updateMealPlan, removeMealPlan } = useMealPlans(user?.id);
 
   useEffect(() => {

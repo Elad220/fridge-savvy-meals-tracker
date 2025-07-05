@@ -4,7 +4,7 @@ import { FoodItem, FoodItemLabel } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { useActionHistory } from '@/hooks/useActionHistory';
 
-export const useFoodItems = (userId: string | undefined) => {
+export const useFoodItems = (userId: string | undefined, onActionComplete?: () => void) => {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { logAction } = useActionHistory(userId);
@@ -94,6 +94,9 @@ export const useFoodItems = (userId: string | undefined) => {
         label: item.label,
       });
       
+      // Notify parent component of action completion
+      onActionComplete?.();
+      
       toast({
         title: 'Food item added',
         description: `${item.name} has been added to your inventory.`,
@@ -165,6 +168,9 @@ export const useFoodItems = (userId: string | undefined) => {
           label: itemToRemove.label,
         });
       }
+      
+      // Notify parent component of action completion
+      onActionComplete?.();
       
       toast({
         title: 'Food item removed',

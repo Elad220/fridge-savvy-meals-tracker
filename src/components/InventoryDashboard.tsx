@@ -37,7 +37,7 @@ export const InventoryDashboard = ({
   const [isSelecting, setIsSelecting] = useState(false);
   
   // Get action history
-  const { recentActions, loading: historyLoading } = useActionHistory(userId);
+  const { recentActions, loading: historyLoading, refetch: refetchHistory } = useActionHistory(userId);
   
   // Ref for photo analysis
   const isInitialRender = useRef(true);

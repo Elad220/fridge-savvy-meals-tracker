@@ -4,7 +4,7 @@ import { FoodItemCard } from '@/components/FoodItemCard';
 import { PhotoAnalysis } from '@/components/PhotoAnalysis';
 import { PhotoAnalysisButton } from '@/components/PhotoAnalysisButton';
 import { RecentActionsCard } from '@/components/RecentActionsCard';
-import { useActionHistory } from '@/hooks/useActionHistory';
+import { ActionHistoryItem } from '@/hooks/useActionHistory';
 import { Filter, Search as SearchIcon, SlidersHorizontal, X, Camera, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,9 @@ interface InventoryDashboardProps {
   onAddItem?: (item: Omit<FoodItem, 'id' | 'userId'>) => void;
   userId?: string;
   onNavigateToSettings: () => void;
+  recentActions: ActionHistoryItem[];
+  historyLoading: boolean;
+  refetchHistory: () => void;
 }
 
 export const InventoryDashboard = ({
@@ -27,6 +30,9 @@ export const InventoryDashboard = ({
   onAddItem,
   userId,
   onNavigateToSettings,
+  recentActions,
+  historyLoading,
+  refetchHistory,
 }: InventoryDashboardProps) => {
   const [sortBy, setSortBy] = useState<'eatByDate' | 'name' | 'storageLocation'>('eatByDate');
   const [filterBy, setFilterBy] = useState<FreshnessStatus | 'all'>('all');
@@ -35,9 +41,6 @@ export const InventoryDashboard = ({
   const [showPhotoAnalysis, setShowPhotoAnalysis] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isSelecting, setIsSelecting] = useState(false);
-  
-  // Get action history
-  const { recentActions, loading: historyLoading, refetch: refetchHistory } = useActionHistory(userId);
   
   // Ref for photo analysis
   const isInitialRender = useRef(true);

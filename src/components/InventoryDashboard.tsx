@@ -3,6 +3,8 @@ import { FoodItem, FreshnessStatus } from '@/types';
 import { FoodItemCard } from '@/components/FoodItemCard';
 import { PhotoAnalysis } from '@/components/PhotoAnalysis';
 import { PhotoAnalysisButton } from '@/components/PhotoAnalysisButton';
+import { RecentActionsCard } from '@/components/RecentActionsCard';
+import { useActionHistory } from '@/hooks/useActionHistory';
 import { Filter, Search as SearchIcon, SlidersHorizontal, X, Camera, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -33,6 +35,9 @@ export const InventoryDashboard = ({
   const [showPhotoAnalysis, setShowPhotoAnalysis] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isSelecting, setIsSelecting] = useState(false);
+  
+  // Get action history
+  const { recentActions, loading: historyLoading } = useActionHistory(userId);
   
   // Ref for photo analysis
   const isInitialRender = useRef(true);
@@ -187,6 +192,9 @@ export const InventoryDashboard = ({
           <div className="text-sm text-muted-foreground text-center">Total Items</div>
         </div>
       </div>
+
+      {/* Recent Actions Card */}
+      <RecentActionsCard actions={recentActions} loading={historyLoading} />
 
       {userId && onAddItem && (
         <PhotoAnalysisButton

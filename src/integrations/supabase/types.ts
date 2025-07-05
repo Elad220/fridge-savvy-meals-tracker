@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      action_history: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          item_details: Json | null
+          item_name: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          item_details?: Json | null
+          item_name: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          item_details?: Json | null
+          item_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       food_items: {
         Row: {
           created_at: string | null

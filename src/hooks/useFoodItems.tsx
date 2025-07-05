@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FoodItem, FoodItemLabel } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import { useActionHistory } from '@/hooks/useActionHistory';
 
 export const useFoodItems = (userId: string | undefined) => {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const { logAction } = useActionHistory(userId);
 
   const fetchFoodItems = async () => {
     if (!userId) {
@@ -85,6 +87,13 @@ export const useFoodItems = (userId: string | undefined) => {
 
       setFoodItems(prev => [...prev, newItem]);
       
+      // Log the add action
+      await logAction('add', item.name, {
+        quantity: item.quantity,
+        storageLocation: item.storageLocation,
+        label: item.label,
+      });
+      
       toast({
         title: 'Food item added',
         description: `${item.name} has been added to your inventory.`,
@@ -136,6 +145,9 @@ export const useFoodItems = (userId: string | undefined) => {
 
   const removeFoodItem = async (id: string) => {
     try {
+      // Find the item to get its name before removing
+      const itemToRemove = foodItems.find(item => item.id === id);
+      
       const { error } = await supabase
         .from('food_items')
         .delete()
@@ -144,6 +156,15 @@ export const useFoodItems = (userId: string | undefined) => {
       if (error) throw error;
 
       setFoodItems(prev => prev.filter(item => item.id !== id));
+      
+      // Log the remove action
+      if (itemToRemove) {
+        await logAction('remove', itemToRemove.name, {
+          quantity: itemToRemove.quantity,
+          storageLocation: itemToRemove.storageLocation,
+          label: itemToRemove.label,
+        });
+      }
       
       toast({
         title: 'Food item removed',

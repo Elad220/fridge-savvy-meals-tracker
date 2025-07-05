@@ -4,7 +4,7 @@ import { FoodItem, FoodItemLabel } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { useActionHistory } from '@/hooks/useActionHistory';
 
-export const useFoodItems = (userId: string | undefined, onActionComplete?: () => void) => {
+export const useFoodItems = (userId: string | undefined, onActionComplete?: () => void, refetchActions?: () => void) => {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { logAction } = useActionHistory(userId);
@@ -94,6 +94,9 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
         label: item.label,
       });
       
+      // Refresh the recent actions in the dashboard
+      refetchActions?.();
+      
       // Notify parent component of action completion
       onActionComplete?.();
       
@@ -168,6 +171,9 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
           label: itemToRemove.label,
         });
       }
+      
+      // Refresh the recent actions in the dashboard
+      refetchActions?.();
       
       // Notify parent component of action completion
       onActionComplete?.();

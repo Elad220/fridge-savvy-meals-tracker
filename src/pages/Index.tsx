@@ -28,8 +28,8 @@ const Index = () => {
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlan | null>(null);
   const [activeTab, setActiveTab] = useState<'inventory' | 'meals' | 'settings'>('inventory');
 
-  const { refetch: refetchHistory } = useActionHistory(user?.id);
-  const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id, refetchHistory);
+  const { recentActions, loading: historyLoading, refetch: refetchHistory } = useActionHistory(user?.id);
+  const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id, undefined, refetchHistory);
   const { mealPlans, loading: mealLoading, addMealPlan, updateMealPlan, removeMealPlan } = useMealPlans(user?.id);
 
   useEffect(() => {
@@ -478,6 +478,9 @@ const Index = () => {
               onEditItem={setEditingItem}
               userId={user.id}
               onNavigateToSettings={() => setActiveTab('settings')}
+              recentActions={recentActions}
+              historyLoading={historyLoading}
+              refetchHistory={refetchHistory}
             />
             {showPhotoAnalysis && (
               <PhotoAnalysis

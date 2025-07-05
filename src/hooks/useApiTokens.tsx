@@ -1,64 +1,90 @@
-
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
+import { AIProvider, AI_PROVIDERS } from '@/types/aiProvider';
+import { AIProviderFactory } from '@/lib/ai-providers/factory';
 
 export const useApiTokens = () => {
   const { user } = useAuth();
-  const [hasGeminiToken, setHasGeminiToken] = useState(false);
+  const [providerTokens, setProviderTokens] = useState<Record<string, boolean>>({});
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider>('gemini');
   const [loading, setLoading] = useState(true);
 
-  const checkForToken = useCallback(async () => {
-    // Skip if no user
+  // Legacy support - check if user has Gemini token
+  const hasGeminiToken = providerTokens['gemini'] || false;
+
+  const checkForTokens = useCallback(async () => {
     if (!user) {
-      setHasGeminiToken(false);
+      setProviderTokens({});
       setLoading(false);
       return;
     }
 
     try {
       setLoading(true);
-      const { data } = await supabase
-        .from('user_api_tokens')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('token_name', 'gemini')
-        .maybeSingle()
-        .throwOnError();
+      
+      // Check for tokens for all supported providers
+      const supportedProviders = AIProviderFactory.getSupportedProviders();
+      const tokenChecks = await Promise.all(
+        supportedProviders.map(async (provider) => {
+          const { data } = await supabase
+            .from('user_api_tokens')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('token_name', provider)
+            .maybeSingle();
+          
+          return { provider, hasToken: !!data };
+        })
+      );
 
-      setHasGeminiToken(!!data);
-    } catch (error: any) {
-      console.error('Error checking for token:', error);
-      setHasGeminiToken(false);
-      // Only show error if we had a token before
-      if (hasGeminiToken) {
-        toast({
-          title: 'Error checking API token',
-          description: error.message,
-          variant: 'destructive',
-        });
+      const tokens: Record<string, boolean> = {};
+      tokenChecks.forEach(({ provider, hasToken }) => {
+        tokens[provider] = hasToken;
+      });
+
+      setProviderTokens(tokens);
+
+      // Auto-select the first provider that has a token, or default to Gemini
+      const providerWithToken = supportedProviders.find(provider => tokens[provider]);
+      if (providerWithToken && !tokens[selectedProvider]) {
+        setSelectedProvider(providerWithToken);
       }
+
+    } catch (error: any) {
+      console.error('Error checking for tokens:', error);
+      setProviderTokens({});
+      toast({
+        title: 'Error checking API tokens',
+        description: error.message,
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
-  }, [user?.id, hasGeminiToken]);
+  }, [user?.id, selectedProvider]);
 
-  const saveToken = async (token: string) => {
+  const saveToken = async (provider: AIProvider, token: string, additionalData?: Record<string, string>) => {
     if (!user) return false;
 
     try {
+      // For providers with additional fields, store as JSON
+      const tokenData = additionalData 
+        ? JSON.stringify({ apiKey: token, ...additionalData })
+        : token;
+
       const { error } = await supabase.rpc('store_api_token', {
-        p_token_name: 'gemini',
-        p_api_token: token,
+        p_token_name: provider,
+        p_api_token: tokenData,
       });
 
       if (error) throw error;
 
-      setHasGeminiToken(true);
+      setProviderTokens(prev => ({ ...prev, [provider]: true }));
       toast({
         title: 'API token saved',
-        description: 'Your Gemini API token has been saved securely.',
+        description: `Your ${AI_PROVIDERS[provider].name} API token has been saved securely.`,
       });
       return true;
     } catch (error: any) {
@@ -72,7 +98,7 @@ export const useApiTokens = () => {
     }
   };
 
-  const removeToken = async () => {
+  const removeToken = async (provider: AIProvider) => {
     if (!user) return false;
 
     try {
@@ -80,14 +106,14 @@ export const useApiTokens = () => {
         .from('user_api_tokens')
         .delete()
         .eq('user_id', user.id)
-        .eq('token_name', 'gemini');
+        .eq('token_name', provider);
 
       if (error) throw error;
 
-      setHasGeminiToken(false);
+      setProviderTokens(prev => ({ ...prev, [provider]: false }));
       toast({
         title: 'API token removed',
-        description: 'Your Gemini API token has been removed.',
+        description: `Your ${AI_PROVIDERS[provider].name} API token has been removed.`,
       });
       return true;
     } catch (error: any) {
@@ -101,21 +127,26 @@ export const useApiTokens = () => {
     }
   };
 
-  const getToken = async (): Promise<string | null> => {
+  const getProviderCredentials = async (provider: AIProvider): Promise<any | null> => {
     if (!user) return null;
 
     try {
       const { data, error } = await supabase
-        .from('user_api_tokens')
-        .select('encrypted_token')
-        .eq('user_id', user.id)
-        .eq('token_name', 'gemini')
-        .maybeSingle();
+        .rpc('get_decrypted_api_token', { p_token_name: provider });
 
       if (error) throw error;
-      return data?.encrypted_token ? '•••••••••••••••••••••••••••••••••••••••••••••' : null;
+      
+      if (!data) return null;
+
+      // Try to parse as JSON for providers with additional fields
+      try {
+        return JSON.parse(data);
+      } catch {
+        // If not JSON, return as simple string (for backwards compatibility)
+        return { apiKey: data };
+      }
     } catch (error: any) {
-      console.error('Error getting token:', error);
+      console.error('Error getting provider credentials:', error);
       return null;
     }
   };
@@ -162,34 +193,100 @@ export const useApiTokens = () => {
     }
   };
 
-  // Only check token when user.id changes
+  const saveSelectedProvider = async (provider: AIProvider) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase.rpc('store_api_token', {
+        p_token_name: 'selected_ai_provider',
+        p_api_token: provider,
+      });
+
+      if (error) throw error;
+      setSelectedProvider(provider);
+      return true;
+    } catch (error: any) {
+      console.error('Error saving selected provider:', error);
+      return false;
+    }
+  };
+
+  const getSelectedProvider = async (): Promise<AIProvider> => {
+    if (!user) return 'gemini';
+
+    try {
+      const { data, error } = await supabase
+        .rpc('get_decrypted_api_token', { p_token_name: 'selected_ai_provider' });
+
+      if (error) throw error;
+      return (data as AIProvider) || 'gemini';
+    } catch (error: any) {
+      console.error('Error getting selected provider:', error);
+      return 'gemini';
+    }
+  };
+
+  // Load saved provider selection on mount
   useEffect(() => {
     let isMounted = true;
-    const controller = new AbortController();
 
-    const checkToken = async () => {
-      if (isMounted) {
-        await checkForToken();
+    const loadProvider = async () => {
+      if (user && isMounted) {
+        const savedProvider = await getSelectedProvider();
+        setSelectedProvider(savedProvider);
       }
     };
 
-    checkToken();
+    loadProvider();
+    return () => { isMounted = false; };
+  }, [user?.id]);
 
-    return () => {
-      isMounted = false;
-      controller.abort();
+  // Check tokens when user or provider changes
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkTokens = async () => {
+      if (isMounted) {
+        await checkForTokens();
+      }
     };
-  }, [user?.id, checkForToken]);
+
+    checkTokens();
+    return () => { isMounted = false; };
+  }, [user?.id, checkForTokens]);
 
   // Memoize the returned object to prevent unnecessary re-renders
   return useMemo(() => ({
+    // Legacy support for existing components
     hasGeminiToken,
+    
+    // New multi-provider support
+    providerTokens,
+    selectedProvider,
+    setSelectedProvider: saveSelectedProvider,
+    hasAnyToken: Object.values(providerTokens).some(Boolean),
+    hasTokenForProvider: (provider: AIProvider) => providerTokens[provider] || false,
+    
+    // Token management
     loading,
-    saveToken,
-    removeToken,
-    getToken,
+    saveToken: (token: string, additionalData?: Record<string, string>) => 
+      saveToken(selectedProvider, token, additionalData),
+    saveTokenForProvider: saveToken,
+    removeToken: () => removeToken(selectedProvider),
+    removeTokenForProvider: removeToken,
+    getProviderCredentials,
+    
+    // Language and preferences
     saveLanguage,
     getLanguage,
-    refreshTokenStatus: checkForToken,
-  }), [hasGeminiToken, loading, checkForToken]);
+    
+    // Utility
+    refreshTokenStatus: checkForTokens,
+  }), [
+    hasGeminiToken,
+    providerTokens,
+    selectedProvider,
+    loading,
+    checkForTokens,
+  ]);
 };

@@ -16,6 +16,7 @@ interface AddItemFormProps {
 }
 
 export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(true);
   const calculateEatByDate = (cookedDate: string, freshnessDays: number) => {
     const cooked = new Date(cookedDate);
     const eatBy = new Date(cooked);
@@ -84,7 +85,7 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
 
         await onSubmit(mealPlan);
       }
-      onClose();
+      handleCloseDialog();
     } catch (error) {
       console.error('Error submitting form:', error);
       toast({
@@ -93,6 +94,18 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
         variant: 'destructive',
       });
     }
+  };
+
+  const handleDialogChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      onClose();
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    onClose();
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -110,7 +123,7 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
   };
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
@@ -265,7 +278,7 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
               />
             </div>
             <div className="flex gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+              <Button type="button" variant="outline" onClick={handleCloseDialog} className="flex-1">
                 Cancel
               </Button>
               <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">

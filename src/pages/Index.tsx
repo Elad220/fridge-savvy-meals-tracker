@@ -1,22 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
-import { InventoryDashboard } from '@/components/InventoryDashboard';
-import { AddItemForm } from '@/components/AddItemForm';
-import { EditItemForm } from '@/components/EditItemForm';
-import { EditMealPlanForm } from '@/components/EditMealPlanForm';
-import { MealPlanning } from '@/components/MealPlanning';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { PhotoAnalysisButton } from '@/components/PhotoAnalysisButton';
-import { PhotoAnalysis } from '@/components/PhotoAnalysis';
-import { FoodItem, MealPlan } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useFoodItems } from '@/hooks/useFoodItems';
 import { useMealPlans } from '@/hooks/useMealPlans';
 import { useActionHistory } from '@/hooks/useActionHistory';
+import { AddItemForm } from '@/components/AddItemForm';
+import { EditItemForm } from '@/components/EditItemForm';
+import { EditMealPlanForm } from '@/components/EditMealPlanForm';
+import { InventoryDashboard } from '@/components/InventoryDashboard';
+import { MealPlanning } from '@/components/MealPlanning';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { PhotoAnalysis } from '@/components/PhotoAnalysis';
+import { PhotoAnalysisButton } from '@/components/PhotoAnalysisButton';
 import Settings from '@/components/Settings'; // Import the new Settings component
+import { VoiceRecording } from '@/components/VoiceRecording';
+import { VoiceRecordingButton } from '@/components/VoiceRecordingButton';
+import { FoodItem, MealPlan } from '@/types';
 
 const Index = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -24,6 +26,7 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showPhotoAnalysis, setShowPhotoAnalysis] = useState(false);
+  const [showVoiceRecording, setShowVoiceRecording] = useState(false);
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlan | null>(null);
   const [activeTab, setActiveTab] = useState<'inventory' | 'meals' | 'settings'>('inventory');
@@ -467,6 +470,26 @@ const Index = () => {
     removeMealPlan(meal.id);
   };
 
+  const handleOpenPhotoAnalysis = () => {
+    setShowPhotoAnalysis(true);
+  };
+
+  const handleOpenVoiceRecording = () => {
+    setShowVoiceRecording(true);
+  };
+
+  const handlePhotoAnalysisComplete = (item: Omit<FoodItem, 'id' | 'userId'>) => {
+    addFoodItem(item);
+    setShowPhotoAnalysis(false);
+  };
+
+  const handleVoiceRecordingComplete = (items: Omit<FoodItem, 'id' | 'userId'>[]) => {
+    items.forEach(item => {
+      addFoodItem(item);
+    });
+    setShowVoiceRecording(false);
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'inventory':
@@ -482,19 +505,11 @@ const Index = () => {
               recentActions={recentActions}
               historyLoading={historyLoading}
               refetchHistory={refetchHistory}
+              showPhotoAnalysis={showPhotoAnalysis}
+              setShowPhotoAnalysis={setShowPhotoAnalysis}
+              showVoiceRecording={showVoiceRecording}
+              setShowVoiceRecording={setShowVoiceRecording}
             />
-            {showPhotoAnalysis && (
-              <PhotoAnalysis
-                key={`photo-analysis-${user.id || 'no-user'}`}
-                isOpen={showPhotoAnalysis}
-                onClose={() => setShowPhotoAnalysis(false)}
-                onAnalysisComplete={(item) => {
-                  addFoodItem(item);
-                  setShowPhotoAnalysis(false);
-                }}
-                userId={user.id}
-              />
-            )}
           </div>
         );
       case 'meals':
@@ -531,14 +546,32 @@ const Index = () => {
             <h2 className="text-2xl font-bold text-foreground">
               {activeTab === 'inventory' ? 'Food Inventory' : 'Meal Planning'}
             </h2>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <Button
-                onClick={() => setShowAddForm(true)}
-                className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                {activeTab === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
-              </Button>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Button
+                  onClick={() => setShowAddForm(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  {activeTab === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
+                </Button>
+                {activeTab === 'inventory' && user.id && (
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <PhotoAnalysisButton
+                      onOpen={handleOpenPhotoAnalysis}
+                      onNavigateToSettings={() => setActiveTab('settings')}
+                      disabled={false}
+                      className="sm:w-auto"
+                    />
+                    <VoiceRecordingButton
+                      onOpen={handleOpenVoiceRecording}
+                      onNavigateToSettings={() => setActiveTab('settings')}
+                      disabled={false}
+                      className="sm:w-auto"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -566,6 +599,24 @@ const Index = () => {
             item={editingMealPlan}
             onSubmit={handleEditMealPlan}
             onClose={() => setEditingMealPlan(null)}
+          />
+        )}
+
+        {showPhotoAnalysis && (
+          <PhotoAnalysis
+            isOpen={showPhotoAnalysis}
+            onClose={() => setShowPhotoAnalysis(false)}
+            onAnalysisComplete={handlePhotoAnalysisComplete}
+            userId={user.id}
+          />
+        )}
+
+        {showVoiceRecording && (
+          <VoiceRecording
+            isOpen={showVoiceRecording}
+            onClose={() => setShowVoiceRecording(false)}
+            onAnalysisComplete={handleVoiceRecordingComplete}
+            userId={user.id}
           />
         )}
       </main>

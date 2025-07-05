@@ -2,9 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { FoodItem, FreshnessStatus } from '@/types';
 import { FoodItemCard } from '@/components/FoodItemCard';
 import { PhotoAnalysis } from '@/components/PhotoAnalysis';
-import { PhotoAnalysisButton } from '@/components/PhotoAnalysisButton';
 import { VoiceRecording } from '@/components/VoiceRecording';
-import { VoiceRecordingButton } from '@/components/VoiceRecordingButton';
 import { RecentActionsCard } from '@/components/RecentActionsCard';
 import { ActionHistoryItem } from '@/hooks/useActionHistory';
 import { Filter, Search as SearchIcon, SlidersHorizontal, X, Camera, Trash2 } from 'lucide-react';
@@ -23,6 +21,10 @@ interface InventoryDashboardProps {
   recentActions: ActionHistoryItem[];
   historyLoading: boolean;
   refetchHistory: () => void;
+  showPhotoAnalysis: boolean;
+  setShowPhotoAnalysis: (show: boolean) => void;
+  showVoiceRecording: boolean;
+  setShowVoiceRecording: (show: boolean) => void;
 }
 
 export const InventoryDashboard = ({
@@ -35,27 +37,20 @@ export const InventoryDashboard = ({
   recentActions,
   historyLoading,
   refetchHistory,
+  showPhotoAnalysis,
+  setShowPhotoAnalysis,
+  showVoiceRecording,
+  setShowVoiceRecording,
 }: InventoryDashboardProps) => {
   const [sortBy, setSortBy] = useState<'eatByDate' | 'name' | 'storageLocation'>('eatByDate');
   const [filterBy, setFilterBy] = useState<FreshnessStatus | 'all'>('all');
   const [foodTypeFilter, setFoodTypeFilter] = useState<'all' | 'cooked meal' | 'raw material'>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showPhotoAnalysis, setShowPhotoAnalysis] = useState(false);
-  const [showVoiceRecording, setShowVoiceRecording] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isSelecting, setIsSelecting] = useState(false);
   
   // Ref for photo analysis
   const isInitialRender = useRef(true);
-
-  // Memoize the callback to prevent unnecessary re-renders
-  const handleOpenPhotoAnalysis = useCallback(() => {
-    setShowPhotoAnalysis(true);
-  }, []);
-
-  const handleOpenVoiceRecording = useCallback(() => {
-    setShowVoiceRecording(true);
-  }, []);
 
   // Handle the analysis completion
   const handleAnalysisComplete = useCallback((item: Omit<FoodItem, 'id' | 'userId'>) => {
@@ -64,7 +59,7 @@ export const InventoryDashboard = ({
       onAddItem(item);
     }
     setShowPhotoAnalysis(false);
-  }, [onAddItem]);
+  }, [onAddItem, setShowPhotoAnalysis]);
 
   // Handle the voice recording completion
   const handleVoiceRecordingComplete = useCallback((items: Omit<FoodItem, 'id' | 'userId'>[]) => {
@@ -75,7 +70,7 @@ export const InventoryDashboard = ({
       });
     }
     setShowVoiceRecording(false);
-  }, [onAddItem]);
+  }, [onAddItem, setShowVoiceRecording]);
 
   const getFreshnessStatus = (eatByDate: Date): FreshnessStatus => {
     const today = new Date();
@@ -218,21 +213,6 @@ export const InventoryDashboard = ({
       {/* Recent Actions Card */}
       <RecentActionsCard actions={recentActions} loading={historyLoading} />
 
-      {userId && onAddItem && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <PhotoAnalysisButton
-            onOpen={handleOpenPhotoAnalysis}
-            onNavigateToSettings={onNavigateToSettings}
-            disabled={!userId || !onAddItem}
-          />
-          <VoiceRecordingButton
-            onOpen={handleOpenVoiceRecording}
-            onNavigateToSettings={onNavigateToSettings}
-            disabled={!userId || !onAddItem}
-          />
-        </div>
-      )}
-
       {/* Bulk selection controls */}
       <div className="flex flex-wrap gap-2 items-center">
         <Button
@@ -355,7 +335,6 @@ export const InventoryDashboard = ({
 
       {showPhotoAnalysis && (
         <PhotoAnalysis
-          key={`photo-analysis-${userId || 'no-user'}`}
           isOpen={showPhotoAnalysis}
           onClose={() => setShowPhotoAnalysis(false)}
           onAnalysisComplete={handleAnalysisComplete}

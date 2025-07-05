@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -92,12 +91,15 @@ serve(async (req) => {
 1. Identify what food item this is and suggest a concise, descriptive name
 2. Determine if this is a cooked meal or a raw ingredient/material
 3. If it's NOT a cooked meal (i.e., it's a packaged food or raw ingredient), look for any visible expiration dates, best-by dates, or use-by dates on packaging or labels
+4. Estimate the quantity (amount and unit) based on visual cues like container size, portion size, or packaging
 
 Please respond in this EXACT JSON format:
 {
   "suggested_name": "Brief descriptive name of the food item",
   "item_type": "cooked_meal" OR "raw_material",
   "expiration_date": "YYYY-MM-DD format if found and applicable, otherwise null",
+  "estimated_amount": number (e.g., 1, 2, 0.5),
+  "estimated_unit": "one of: pcs, pieces, item, items, small container, medium container, large container, small bowl, medium bowl, large bowl, small pot, medium pot, large pot, dozen, pack, packs, packet, packets, serving, servings, portion, portions, cup, cups, tbsp, tsp, ml, l, liter, liters, g, gr, gram, grams, kg, kilogram, kilograms, oz, ounce, ounces, lb, lbs, pound, pounds, slice, slices, half, quarter, third, bag, bags, box, boxes, bottle, bottles, can, cans, jar, jars, tube, tubes",
   "confidence": "high/medium/low based on image clarity and visibility of details"
 }
 
@@ -106,6 +108,8 @@ Important notes:
 - Some products may only contain a day and month expiration date in the format DD-MM or DD/MM. In such cases, assume the year is ${year}.
 - Only include expiration_date if you can clearly see a date on packaging and the item is NOT a cooked meal
 - Be conservative with expiration dates - only include if clearly visible and readable
+- For estimated_amount, use your best judgment based on visual cues (e.g., if it looks like a single serving, use 1 with "serving"; if it's a small container, use 1 with "small container")
+- Choose the most appropriate unit from the provided list - default to "serving" for cooked meals and "item" or "pcs" for individual items
 - You have been provided multiple photos of the same item from different angles - use all available images to make the most accurate determination possible
 - Write the item name in ${replyLanguage}`;
 
@@ -187,8 +191,18 @@ Important notes:
         suggested_name: "Food Item",
         item_type: "raw_material",
         expiration_date: null,
+        estimated_amount: 1,
+        estimated_unit: "item",
         confidence: "low"
       };
+    }
+
+    // Ensure the response has the required fields
+    if (!analysisResult.estimated_amount) {
+      analysisResult.estimated_amount = 1;
+    }
+    if (!analysisResult.estimated_unit) {
+      analysisResult.estimated_unit = analysisResult.item_type === 'cooked_meal' ? 'serving' : 'item';
     }
 
     return new Response(JSON.stringify(analysisResult), {

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { StorageLocationSelect } from '@/components/StorageLocationSelect';
-import { FoodItem } from '@/types';
+import { FoodItem, FOOD_UNITS } from '@/types';
+import { toast } from '@/components/ui/use-toast';
 
 interface EditItemFormProps {
   item: FoodItem;
@@ -20,14 +20,13 @@ export const EditItemForm = ({ item, onSubmit, onClose }: EditItemFormProps) => 
     name: item.name,
     dateCookedStored: item.dateCookedStored.toISOString().split('T')[0],
     eatByDate: item.eatByDate.toISOString().split('T')[0],
-    quantity: item.quantity,
+    amount: item.amount.toString(),
+    unit: item.unit,
     storageLocation: item.storageLocation,
     label: item.label,
     notes: item.notes || '',
     freshnessDays: (item.freshnessDays || 4).toString(),
   });
-
-
 
   const calculateEatByDate = (cookedDate: string, freshnessDays: number) => {
     const cooked = new Date(cookedDate);
@@ -39,12 +38,24 @@ export const EditItemForm = ({ item, onSubmit, onClose }: EditItemFormProps) => 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    const amount = parseFloat(formData.amount);
+    
+    if (isNaN(amount) || amount <= 0) {
+      toast({
+        title: 'Invalid Amount',
+        description: 'Please enter a valid positive number for the amount.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     const updatedItem: FoodItem = {
       ...item,
       name: formData.name,
       dateCookedStored: new Date(formData.dateCookedStored),
       eatByDate: new Date(formData.eatByDate),
-      quantity: formData.quantity,
+      amount: amount,
+      unit: formData.unit,
       storageLocation: formData.storageLocation,
       label: formData.label,
       notes: formData.notes || undefined,
@@ -124,15 +135,38 @@ export const EditItemForm = ({ item, onSubmit, onClose }: EditItemFormProps) => 
             />
           </div>
 
-          <div>
-            <Label htmlFor="quantity">Quantity *</Label>
-            <Input
-              id="quantity"
-              value={formData.quantity}
-              onChange={(e) => handleInputChange('quantity', e.target.value)}
-              placeholder="e.g., 2 servings, Half a pot, Small container"
-              required
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="amount">Amount *</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.1"
+                min="0.1"
+                value={formData.amount}
+                onChange={(e) => handleInputChange('amount', e.target.value)}
+                placeholder="e.g., 2"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="unit">Unit *</Label>
+              <Select 
+                value={formData.unit} 
+                onValueChange={(value) => handleInputChange('unit', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select unit" />
+                </SelectTrigger>
+                <SelectContent>
+                  {FOOD_UNITS.map((unit) => (
+                    <SelectItem key={unit} value={unit}>
+                      {unit}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div>

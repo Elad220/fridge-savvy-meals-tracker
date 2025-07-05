@@ -112,7 +112,7 @@ export const FoodItemCard = ({ item, onRemove, onEdit }: FoodItemCardProps) => {
         
         <div className="flex items-center text-sm text-muted-foreground">
           <Package className="w-4 h-4 mr-2" />
-          <span>{item.quantity}</span>
+          <span>{item.amount} {item.unit}</span>
         </div>
         
         <div className="flex items-center text-sm text-muted-foreground">

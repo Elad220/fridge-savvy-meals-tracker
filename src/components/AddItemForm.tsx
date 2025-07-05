@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { StorageLocationSelect } from '@/components/StorageLocationSelect';
-import { FoodItem, MealPlan } from '@/types';
+import { FoodItem, MealPlan, FOOD_UNITS } from '@/types';
 
 interface AddItemFormProps {
   type: 'inventory' | 'meals';
@@ -32,7 +32,8 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
       name: '',
       dateCookedStored: today,
       eatByDate: eatByDate,
-      quantity: '',
+      amount: '1',
+      unit: 'serving',
       storageLocation: '',
       label: 'raw material' as const,
       notes: '',
@@ -42,10 +43,6 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
     };
   });
 
-
-
-
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -53,12 +50,23 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
       if (type === 'inventory') {
         const freshnessDays = parseInt(formData.freshnessDays) || 4;
         const eatByDate = formData.eatByDate || calculateEatByDate(formData.dateCookedStored, freshnessDays);
+        const amount = parseFloat(formData.amount);
+        
+        if (isNaN(amount) || amount <= 0) {
+          toast({
+            title: 'Invalid Amount',
+            description: 'Please enter a valid positive number for the amount.',
+            variant: 'destructive',
+          });
+          return;
+        }
 
         const foodItem: Omit<FoodItem, 'id' | 'userId'> = {
           name: formData.name,
           dateCookedStored: new Date(formData.dateCookedStored),
           eatByDate: new Date(eatByDate),
-          quantity: formData.quantity,
+          amount: amount,
+          unit: formData.unit,
           storageLocation: formData.storageLocation,
           label: formData.label,
           notes: formData.notes || undefined,
@@ -162,15 +170,38 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="quantity">Quantity *</Label>
-                <Input
-                  id="quantity"
-                  value={formData.quantity}
-                  onChange={(e) => handleInputChange('quantity', e.target.value)}
-                  placeholder="e.g., 2 servings, Half a pot, Small container"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="amount">Amount *</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.1"
+                    min="0.1"
+                    value={formData.amount}
+                    onChange={(e) => handleInputChange('amount', e.target.value)}
+                    placeholder="e.g., 2"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="unit">Unit *</Label>
+                  <Select 
+                    value={formData.unit} 
+                    onValueChange={(value) => handleInputChange('unit', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select unit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FOOD_UNITS.map((unit) => (
+                        <SelectItem key={unit} value={unit}>
+                          {unit}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div>

@@ -3,6 +3,8 @@ import { FoodItem, FreshnessStatus } from '@/types';
 import { FoodItemCard } from '@/components/FoodItemCard';
 import { PhotoAnalysis } from '@/components/PhotoAnalysis';
 import { PhotoAnalysisButton } from '@/components/PhotoAnalysisButton';
+import { VoiceRecording } from '@/components/VoiceRecording';
+import { VoiceRecordingButton } from '@/components/VoiceRecordingButton';
 import { RecentActionsCard } from '@/components/RecentActionsCard';
 import { ActionHistoryItem } from '@/hooks/useActionHistory';
 import { Filter, Search as SearchIcon, SlidersHorizontal, X, Camera, Trash2 } from 'lucide-react';
@@ -39,6 +41,7 @@ export const InventoryDashboard = ({
   const [foodTypeFilter, setFoodTypeFilter] = useState<'all' | 'cooked meal' | 'raw material'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showPhotoAnalysis, setShowPhotoAnalysis] = useState(false);
+  const [showVoiceRecording, setShowVoiceRecording] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isSelecting, setIsSelecting] = useState(false);
   
@@ -50,6 +53,10 @@ export const InventoryDashboard = ({
     setShowPhotoAnalysis(true);
   }, []);
 
+  const handleOpenVoiceRecording = useCallback(() => {
+    setShowVoiceRecording(true);
+  }, []);
+
   // Handle the analysis completion
   const handleAnalysisComplete = useCallback((item: Omit<FoodItem, 'id' | 'userId'>) => {
     // The item is already in the correct format, just pass it through
@@ -57,6 +64,17 @@ export const InventoryDashboard = ({
       onAddItem(item);
     }
     setShowPhotoAnalysis(false);
+  }, [onAddItem]);
+
+  // Handle the voice recording completion
+  const handleVoiceRecordingComplete = useCallback((items: Omit<FoodItem, 'id' | 'userId'>[]) => {
+    // Add all items from voice recording
+    if (onAddItem) {
+      items.forEach(item => {
+        onAddItem(item);
+      });
+    }
+    setShowVoiceRecording(false);
   }, [onAddItem]);
 
   const getFreshnessStatus = (eatByDate: Date): FreshnessStatus => {
@@ -201,11 +219,18 @@ export const InventoryDashboard = ({
       <RecentActionsCard actions={recentActions} loading={historyLoading} />
 
       {userId && onAddItem && (
-        <PhotoAnalysisButton
-          onOpen={handleOpenPhotoAnalysis}
-          onNavigateToSettings={onNavigateToSettings}
-          disabled={!userId || !onAddItem}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <PhotoAnalysisButton
+            onOpen={handleOpenPhotoAnalysis}
+            onNavigateToSettings={onNavigateToSettings}
+            disabled={!userId || !onAddItem}
+          />
+          <VoiceRecordingButton
+            onOpen={handleOpenVoiceRecording}
+            onNavigateToSettings={onNavigateToSettings}
+            disabled={!userId || !onAddItem}
+          />
+        </div>
       )}
 
       {/* Bulk selection controls */}
@@ -334,6 +359,15 @@ export const InventoryDashboard = ({
           isOpen={showPhotoAnalysis}
           onClose={() => setShowPhotoAnalysis(false)}
           onAnalysisComplete={handleAnalysisComplete}
+          userId={userId || ''}
+        />
+      )}
+
+      {showVoiceRecording && (
+        <VoiceRecording
+          isOpen={showVoiceRecording}
+          onClose={() => setShowVoiceRecording(false)}
+          onAnalysisComplete={handleVoiceRecordingComplete}
           userId={userId || ''}
         />
       )}

@@ -24,7 +24,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
     expiration_date: string | null;
     confidence: string;
   } | null>(null);
-  const [showEditForm, setShowEditForm] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'main' | 'edit'>('main');
 
   // Refs for file inputs to reset them after use
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -37,7 +37,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
       console.log('Modal opened, resetting states');
       setSelectedImages([]);
       setAnalysisResult(null);
-      setShowEditForm(false);
+      setDialogMode('main');
       setIsAnalyzing(false);
       // Reset all file inputs
       if (cameraInputRef.current) cameraInputRef.current.value = '';
@@ -47,6 +47,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
   }, [isOpen]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('handleFileChange called');
     const files = event.target.files;
     if (!files || files.length === 0) {
       console.log('No files selected');
@@ -167,20 +168,20 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
       
       // Store analysis result and show edit form
       setAnalysisResult(data);
-      setShowEditForm(true);
+      setDialogMode('edit');
       
       toast({
         title: 'Analysis complete',
         description: `Detected: ${data.suggested_name}. Review and edit the details before adding.`,
       });
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error analyzing photo:', error);
       
       // Provide more specific error messages
       let errorMessage = 'Failed to analyze the photo. Please try again.';
       
-      if (error.message) {
+      if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
         if (error.message.includes('rate limit')) {
           errorMessage = 'Rate limit exceeded. Please wait a moment and try again.';
         } else if (error.message.includes('API key')) {
@@ -208,13 +209,14 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
   };
 
   const handleEditFormClose = () => {
-    setShowEditForm(false);
+    setDialogMode('main');
+    setAnalysisResult(null);
   };
 
   const handleReset = () => {
     setSelectedImages([]);
     setAnalysisResult(null);
-    setShowEditForm(false);
+    setDialogMode('main');
     setIsAnalyzing(false);
     // Reset all file inputs
     if (cameraInputRef.current) cameraInputRef.current.value = '';
@@ -226,7 +228,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
   const resetAnalysis = () => {
     setSelectedImages([]);
     setAnalysisResult(null);
-    setShowEditForm(false);
+    setDialogMode('main');
     setIsAnalyzing(false);
     // Reset all file inputs
     if (cameraInputRef.current) cameraInputRef.current.value = '';
@@ -236,7 +238,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
 
   return (
     <>
-      <Dialog open={isOpen && !showEditForm} onOpenChange={onClose}>
+      <Dialog open={isOpen && dialogMode === 'main'} onOpenChange={onClose}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Analyze Food Photo</DialogTitle>
@@ -259,27 +261,14 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                     id="camera-input"
                     multiple
                   />
-                  <label htmlFor="camera-input">
-                    <Button 
-                      variant="outline" 
-                      className="w-full" 
-                      asChild
-                      onClick={() => {
-                        console.log('Camera button clicked');
-                        // Small delay to ensure the input is ready
-                        setTimeout(() => {
-                          if (cameraInputRef.current) {
-                            cameraInputRef.current.click();
-                          }
-                        }, 100);
-                      }}
-                    >
-                      <span>
-                        <Camera className="w-4 h-4 mr-2" />
-                        Take Photos
-                      </span>
-                    </Button>
-                  </label>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => cameraInputRef.current?.click()}
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    Take Photos
+                  </Button>
                   
                   <Input
                     ref={uploadInputRef}
@@ -290,27 +279,14 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                     id="upload-input"
                     multiple
                   />
-                  <label htmlFor="upload-input">
-                    <Button 
-                      variant="outline" 
-                      className="w-full" 
-                      asChild
-                      onClick={() => {
-                        console.log('Upload button clicked');
-                        // Small delay to ensure the input is ready
-                        setTimeout(() => {
-                          if (uploadInputRef.current) {
-                            uploadInputRef.current.click();
-                          }
-                        }, 100);
-                      }}
-                    >
-                      <span>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload Photos
-                      </span>
-                    </Button>
-                  </label>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => uploadInputRef.current?.click()}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Photos
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -373,27 +349,14 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                     id="add-more-input"
                     multiple
                   />
-                  <label htmlFor="add-more-input" className="flex-1">
-                    <Button 
-                      variant="outline" 
-                      className="w-full" 
-                      asChild
-                      onClick={() => {
-                        console.log('Add more button clicked');
-                        // Small delay to ensure the input is ready
-                        setTimeout(() => {
-                          if (addMoreInputRef.current) {
-                            addMoreInputRef.current.click();
-                          }
-                        }, 100);
-                      }}
-                    >
-                      <span>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add More
-                      </span>
-                    </Button>
-                  </label>
+                  <Button 
+                    variant="outline" 
+                    className="w-full flex-1"
+                    onClick={() => addMoreInputRef.current?.click()}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add More
+                  </Button>
                 </div>
               </div>
             )}
@@ -401,9 +364,9 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
         </DialogContent>
       </Dialog>
 
-      {showEditForm && analysisResult && (
+      {analysisResult && (
         <PhotoAnalysisEditForm
-          isOpen={showEditForm}
+          isOpen={dialogMode === 'edit'}
           onClose={handleEditFormClose}
           onSubmit={handleEditFormSubmit}
           analysisData={analysisResult}

@@ -430,41 +430,51 @@ Important notes:
         }
       ];
 
-      const request: AIRequest = {
-        prompt,
-        imageData: imageArray[0], // Use first image as primary
-        temperature: 0.4,
-        maxTokens: 4096,
-      };
+      // Try different Gemini models for better reliability
+      const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+      let lastError: any = null;
 
-      // Override for Gemini to use its special multi-image format
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${credentials.apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ contents }),
-      });
+      for (const model of models) {
+        try {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${credentials.apiKey}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ contents }),
+          });
 
-      if (!response.ok) {
-        throw { status: response.status, message: await response.text() };
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Gemini API error response for model ${model}:`, errorText);
+            lastError = { status: response.status, message: errorText };
+            continue; // Try next model
+          }
+
+          const data = await response.json();
+          const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+          if (!content) {
+            throw new Error('No content generated from image analysis');
+          }
+
+          console.log(`Image analyzed using ${provider} (${model})`);
+          
+          return {
+            content,
+            provider,
+            model,
+            usage: undefined,
+          };
+        } catch (error) {
+          lastError = error;
+          console.error(`Error with model ${model}:`, error);
+          continue; // Try next model
+        }
       }
 
-      const data = await response.json();
-      const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (!content) {
-        throw new Error('No content generated from image analysis');
-      }
-
-      console.log(`Image analyzed using ${provider} (gemini-2.0-flash)`);
-      
-      return {
-        content,
-        provider,
-        model: 'gemini-2.0-flash',
-        usage: undefined,
-      };
+      // If all Gemini models failed, throw the last error
+      throw lastError || new Error('All Gemini models failed for image analysis');
     } else {
       // For other providers, analyze the first image (most providers support single image)
       const request: AIRequest = {

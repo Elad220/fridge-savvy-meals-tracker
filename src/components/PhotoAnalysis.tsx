@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,16 +63,28 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
     setIsAnalyzing(true);
 
     try {
+      // Validate images before sending
+      const validImages = selectedImages.filter(img => img.url && img.url.length > 0);
+      
+      if (validImages.length === 0) {
+        throw new Error('No valid images to analyze');
+      }
+
       // Send all selected images for analysis
       const { data, error } = await supabase.functions.invoke('analyze-photo', {
         body: {
-          images: selectedImages.map(img => img.url), // Send array of all image URLs
+          images: validImages.map(img => img.url), // Send array of all image URLs
           userId: userId,
         },
       });
 
       if (error) {
         throw error;
+      }
+
+      // Validate the response
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid response from analysis service');
       }
 
       console.log('Photo analysis result:', data);
@@ -89,9 +100,25 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
       
     } catch (error: any) {
       console.error('Error analyzing photo:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to analyze the photo. Please try again.';
+      
+      if (error.message) {
+        if (error.message.includes('rate limit')) {
+          errorMessage = 'Rate limit exceeded. Please wait a moment and try again.';
+        } else if (error.message.includes('API key')) {
+          errorMessage = 'Invalid API configuration. Please check your settings.';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: 'Analysis failed',
-        description: error.message || 'Failed to analyze the photo. Please try again.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {

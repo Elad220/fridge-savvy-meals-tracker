@@ -92,10 +92,6 @@ class GeminiProvider extends BaseAIProvider {
     audioTranscription: true,
   };
 
-  private getApiUrl(model: string = 'gemini-2.0-flash'): string {
-    return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.credentials.apiKey}`;
-  }
-
   async transcribeAudio(request: AIRequest): Promise<AIResponse> {
     this.validateCredentials();
 
@@ -104,46 +100,81 @@ class GeminiProvider extends BaseAIProvider {
     }
 
     try {
-      // Extract base64 data and mime type from data URL
-      const [header, base64Data] = request.audioData.split(',');
-      const mimeType = header.match(/data:([^;]+)/)?.[1] || 'audio/wav';
+      // Handle both data URL format and raw base64 format
+      let base64Data: string;
+      let mimeType: string;
 
-      const response = await fetch(this.getApiUrl(request.model), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: request.prompt },
-              {
-                inline_data: {
-                  mime_type: mimeType,
-                  data: base64Data
-                }
+      if (request.audioData.includes(',')) {
+        // Data URL format: data:audio/wav;base64,<data>
+        const [header, data] = request.audioData.split(',');
+        base64Data = data;
+        mimeType = header.match(/data:([^;]+)/)?.[1] || 'audio/webm';
+      } else {
+        // Raw base64 format (what frontend sends)
+        base64Data = request.audioData;
+        mimeType = 'audio/webm';
+      }
+
+      // Validate base64 data
+      if (!base64Data || base64Data.length === 0) {
+        throw new Error('Invalid audio data: empty or malformed');
+      }
+
+      // For Gemini, we need to use a model that supports audio
+      // Try different models that support audio transcription
+      const models = ['gemini-2.0-flash-exp', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      let lastError: any = null;
+
+      for (const model of models) {
+        try {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.credentials.apiKey}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  { text: request.prompt },
+                  {
+                    inline_data: {
+                      mime_type: mimeType,
+                      data: base64Data
+                    }
+                  }
+                ]
+              }],
+              generationConfig: {
+                temperature: request.temperature || 0.4,
+                maxOutputTokens: request.maxTokens || 8192,
               }
-            ]
-          }],
-          generationConfig: {
-            temperature: request.temperature || 0.4,
-            maxOutputTokens: request.maxTokens || 8192,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Gemini API error response for model ${model}:`, errorText);
+            lastError = { status: response.status, message: errorText };
+            continue; // Try next model
           }
-        }),
-      });
 
-      if (!response.ok) {
-        throw { status: response.status, message: await response.text() };
+          const data = await response.json();
+          const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+          if (!content) {
+            throw new Error('No content generated from audio transcription');
+          }
+
+          return this.createResponse(content, model);
+        } catch (error) {
+          lastError = error;
+          console.error(`Error with model ${model}:`, error);
+          continue; // Try next model
+        }
       }
 
-      const data = await response.json();
-      const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (!content) {
-        throw new Error('No content generated from audio transcription');
-      }
-
-      return this.createResponse(content, request.model || 'gemini-2.0-flash');
+      // If all models failed, throw the last error
+      throw lastError || new Error('All audio transcription models failed');
     } catch (error) {
       this.handleError(error, 'audio transcription');
     }

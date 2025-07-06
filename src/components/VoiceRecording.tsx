@@ -38,8 +38,23 @@ export const VoiceRecording = ({ isOpen, onClose, onAnalysisComplete, userId }: 
 
   const startRecording = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          sampleRate: 16000,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true
+        } 
+      });
+      
+      // Use a more compatible audio format
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/webm')
+        ? 'audio/webm'
+        : 'audio/mp4';
+        
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
       
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -51,7 +66,7 @@ export const VoiceRecording = ({ isOpen, onClose, onAnalysisComplete, userId }: 
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/wav' });
+        const blob = new Blob(chunksRef.current, { type: mimeType });
         setRecordedBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
         
@@ -113,13 +128,27 @@ export const VoiceRecording = ({ isOpen, onClose, onAnalysisComplete, userId }: 
     setIsAnalyzing(true);
 
     try {
+      // Validate blob size and type
+      if (recordedBlob.size === 0) {
+        throw new Error('Recording is empty');
+      }
+
+      if (recordedBlob.size > 25 * 1024 * 1024) { // 25MB limit
+        throw new Error('Recording is too large. Please record a shorter message.');
+      }
+
       // Convert blob to base64
       const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve) => {
+      const base64Promise = new Promise<string>((resolve, reject) => {
         reader.onloadend = () => {
           const base64 = reader.result as string;
-          resolve(base64.split(',')[1]); // Remove data:audio/wav;base64, prefix
+          if (base64) {
+            resolve(base64.split(',')[1]); // Remove data:audio/wav;base64, prefix
+          } else {
+            reject(new Error('Failed to convert audio to base64'));
+          }
         };
+        reader.onerror = () => reject(new Error('Failed to read audio file'));
       });
       reader.readAsDataURL(recordedBlob);
       const base64Audio = await base64Promise;
@@ -136,6 +165,11 @@ export const VoiceRecording = ({ isOpen, onClose, onAnalysisComplete, userId }: 
         throw error;
       }
 
+      // Validate the response
+      if (!data || typeof data !== 'object' || !data.items || !Array.isArray(data.items)) {
+        throw new Error('Invalid response from voice analysis service');
+      }
+
       console.log('Voice analysis result:', data);
       
       // Store analysis result and show edit form
@@ -149,9 +183,27 @@ export const VoiceRecording = ({ isOpen, onClose, onAnalysisComplete, userId }: 
       
     } catch (error: any) {
       console.error('Error analyzing voice recording:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to analyze the recording. Please try again.';
+      
+      if (error.message) {
+        if (error.message.includes('rate limit')) {
+          errorMessage = 'Rate limit exceeded. Please wait a moment and try again.';
+        } else if (error.message.includes('API key')) {
+          errorMessage = 'Invalid API configuration. Please check your settings.';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (error.message.includes('audio')) {
+          errorMessage = 'Audio format not supported. Please try recording again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: 'Analysis failed',
-        description: error.message || 'Failed to analyze the recording. Please try again.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {

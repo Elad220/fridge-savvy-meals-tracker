@@ -544,10 +544,6 @@ const Index = () => {
               recentActions={recentActions}
               historyLoading={historyLoading}
               refetchHistory={refetchHistory}
-              showPhotoAnalysis={showPhotoAnalysis}
-              setShowPhotoAnalysis={setShowPhotoAnalysis}
-              showVoiceRecording={showVoiceRecording}
-              setShowVoiceRecording={setShowVoiceRecording}
             />
           </div>
         );

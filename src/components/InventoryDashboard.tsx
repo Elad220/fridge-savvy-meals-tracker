@@ -1,15 +1,13 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { FoodItem, FreshnessStatus } from '@/types';
 import { FoodItemCard } from '@/components/FoodItemCard';
-import { PhotoAnalysis } from '@/components/PhotoAnalysis';
-import { VoiceRecording } from '@/components/VoiceRecording';
 import { RecentActionsCard } from '@/components/RecentActionsCard';
 import { ActionHistoryItem } from '@/hooks/useActionHistory';
-import { Filter, Search as SearchIcon, SlidersHorizontal, X, Camera, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Search as SearchIcon, Trash2 } from 'lucide-react';
 
 interface InventoryDashboardProps {
   foodItems: FoodItem[];
@@ -21,10 +19,6 @@ interface InventoryDashboardProps {
   recentActions: ActionHistoryItem[];
   historyLoading: boolean;
   refetchHistory: () => void;
-  showPhotoAnalysis: boolean;
-  setShowPhotoAnalysis: (show: boolean) => void;
-  showVoiceRecording: boolean;
-  setShowVoiceRecording: (show: boolean) => void;
 }
 
 export const InventoryDashboard = ({
@@ -37,10 +31,6 @@ export const InventoryDashboard = ({
   recentActions,
   historyLoading,
   refetchHistory,
-  showPhotoAnalysis,
-  setShowPhotoAnalysis,
-  showVoiceRecording,
-  setShowVoiceRecording,
 }: InventoryDashboardProps) => {
   const [sortBy, setSortBy] = useState<'eatByDate' | 'name' | 'storageLocation'>('eatByDate');
   const [filterBy, setFilterBy] = useState<FreshnessStatus | 'all'>('all');
@@ -48,29 +38,6 @@ export const InventoryDashboard = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isSelecting, setIsSelecting] = useState(false);
-  
-  // Ref for photo analysis
-  const isInitialRender = useRef(true);
-
-  // Handle the analysis completion
-  const handleAnalysisComplete = useCallback((item: Omit<FoodItem, 'id' | 'userId'>) => {
-    // The item is already in the correct format, just pass it through
-    if (onAddItem) {
-      onAddItem(item);
-    }
-    setShowPhotoAnalysis(false);
-  }, [onAddItem, setShowPhotoAnalysis]);
-
-  // Handle the voice recording completion
-  const handleVoiceRecordingComplete = useCallback((items: Omit<FoodItem, 'id' | 'userId'>[]) => {
-    // Add all items from voice recording
-    if (onAddItem) {
-      items.forEach(item => {
-        onAddItem(item);
-      });
-    }
-    setShowVoiceRecording(false);
-  }, [onAddItem, setShowVoiceRecording]);
 
   const getFreshnessStatus = (eatByDate: Date): FreshnessStatus => {
     const today = new Date();
@@ -86,34 +53,6 @@ export const InventoryDashboard = ({
     if (diffDays === 0) return 'use-or-throw';
     if (diffDays <= 2) return 'use-soon';
     return 'fresh';
-  };
-
-  const handlePhotoAnalysisComplete = (analysisData: {
-    suggested_name: string;
-    item_type: 'cooked_meal' | 'raw_material';
-    expiration_date: string | null;
-    confidence: string;
-  }) => {
-    if (!onAddItem) return;
-
-    const today = new Date();
-    const eatByDate = analysisData.expiration_date 
-      ? new Date(analysisData.expiration_date)
-      : new Date(today.getTime() + (4 * 24 * 60 * 60 * 1000));
-
-    const newItem: Omit<FoodItem, 'id' | 'userId'> = {
-      name: analysisData.suggested_name,
-      dateCookedStored: today,
-      eatByDate: eatByDate,
-      amount: 1,
-      unit: analysisData.item_type === 'cooked_meal' ? 'serving' : 'item',
-      storageLocation: 'Refrigerator',
-      label: analysisData.item_type === 'cooked_meal' ? 'cooked meal' : 'raw material',
-      notes: `AI analyzed with ${analysisData.confidence} confidence`,
-      freshnessDays: analysisData.expiration_date ? undefined : 4,
-    };
-
-    onAddItem(newItem);
   };
 
   const filteredAndSortedItems = foodItems
@@ -331,24 +270,6 @@ export const InventoryDashboard = ({
             </div>
           ))}
         </div>
-      )}
-
-      {showPhotoAnalysis && (
-        <PhotoAnalysis
-          isOpen={showPhotoAnalysis}
-          onClose={() => setShowPhotoAnalysis(false)}
-          onAnalysisComplete={handleAnalysisComplete}
-          userId={userId || ''}
-        />
-      )}
-
-      {showVoiceRecording && (
-        <VoiceRecording
-          isOpen={showVoiceRecording}
-          onClose={() => setShowVoiceRecording(false)}
-          onAnalysisComplete={handleVoiceRecordingComplete}
-          userId={userId || ''}
-        />
       )}
     </div>
   );

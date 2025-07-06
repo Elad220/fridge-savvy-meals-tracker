@@ -340,7 +340,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, onBulkAnaly
   return (
     <>
       <Dialog open={isOpen && dialogMode === 'main'} onOpenChange={onClose}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
             <DialogTitle>Analyze Food Photo</DialogTitle>
           </DialogHeader>
@@ -492,7 +492,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, onBulkAnaly
                 </div>
                 
                 {/* Add More Buttons */}
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
                   <Input
                     ref={addMoreCurrentItemRef}
                     type="file"
@@ -504,7 +504,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, onBulkAnaly
                   />
                   <Button 
                     variant="outline" 
-                    className="flex-1"
+                    className="w-full"
                     onClick={() => addMoreCurrentItemRef.current?.click()}
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -524,7 +524,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, onBulkAnaly
                       />
                       <Button 
                         variant="outline" 
-                        className="flex-1"
+                        className="w-full"
                         onClick={() => addMoreNextItemRef.current?.click()}
                       >
                         <Plus className="w-4 h-4 mr-2" />

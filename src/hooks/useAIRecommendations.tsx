@@ -180,7 +180,7 @@ export const useAIRecommendations = (
         .limit(1);
 
       if (!cacheError && cached && cached.length > 0) {
-        const cachedRecs = cached[0].recommendations as AIRecommendations;
+        const cachedRecs = cached[0].recommendations as any;
         setRecommendations({
           ...cachedRecs,
           generatedAt: new Date(cached[0].generated_at)
@@ -206,7 +206,7 @@ export const useAIRecommendations = (
         .insert({
           user_id: userId,
           recommendation_type: 'all',
-          recommendations: newRecommendations
+          recommendations: newRecommendations as any
         });
 
       setRecommendations(newRecommendations);

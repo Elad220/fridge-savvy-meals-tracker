@@ -3,8 +3,6 @@ import { FoodItem, FreshnessStatus } from '@/types';
 import { FoodItemCard } from '@/components/FoodItemCard';
 import { PhotoAnalysis } from '@/components/PhotoAnalysis';
 import { VoiceRecording } from '@/components/VoiceRecording';
-import { RecentActionsCard } from '@/components/RecentActionsCard';
-import { ActionHistoryItem } from '@/hooks/useActionHistory';
 import { Filter, Search as SearchIcon, SlidersHorizontal, X, Camera, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,9 +16,6 @@ interface InventoryDashboardProps {
   onAddItem?: (item: Omit<FoodItem, 'id' | 'userId'>) => void;
   userId?: string;
   onNavigateToSettings: () => void;
-  recentActions: ActionHistoryItem[];
-  historyLoading: boolean;
-  refetchHistory: () => void;
   showPhotoAnalysis: boolean;
   setShowPhotoAnalysis: (show: boolean) => void;
   showVoiceRecording: boolean;
@@ -34,9 +29,6 @@ export const InventoryDashboard = ({
   onAddItem,
   userId,
   onNavigateToSettings,
-  recentActions,
-  historyLoading,
-  refetchHistory,
   showPhotoAnalysis,
   setShowPhotoAnalysis,
   showVoiceRecording,
@@ -210,8 +202,6 @@ export const InventoryDashboard = ({
         </div>
       </div>
 
-      {/* Recent Actions Card */}
-      <RecentActionsCard actions={recentActions} loading={historyLoading} />
 
       {/* Bulk selection controls */}
       <div className="flex flex-wrap gap-2 items-center">

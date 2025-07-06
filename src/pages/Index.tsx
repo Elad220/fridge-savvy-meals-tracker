@@ -565,7 +565,7 @@ const Index = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <Header 
         user={headerUser}
-        onSignOut={handleLogout}
+        onLogout={handleLogout}
         activeTab={activeTab}
         onTabChange={handleTabChange}
       />

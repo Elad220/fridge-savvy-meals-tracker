@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AmountInput } from '@/components/ui/amount-input';
 import { StorageLocationSelect } from '@/components/StorageLocationSelect';
-import { FoodItem, MealPlan, FOOD_UNITS } from '@/types';
+import { FoodItem, MealPlan, FOOD_UNITS, FoodItemLabel } from '@/types';
 import { X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -43,7 +43,7 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
       amount: '1',
       unit: 'serving',
       storageLocation: '',
-      label: 'raw material' as const,
+      label: 'raw material' as FoodItemLabel,
       notes: '',
       plannedDate: today,
       destinationTime: '12:30',
@@ -248,7 +248,7 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
                 <Label htmlFor="label">Food Type *</Label>
                 <Select 
                   value={formData.label} 
-                  onValueChange={(value: 'cooked meal' | 'raw material') => handleInputChange('label', value)}
+                  onValueChange={(value: FoodItemLabel) => handleInputChange('label', value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select food type" />

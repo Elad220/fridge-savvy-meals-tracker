@@ -401,7 +401,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
         </DialogContent>
       </Dialog>
 
-      {analysisResult && (
+      {showEditForm && analysisResult && (
         <PhotoAnalysisEditForm
           isOpen={showEditForm}
           onClose={handleEditFormClose}

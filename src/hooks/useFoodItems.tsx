@@ -139,6 +139,20 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
       setFoodItems(prev => prev.map(item => 
         item.id === updatedItem.id ? updatedItem : item
       ));
+      
+      // Log the edit action (as 'add' type with update flag)
+      await logAction('add', updatedItem.name, {
+        quantity: `${updatedItem.amount} ${updatedItem.unit}`,
+        storageLocation: updatedItem.storageLocation,
+        label: updatedItem.label,
+        isUpdate: true, // Flag to indicate this was an update
+      });
+      
+      // Refresh the recent actions in the dashboard
+      refetchActions?.();
+      
+      // Notify parent component of action completion
+      onActionComplete?.();
 
       toast({
         title: 'Food item updated',

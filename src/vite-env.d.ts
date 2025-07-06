@@ -5,3 +5,5 @@
 
 declare module 'lucide-react';
 declare module 'react/jsx-runtime';
+declare module 'react-router-dom';
+declare module 'react';

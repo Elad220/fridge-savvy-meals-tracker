@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -30,6 +30,21 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const addMoreInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset states when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      console.log('Modal opened, resetting states');
+      setSelectedImages([]);
+      setAnalysisResult(null);
+      setShowEditForm(false);
+      setIsAnalyzing(false);
+      // Reset all file inputs
+      if (cameraInputRef.current) cameraInputRef.current.value = '';
+      if (uploadInputRef.current) uploadInputRef.current.value = '';
+      if (addMoreInputRef.current) addMoreInputRef.current.value = '';
+    }
+  }, [isOpen]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;

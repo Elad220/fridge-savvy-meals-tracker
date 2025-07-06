@@ -99,7 +99,11 @@ CREATE POLICY "Users can manage their own meal combinations"
   USING (auth.uid() = user_id);
 
 -- Create indexes for better performance
-CREATE INDEX idx_consumption_patterns_user_item ON public.consumption_patterns(user_id, item_name);
+-- The consumption_patterns.user_id + item_name pair must be unique for
+-- ON CONFLICT (user_id, item_name) in update_consumption_pattern() to work.
+-- Creating the index as UNIQUE enforces this invariant while still giving us
+-- the performance benefits of the composite index.
+CREATE UNIQUE INDEX idx_consumption_patterns_user_item ON public.consumption_patterns(user_id, item_name);
 CREATE INDEX idx_ai_recommendations_user_type ON public.ai_recommendations(user_id, recommendation_type);
 CREATE INDEX idx_meal_combinations_user ON public.meal_combinations(user_id);
 

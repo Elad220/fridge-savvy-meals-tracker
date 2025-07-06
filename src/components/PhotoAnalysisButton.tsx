@@ -39,7 +39,7 @@ export const PhotoAnalysisButton = ({
         className={`border-purple-500 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400 dark:hover:bg-purple-950/30 transition-colors duration-200 w-full ${className}`}
       >
         <Camera className="w-4 h-4 mr-2" />
-        Analyze Photo
+        Photo Analysis
       </Button>
     );
   }

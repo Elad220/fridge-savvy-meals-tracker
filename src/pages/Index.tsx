@@ -497,6 +497,22 @@ const Index = () => {
     setShowPhotoAnalysis(false);
   };
 
+  const handleBulkPhotoAnalysisComplete = (items: Omit<FoodItem, 'id' | 'userId'>[]) => {
+    items.forEach(item => {
+      addFoodItem(item);
+      
+      // Update consumption pattern for raw materials
+      if (item.label === 'raw material') {
+        updateConsumptionPattern({
+          ...item,
+          id: '', // Will be generated
+          userId: user.id
+        });
+      }
+    });
+    setShowBulkPhotoAnalysis(false);
+  };
+
   const handleVoiceRecordingComplete = (items: Omit<FoodItem, 'id' | 'userId'>[]) => {
     items.forEach(item => {
       addFoodItem(item);
@@ -643,6 +659,7 @@ const Index = () => {
             isOpen={showPhotoAnalysis}
             onClose={() => setShowPhotoAnalysis(false)}
             onAnalysisComplete={handlePhotoAnalysisComplete}
+            onBulkAnalysisComplete={handleBulkPhotoAnalysisComplete}
             userId={user.id}
           />
         )}

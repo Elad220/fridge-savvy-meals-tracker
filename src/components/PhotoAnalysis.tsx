@@ -18,7 +18,7 @@ interface PhotoAnalysisProps {
 
 export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: PhotoAnalysisProps) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [selectedImages, setSelectedImages] = useState<{id: string; url: string}[]>([]);
+  const [selectedImages, setSelectedImages] = useState<{id: string; url: string; file: File}[]>([]);
   const [analysisResult, setAnalysisResult] = useState<{
     suggested_name: string;
     item_type: 'cooked_meal' | 'raw_material';
@@ -42,17 +42,17 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    const newImages = Array.from(files).map(file => ({
+    const newImages = Array.from(files).map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
-      file
+      file,
     }));
 
-    // Convert files to data URLs and add to state
+    // Convert files to data URLs and add to state with both file & url
     newImages.forEach(({ id, file }) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
-        setSelectedImages(prev => [...prev, { id, url: result }]);
+        setSelectedImages((prev) => [...prev, { id, url: result, file }]);
       };
       reader.readAsDataURL(file);
     });
@@ -78,7 +78,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
       // Send all selected images for analysis
       const { data, error } = await supabase.functions.invoke('analyze-photo', {
         body: {
-          images: selectedImages.map(img => img.url), // Send array of all image URLs
+          images: selectedImages.map((img) => img.url), // Send array of all image URLs
           userId: userId,
         },
       });

@@ -9,15 +9,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { AmountInput } from '@/components/ui/amount-input';
 import { StorageLocationSelect } from '@/components/StorageLocationSelect';
 import { FoodItem, MealPlan, FOOD_UNITS } from '@/types';
+import { X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface AddItemFormProps {
   type: 'inventory' | 'meals';
   onSubmit: (item: any) => void;
   onClose: () => void;
+  onMealCombinationUpdate?: (mealName: string, ingredients: string[]) => void;
 }
 
-export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
+export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }: AddItemFormProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(true);
+  const [ingredients, setIngredients] = useState<string[]>([]);
+  const [ingredientInput, setIngredientInput] = useState('');
+  
   const calculateEatByDate = (cookedDate: string, freshnessDays: number) => {
     const cooked = new Date(cookedDate);
     const eatBy = new Date(cooked);
@@ -44,6 +50,24 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
       freshnessDays: defaultFreshnessDays.toString()
     };
   });
+
+  const handleAddIngredient = () => {
+    if (ingredientInput.trim() && !ingredients.includes(ingredientInput.trim())) {
+      setIngredients([...ingredients, ingredientInput.trim()]);
+      setIngredientInput('');
+    }
+  };
+
+  const handleRemoveIngredient = (ingredient: string) => {
+    setIngredients(ingredients.filter(i => i !== ingredient));
+  };
+
+  const handleIngredientKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddIngredient();
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +100,11 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
         };
 
         await onSubmit(foodItem);
+        
+        // Track meal combination for cooked meals
+        if (formData.label === 'cooked meal' && ingredients.length > 0 && onMealCombinationUpdate) {
+          onMealCombinationUpdate(formData.name, ingredients);
+        }
       } else {
         const mealPlan: Omit<MealPlan, 'id' | 'userId'> = {
           name: formData.name,
@@ -230,6 +259,49 @@ export const AddItemForm = ({ type, onSubmit, onClose }: AddItemFormProps) => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {formData.label === 'cooked meal' && (
+                <div>
+                  <Label htmlFor="ingredients">Ingredients (Optional)</Label>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        id="ingredients"
+                        value={ingredientInput}
+                        onChange={(e) => setIngredientInput(e.target.value)}
+                        onKeyPress={handleIngredientKeyPress}
+                        placeholder="Add an ingredient..."
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleAddIngredient}
+                        disabled={!ingredientInput.trim()}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    {ingredients.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {ingredients.map((ingredient, index) => (
+                          <Badge key={index} variant="secondary" className="pr-1">
+                            {ingredient}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-4 w-4 p-0 ml-1"
+                              onClick={() => handleRemoveIngredient(ingredient)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <StorageLocationSelect
                 value={formData.storageLocation}

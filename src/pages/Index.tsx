@@ -19,6 +19,9 @@ import Settings from '@/components/Settings'; // Import the new Settings compone
 import { VoiceRecording } from '@/components/VoiceRecording';
 import { VoiceRecordingButton } from '@/components/VoiceRecordingButton';
 import { FoodItem, MealPlan } from '@/types';
+import { AIRecommendations } from '@/components/AIRecommendations';
+import { useAIRecommendations } from '@/hooks/useAIRecommendations';
+import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -34,6 +37,7 @@ const Index = () => {
   const { recentActions, loading: historyLoading, refetch: refetchHistory } = useActionHistory(user?.id);
   const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id, undefined, refetchHistory);
   const { mealPlans, loading: mealLoading, addMealPlan, updateMealPlan, removeMealPlan } = useMealPlans(user?.id);
+  const { updateConsumptionPattern, updateMealCombination } = useAIRecommendations(user?.id, foodItems, recentActions);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -480,12 +484,31 @@ const Index = () => {
 
   const handlePhotoAnalysisComplete = (item: Omit<FoodItem, 'id' | 'userId'>) => {
     addFoodItem(item);
+    
+    // Update consumption pattern for raw materials
+    if (item.label === 'raw material') {
+      updateConsumptionPattern({
+        ...item,
+        id: '', // Will be generated
+        userId: user.id
+      });
+    }
+    
     setShowPhotoAnalysis(false);
   };
 
   const handleVoiceRecordingComplete = (items: Omit<FoodItem, 'id' | 'userId'>[]) => {
     items.forEach(item => {
       addFoodItem(item);
+      
+      // Update consumption pattern for raw materials
+      if (item.label === 'raw material') {
+        updateConsumptionPattern({
+          ...item,
+          id: '', // Will be generated
+          userId: user.id
+        });
+      }
     });
     setShowVoiceRecording(false);
   };
@@ -495,6 +518,22 @@ const Index = () => {
       case 'inventory':
         return (
           <div className="space-y-6">
+            {/* AI Recommendations Section */}
+            {user?.id && (
+              <AIRecommendations
+                userId={user.id}
+                foodItems={foodItems}
+                actionHistory={recentActions}
+                onAddToShoppingList={(items) => {
+                  // Handle adding items to shopping list
+                  toast({
+                    title: "Added to shopping list",
+                    description: `${items.length} item(s) added to your shopping list.`,
+                  });
+                }}
+              />
+            )}
+            
             <InventoryDashboard
               foodItems={foodItems}
               onRemoveItem={removeFoodItem}
@@ -583,6 +622,7 @@ const Index = () => {
             type={activeTab}
             onSubmit={activeTab === 'inventory' ? addFoodItem : addMealPlan}
             onClose={() => setShowAddForm(false)}
+            onMealCombinationUpdate={updateMealCombination}
           />
         )}
 

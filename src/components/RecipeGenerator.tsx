@@ -26,14 +26,20 @@ interface RecipeGeneratorProps {
 
 export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings }: RecipeGeneratorProps) => {
   const { user } = useAuth();
-  const { hasGeminiToken, loading: tokenLoading } = useApiTokens();
+  const { hasAnyToken, loading: tokenLoading } = useApiTokens();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [recipeDetails, setRecipeDetails] = useState<any>(null);
+  const [recipeDetails, setRecipeDetails] = useState<{
+    instructions?: string[];
+    nutrition?: Record<string, string>;
+    tips?: string[];
+  } | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [generatedRecipes, setGeneratedRecipes] = useState<Recipe[]>([]);
+  const [showRecipes, setShowRecipes] = useState(false);
 
   const handleIngredientToggle = (ingredient: string) => {
     setSelectedIngredients(prev =>
@@ -150,11 +156,11 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
       );
     }
 
-    if (!hasGeminiToken) {
+    if (!hasAnyToken) {
       return (
         <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
           <p className="text-sm text-orange-700 dark:text-orange-400">
-            Add your Gemini API token in the{' '}
+            Add your AI API token in the{' '}
             <button onClick={onNavigateToSettings} className="font-bold underline hover:text-orange-800 dark:hover:text-orange-300">
               settings page
             </button>{' '}

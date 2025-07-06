@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -26,24 +26,76 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
   } | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
 
+  // Refs for file inputs to reset them after use
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+  const addMoreInputRef = useRef<HTMLInputElement>(null);
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0) {
+      console.log('No files selected');
+      return;
+    }
+
+    console.log('Files selected:', files.length, 'files');
 
     const newImages = Array.from(files).map(file => ({
       id: Math.random().toString(36).substr(2, 9),
       file
     }));
 
+    console.log('Processing', newImages.length, 'images');
+
     // Convert files to data URLs and add to state
-    newImages.forEach(({ id, file }) => {
+    newImages.forEach(({ id, file }, index) => {
+      console.log(`Processing file ${index + 1}:`, file.name, file.type, file.size);
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        console.error(`File ${file.name} is not an image:`, file.type);
+        toast({
+          title: 'Invalid File Type',
+          description: `${file.name} is not an image file. Please select an image.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        console.error(`File ${file.name} is too large:`, file.size);
+        toast({
+          title: 'File Too Large',
+          description: `${file.name} is too large. Please select a smaller image (max 10MB).`,
+          variant: 'destructive',
+        });
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
-        setSelectedImages(prev => [...prev, { id, url: result }]);
+        console.log(`File ${index + 1} converted to data URL, length:`, result.length);
+        setSelectedImages(prev => {
+          const newImages = [...prev, { id, url: result }];
+          console.log('Total images now:', newImages.length);
+          return newImages;
+        });
+      };
+      reader.onerror = (error) => {
+        console.error(`Error reading file ${index + 1}:`, error);
+        toast({
+          title: 'File Error',
+          description: `Failed to read ${file.name}. Please try again.`,
+          variant: 'destructive',
+        });
       };
       reader.readAsDataURL(file);
     });
+
+    // Reset the file input to allow selecting the same file again
+    event.target.value = '';
   };
 
   const removeImage = (id: string) => {
@@ -52,6 +104,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
 
   const analyzePhoto = async () => {
     if (selectedImages.length === 0) {
+      console.log('No images selected for analysis');
       toast({
         title: 'No images selected',
         description: 'Please select or take at least one photo.',
@@ -60,15 +113,21 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
       return;
     }
 
+    console.log('Starting photo analysis with', selectedImages.length, 'images');
     setIsAnalyzing(true);
 
     try {
       // Validate images before sending
       const validImages = selectedImages.filter(img => img.url && img.url.length > 0);
       
+      console.log('Valid images:', validImages.length, 'out of', selectedImages.length);
+      
       if (validImages.length === 0) {
         throw new Error('No valid images to analyze');
       }
+
+      console.log('Sending', validImages.length, 'images for analysis');
+      console.log('User ID:', userId);
 
       // Send all selected images for analysis
       const { data, error } = await supabase.functions.invoke('analyze-photo', {
@@ -79,11 +138,13 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
       });
 
       if (error) {
+        console.error('Supabase function error:', error);
         throw error;
       }
 
       // Validate the response
       if (!data || typeof data !== 'object') {
+        console.error('Invalid response data:', data);
         throw new Error('Invalid response from analysis service');
       }
 
@@ -140,6 +201,10 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
     setAnalysisResult(null);
     setShowEditForm(false);
     setIsAnalyzing(false);
+    // Reset all file inputs
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
+    if (uploadInputRef.current) uploadInputRef.current.value = '';
+    if (addMoreInputRef.current) addMoreInputRef.current.value = '';
     onClose();
   };
 
@@ -148,6 +213,10 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
     setAnalysisResult(null);
     setShowEditForm(false);
     setIsAnalyzing(false);
+    // Reset all file inputs
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
+    if (uploadInputRef.current) uploadInputRef.current.value = '';
+    if (addMoreInputRef.current) addMoreInputRef.current.value = '';
   };
 
   return (
@@ -167,16 +236,29 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                 
                 <div className="space-y-2">
                   <Input
+                    ref={cameraInputRef}
                     type="file"
                     accept="image/*"
-                    capture="environment"
                     onChange={handleFileChange}
                     className="hidden"
                     id="camera-input"
                     multiple
                   />
                   <label htmlFor="camera-input">
-                    <Button variant="outline" className="w-full" asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full" 
+                      asChild
+                      onClick={() => {
+                        console.log('Camera button clicked');
+                        // Small delay to ensure the input is ready
+                        setTimeout(() => {
+                          if (cameraInputRef.current) {
+                            cameraInputRef.current.click();
+                          }
+                        }, 100);
+                      }}
+                    >
                       <span>
                         <Camera className="w-4 h-4 mr-2" />
                         Take Photos
@@ -185,6 +267,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                   </label>
                   
                   <Input
+                    ref={uploadInputRef}
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
@@ -193,7 +276,20 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                     multiple
                   />
                   <label htmlFor="upload-input">
-                    <Button variant="outline" className="w-full" asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full" 
+                      asChild
+                      onClick={() => {
+                        console.log('Upload button clicked');
+                        // Small delay to ensure the input is ready
+                        setTimeout(() => {
+                          if (uploadInputRef.current) {
+                            uploadInputRef.current.click();
+                          }
+                        }, 100);
+                      }}
+                    >
                       <span>
                         <Upload className="w-4 h-4 mr-2" />
                         Upload Photos
@@ -254,6 +350,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                     Reset All
                   </Button>
                   <Input
+                    ref={addMoreInputRef}
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
@@ -262,7 +359,20 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                     multiple
                   />
                   <label htmlFor="add-more-input" className="flex-1">
-                    <Button variant="outline" className="w-full" asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full" 
+                      asChild
+                      onClick={() => {
+                        console.log('Add more button clicked');
+                        // Small delay to ensure the input is ready
+                        setTimeout(() => {
+                          if (addMoreInputRef.current) {
+                            addMoreInputRef.current.click();
+                          }
+                        }, 100);
+                      }}
+                    >
                       <span>
                         <Plus className="w-4 h-4 mr-2" />
                         Add More

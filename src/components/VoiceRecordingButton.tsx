@@ -15,7 +15,7 @@ export const VoiceRecordingButton = ({
   disabled = false,
   className = '',
 }: VoiceRecordingButtonProps) => {
-  const { hasGeminiToken, loading: tokenLoading } = useApiTokens();
+  const { hasAnyToken, loading: tokenLoading } = useApiTokens();
 
   if (tokenLoading) {
     return (
@@ -30,7 +30,7 @@ export const VoiceRecordingButton = ({
     );
   }
 
-  if (hasGeminiToken) {
+  if (hasAnyToken) {
     return (
       <Button
         onClick={onOpen}
@@ -47,7 +47,7 @@ export const VoiceRecordingButton = ({
   return (
     <div className={`bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 w-full ${className}`}>
       <p className="text-sm text-orange-700 dark:text-orange-400 text-center">
-        Add your Gemini API token in the{' '}
+        Add your AI API token in the{' '}
         <button 
           onClick={onNavigateToSettings} 
           className="font-bold underline hover:text-orange-800 dark:hover:text-orange-300"

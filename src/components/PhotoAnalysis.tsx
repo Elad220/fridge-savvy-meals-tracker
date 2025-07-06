@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { FoodItem } from '@/types';
 import { PhotoAnalysisEditForm } from './PhotoAnalysisEditForm';
+import { PhotoAnalysisBulkEditForm } from './PhotoAnalysisBulkEditForm';
 
 interface PhotoAnalysisProps {
   isOpen: boolean;
@@ -26,6 +26,17 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
     confidence: string;
   } | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+
+  // Bulk analysis state
+  const [bulkAnalysisResults, setBulkAnalysisResults] = useState<Array<{
+    suggested_name: string;
+    item_type: 'cooked_meal' | 'raw_material';
+    expiration_date: string | null;
+    estimated_amount?: number;
+    estimated_unit?: string;
+    confidence: string;
+  }>>([]);
+  const [showBulkEditForm, setShowBulkEditForm] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -99,6 +110,57 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
     }
   };
 
+  // Analyze each photo individually for bulk adding
+  const analyzePhotosIndividually = async () => {
+    if (selectedImages.length === 0) {
+      toast({
+        title: 'No images selected',
+        description: 'Please select or take at least one photo.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+
+    try {
+      const results: typeof bulkAnalysisResults = [];
+
+      // Analyze photos in parallel
+      const promises = selectedImages.map(async (img) => {
+        const { data, error } = await supabase.functions.invoke('analyze-photo', {
+          body: {
+            image: img.url,
+            userId: userId,
+          },
+        });
+
+        if (error) throw error;
+
+        results.push(data);
+      });
+
+      await Promise.all(promises);
+
+      setBulkAnalysisResults(results);
+      setShowBulkEditForm(true);
+
+      toast({
+        title: 'Analysis complete',
+        description: `Detected ${results.length} item${results.length === 1 ? '' : 's'}. Review and edit the details before adding.`,
+      });
+    } catch (error: any) {
+      console.error('Error analyzing photos:', error);
+      toast({
+        title: 'Analysis failed',
+        description: error.message || 'Failed to analyze the photos. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const handleEditFormSubmit = (item: Omit<FoodItem, 'id' | 'userId'>) => {
     onAnalysisComplete(item);
     handleReset();
@@ -114,6 +176,10 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
     setShowEditForm(false);
     setIsAnalyzing(false);
     onClose();
+
+    // Reset bulk analysis
+    setBulkAnalysisResults([]);
+    setShowBulkEditForm(false);
   };
 
   const resetAnalysis = () => {
@@ -121,6 +187,19 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
     setAnalysisResult(null);
     setShowEditForm(false);
     setIsAnalyzing(false);
+
+    // Reset bulk analysis
+    setBulkAnalysisResults([]);
+    setShowBulkEditForm(false);
+  };
+
+  const handleBulkEditFormSubmit = (items: Omit<FoodItem, 'id' | 'userId'>[]) => {
+    items.forEach(item => onAnalysisComplete(item));
+    handleReset();
+  };
+
+  const handleBulkEditFormClose = () => {
+    setShowBulkEditForm(false);
   };
 
   return (
@@ -204,7 +283,8 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                   ))}
                 </div>
                 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {/* Analyze together (single item) */}
                   <Button
                     onClick={analyzePhoto}
                     disabled={isAnalyzing || selectedImages.length === 0}
@@ -216,9 +296,27 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                         Analyzing...
                       </>
                     ) : (
-                      `Analyze ${selectedImages.length > 1 ? 'All Photos' : 'Photo'}`
+                      `Analyze ${selectedImages.length > 1 ? 'Together' : 'Photo'}`
                     )}
                   </Button>
+
+                  {/* Analyze separately for bulk adding - only show when multiple images */}
+                  {selectedImages.length > 1 && (
+                    <Button
+                      onClick={analyzePhotosIndividually}
+                      disabled={isAnalyzing}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      {isAnalyzing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : 'Analyze Separately'}
+                    </Button>
+                  )}
+
                   <Button
                     variant="outline"
                     onClick={resetAnalysis}
@@ -255,6 +353,15 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
           onClose={handleEditFormClose}
           onSubmit={handleEditFormSubmit}
           analysisData={analysisResult}
+        />
+      )}
+
+      {bulkAnalysisResults.length > 0 && (
+        <PhotoAnalysisBulkEditForm
+          isOpen={showBulkEditForm}
+          onClose={handleBulkEditFormClose}
+          onSubmit={handleBulkEditFormSubmit}
+          analysisData={bulkAnalysisResults}
         />
       )}
     </>

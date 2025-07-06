@@ -1,4 +1,4 @@
-import { Clock, Plus, Trash2 } from 'lucide-react';
+import { Clock, Plus, Trash2, Pencil } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ActionHistoryItem } from '@/hooks/useActionHistory';
 import { formatDistanceToNow } from 'date-fns';
@@ -63,14 +63,20 @@ export const RecentActionsCard = ({ actions, loading }: RecentActionsCardProps) 
               key={action.id} 
               className="flex items-center gap-2 p-2 rounded-md bg-muted/50 text-sm"
             >
-              {action.actionType === 'add' ? (
+              {action.actionType === 'add' && action.itemDetails?.isUpdate ? (
+                <Pencil className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              ) : action.actionType === 'add' ? (
                 <Plus className="w-4 h-4 text-green-600 dark:text-green-400" />
               ) : (
                 <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
               )}
               <span className="flex-1">
                 <span className="font-medium">
-                  {action.actionType === 'add' ? 'Added' : 'Removed'}
+                  {action.actionType === 'add' && action.itemDetails?.isUpdate 
+                    ? 'Updated' 
+                    : action.actionType === 'add' 
+                    ? 'Added' 
+                    : 'Removed'}
                 </span>{' '}
                 <span className="text-foreground">{action.itemName}</span>
               </span>

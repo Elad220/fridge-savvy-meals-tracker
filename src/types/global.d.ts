@@ -1,5 +1,4 @@
-/// <reference types="react" />
-/// <reference types="react-dom" />
+// React types are pulled in automatically via @types/react and the compiler's JSX settings.
 
 // Allow importing SVGs and other media files as React components or strings
 declare module '*.svg' {

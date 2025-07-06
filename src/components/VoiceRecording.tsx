@@ -113,12 +113,13 @@ export const VoiceRecording = ({ isOpen, onClose, onAnalysisComplete, userId }: 
     setIsAnalyzing(true);
 
     try {
-      // Convert blob to base64
+      // Read the recorded audio blob as a Data URL (includes the MIME prefix)
       const reader = new FileReader();
       const base64Promise = new Promise<string>((resolve) => {
         reader.onloadend = () => {
-          const base64 = reader.result as string;
-          resolve(base64.split(',')[1]); // Remove data:audio/wav;base64, prefix
+          const dataUrl = reader.result as string;
+          // Keep the full data URL so the server can reliably determine the MIME type
+          resolve(dataUrl);
         };
       });
       reader.readAsDataURL(recordedBlob);

@@ -101,6 +101,11 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, onBulkAnaly
     });
   };
 
+  // Helper to change the active group when user selects a previous item
+  const setCurrentGroup = (index: number) => {
+    setGroupState(prev => ({ ...prev, currentGroupIndex: index }));
+  };
+
   // Reset states when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -433,7 +438,11 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, onBulkAnaly
                 {groupState.itemGroups.length > 0 && (
                   <div className="space-y-2">
                     {groupState.itemGroups.map((group, groupIdx) => (
-                      <div key={group.id} className="mb-2">
+                      <div
+                        key={group.id}
+                        className={`mb-2 rounded border ${groupIdx === groupState.currentGroupIndex ? 'border-primary' : 'border-transparent'} cursor-pointer`}
+                        onClick={() => setCurrentGroup(groupIdx)}
+                      >
                         <div className="text-xs text-muted-foreground mb-1">
                           Item {groupIdx + 1} {groupIdx === groupState.currentGroupIndex && "(current)"}
                         </div>

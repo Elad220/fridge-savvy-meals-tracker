@@ -2,7 +2,7 @@ import { Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useApiTokens } from '@/hooks/useApiTokens';
 
-interface VoiceRecordingButtonProps {
+interface VoiceRecordingButtonProps { 
   onOpen: () => void;
   onNavigateToSettings: () => void;
   disabled?: boolean;

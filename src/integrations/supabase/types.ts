@@ -36,75 +36,8 @@ export type Database = {
         }
         Relationships: []
       }
-      ai_recommendations: {
-        Row: {
-          expires_at: string | null
-          generated_at: string | null
-          id: string
-          recommendation_type: string
-          recommendations: Json
-          user_id: string
-        }
-        Insert: {
-          expires_at?: string | null
-          generated_at?: string | null
-          id?: string
-          recommendation_type: string
-          recommendations: Json
-          user_id: string
-        }
-        Update: {
-          expires_at?: string | null
-          generated_at?: string | null
-          id?: string
-          recommendation_type?: string
-          recommendations?: Json
-          user_id?: string
-        }
-        Relationships: []
-      }
-      consumption_patterns: {
-        Row: {
-          average_consumption_rate: number | null
-          created_at: string | null
-          id: string
-          item_name: string
-          last_purchase_date: string | null
-          times_purchased: number | null
-          typical_quantity: number | null
-          typical_unit: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          average_consumption_rate?: number | null
-          created_at?: string | null
-          id?: string
-          item_name: string
-          last_purchase_date?: string | null
-          times_purchased?: number | null
-          typical_quantity?: number | null
-          typical_unit?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          average_consumption_rate?: number | null
-          created_at?: string | null
-          id?: string
-          item_name?: string
-          last_purchase_date?: string | null
-          times_purchased?: number | null
-          typical_quantity?: number | null
-          typical_unit?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       food_items: {
         Row: {
-          amount: number
           created_at: string | null
           date_cooked_stored: string
           eat_by_date: string
@@ -113,13 +46,12 @@ export type Database = {
           label: string
           name: string
           notes: string | null
+          quantity: string
           storage_location: string
-          unit: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
-          amount?: number
           created_at?: string | null
           date_cooked_stored: string
           eat_by_date: string
@@ -128,13 +60,12 @@ export type Database = {
           label?: string
           name: string
           notes?: string | null
+          quantity: string
           storage_location: string
-          unit?: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
-          amount?: number
           created_at?: string | null
           date_cooked_stored?: string
           eat_by_date?: string
@@ -143,41 +74,8 @@ export type Database = {
           label?: string
           name?: string
           notes?: string | null
+          quantity?: string
           storage_location?: string
-          unit?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      meal_combinations: {
-        Row: {
-          created_at: string | null
-          frequency: number | null
-          id: string
-          ingredients: Json
-          last_prepared: string | null
-          meal_name: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          frequency?: number | null
-          id?: string
-          ingredients: Json
-          last_prepared?: string | null
-          meal_name: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          frequency?: number | null
-          id?: string
-          ingredients?: Json
-          last_prepared?: string | null
-          meal_name?: string
           updated_at?: string | null
           user_id?: string
         }
@@ -261,42 +159,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_preferences: {
-        Row: {
-          created_at: string | null
-          dietary_restrictions: string[] | null
-          favorite_items: Json | null
-          id: string
-          preferred_meal_types: string[] | null
-          shopping_frequency: string | null
-          typical_household_size: number | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          dietary_restrictions?: string[] | null
-          favorite_items?: Json | null
-          id?: string
-          preferred_meal_types?: string[] | null
-          shopping_frequency?: string | null
-          typical_household_size?: number | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          dietary_restrictions?: string[] | null
-          favorite_items?: Json | null
-          id?: string
-          preferred_meal_types?: string[] | null
-          shopping_frequency?: string | null
-          typical_household_size?: number | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -321,15 +183,6 @@ export type Database = {
       store_api_token: {
         Args: { p_token_name: string; p_api_token: string }
         Returns: string
-      }
-      update_consumption_pattern: {
-        Args: {
-          p_user_id: string
-          p_item_name: string
-          p_quantity: number
-          p_unit: string
-        }
-        Returns: undefined
       }
     }
     Enums: {

@@ -19,6 +19,7 @@ import Settings from '@/components/Settings'; // Import the new Settings compone
 import { VoiceRecording } from '@/components/VoiceRecording';
 import { VoiceRecordingButton } from '@/components/VoiceRecordingButton';
 import { FoodItem, MealPlan } from '@/types';
+import { AIRecommendations } from '@/components/AIRecommendations';
 import { useAIRecommendations } from '@/hooks/useAIRecommendations';
 import { toast } from '@/hooks/use-toast';
 
@@ -42,8 +43,6 @@ const Index = () => {
     const tab = searchParams.get('tab');
     if (tab === 'meals') {
       setActiveTab('meals');
-    } else if (tab === 'settings') {
-      setActiveTab('settings');
     } else {
       setActiveTab('inventory');
     }
@@ -115,15 +114,6 @@ const Index = () => {
   const handleLogout = async () => {
     await signOut();
     navigate('/auth');
-  };
-
-  const handleTabChange = (tab: 'inventory' | 'meals' | 'settings' | 'dashboard') => {
-    if (tab === 'dashboard') {
-      navigate('/dashboard');
-    } else {
-      setActiveTab(tab as 'inventory' | 'meals' | 'settings');
-      navigate(`/?tab=${tab}`);
-    }
   };
 
   if (authLoading) {
@@ -484,8 +474,16 @@ const Index = () => {
     removeMealPlan(meal.id);
   };
 
-  const handleAddFoodItem = async (item: Omit<FoodItem, 'id' | 'userId'>) => {
-    await addFoodItem(item);
+  const handleOpenPhotoAnalysis = () => {
+    setShowPhotoAnalysis(true);
+  };
+
+  const handleOpenVoiceRecording = () => {
+    setShowVoiceRecording(true);
+  };
+
+  const handlePhotoAnalysisComplete = (item: Omit<FoodItem, 'id' | 'userId'>) => {
+    addFoodItem(item);
     
     // Update consumption pattern for raw materials
     if (item.label === 'raw material') {
@@ -496,31 +494,21 @@ const Index = () => {
       });
     }
     
-    // Track meal combinations for cooked meals  
-    if (item.label === 'cooked meal' && item.notes) {
-      const ingredients = item.notes.split(',').map(i => i.trim()).filter(Boolean);
-      if (ingredients.length > 0) {
-        updateMealCombination(item.name, ingredients);
-      }
-    }
-  };
-
-  const handleOpenPhotoAnalysis = () => {
-    setShowPhotoAnalysis(true);
-  };
-
-  const handleOpenVoiceRecording = () => {
-    setShowVoiceRecording(true);
-  };
-
-  const handlePhotoAnalysisComplete = (item: Omit<FoodItem, 'id' | 'userId'>) => {
-    handleAddFoodItem(item);
     setShowPhotoAnalysis(false);
   };
 
   const handleVoiceRecordingComplete = (items: Omit<FoodItem, 'id' | 'userId'>[]) => {
     items.forEach(item => {
-      handleAddFoodItem(item);
+      addFoodItem(item);
+      
+      // Update consumption pattern for raw materials
+      if (item.label === 'raw material') {
+        updateConsumptionPattern({
+          ...item,
+          id: '', // Will be generated
+          userId: user.id
+        });
+      }
     });
     setShowVoiceRecording(false);
   };
@@ -529,18 +517,39 @@ const Index = () => {
     switch (activeTab) {
       case 'inventory':
         return (
-          <InventoryDashboard
-            foodItems={foodItems}
-            onRemoveItem={removeFoodItem}
-            onEditItem={setEditingItem}
-            onAddItem={handleAddFoodItem}
-            userId={user.id}
-            onNavigateToSettings={() => setActiveTab('settings')}
-            showPhotoAnalysis={showPhotoAnalysis}
-            setShowPhotoAnalysis={setShowPhotoAnalysis}
-            showVoiceRecording={showVoiceRecording}
-            setShowVoiceRecording={setShowVoiceRecording}
-          />
+          <div className="space-y-6">
+            {/* AI Recommendations Section */}
+            {user?.id && (
+              <AIRecommendations
+                userId={user.id}
+                foodItems={foodItems}
+                actionHistory={recentActions}
+                onAddToShoppingList={(items) => {
+                  // Handle adding items to shopping list
+                  toast({
+                    title: "Added to shopping list",
+                    description: `${items.length} item(s) added to your shopping list.`,
+                  });
+                }}
+              />
+            )}
+            
+            <InventoryDashboard
+              foodItems={foodItems}
+              onRemoveItem={removeFoodItem}
+              onEditItem={setEditingItem}
+              onAddItem={addFoodItem}
+              userId={user.id}
+              onNavigateToSettings={() => setActiveTab('settings')}
+              recentActions={recentActions}
+              historyLoading={historyLoading}
+              refetchHistory={refetchHistory}
+              showPhotoAnalysis={showPhotoAnalysis}
+              setShowPhotoAnalysis={setShowPhotoAnalysis}
+              showVoiceRecording={showVoiceRecording}
+              setShowVoiceRecording={setShowVoiceRecording}
+            />
+          </div>
         );
       case 'meals':
         return (
@@ -563,11 +572,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header 
+      <Header
         user={headerUser}
         onLogout={handleLogout}
         activeTab={activeTab}
-        onTabChange={handleTabChange}
+        onTabChange={setActiveTab}
       />
 
       <main className="flex-1 container mx-auto px-4 py-6">
@@ -610,8 +619,8 @@ const Index = () => {
 
         {showAddForm && activeTab !== 'settings' && (
           <AddItemForm
-            type={activeTab as 'inventory' | 'meals'}
-            onSubmit={activeTab === 'inventory' ? handleAddFoodItem : addMealPlan}
+            type={activeTab}
+            onSubmit={activeTab === 'inventory' ? addFoodItem : addMealPlan}
             onClose={() => setShowAddForm(false)}
             onMealCombinationUpdate={updateMealCombination}
           />

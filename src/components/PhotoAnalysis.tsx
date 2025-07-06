@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,25 +25,78 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
     confidence: string;
   } | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [isPreparingImages, setIsPreparingImages] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    const newImages = Array.from(files).map(file => ({
+    setIsPreparingImages(true);
+
+    const maxWidth = 1024; // Resize large photos to a reasonable width to keep request size small
+    const quality = 0.8;   // JPEG quality
+
+    const compressImage = (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const scale = Math.min(1, maxWidth / img.width);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              reject(new Error('Canvas 2D context not available'));
+              return;
+            }
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            // Convert to JPEG to drastically cut size (even if original is PNG)
+            canvas.toBlob((blob) => {
+              if (!blob) {
+                reject(new Error('Failed to compress image'));
+                return;
+              }
+              const blobReader = new FileReader();
+              blobReader.onloadend = () => {
+                const dataUrl = blobReader.result as string;
+                resolve(dataUrl);
+              };
+              blobReader.readAsDataURL(blob);
+            }, 'image/jpeg', quality);
+          };
+          img.onerror = () => reject(new Error('Failed to load image'));
+          img.src = e.target?.result as string;
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+      });
+    };
+
+    const newImages = Array.from(files).map((file: File) => ({
       id: Math.random().toString(36).substr(2, 9),
       file
     }));
 
-    // Convert files to data URLs and add to state
-    newImages.forEach(({ id, file }) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setSelectedImages(prev => [...prev, { id, url: result }]);
-      };
-      reader.readAsDataURL(file);
-    });
+    // Compress each image, convert to data URL, then add to state
+    Promise.all(
+      newImages.map(({ id, file }) =>
+        compressImage(file).then((dataUrl) => ({ id, url: dataUrl }))
+      )
+    )
+      .then((compressed) => {
+        setSelectedImages((prev) => [...prev, ...compressed]);
+      })
+      .catch((err) => {
+        console.error('Image compression failed:', err);
+        toast({
+          title: 'Image processing failed',
+          description: 'One or more images could not be processed. Please try again with different photos.',
+          variant: 'destructive',
+        });
+      })
+      .finally(() => setIsPreparingImages(false));
   };
 
   const removeImage = (id: string) => {
@@ -56,6 +108,15 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
       toast({
         title: 'No images selected',
         description: 'Please select or take at least one photo.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (isPreparingImages) {
+      toast({
+        title: 'Images still processing',
+        description: 'Please wait until all selected photos have finished processing.',
         variant: 'destructive',
       });
       return;
@@ -113,6 +174,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
     setAnalysisResult(null);
     setShowEditForm(false);
     setIsAnalyzing(false);
+    setIsPreparingImages(false);
     onClose();
   };
 
@@ -121,6 +183,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
     setAnalysisResult(null);
     setShowEditForm(false);
     setIsAnalyzing(false);
+    setIsPreparingImages(false);
   };
 
   return (
@@ -207,7 +270,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                 <div className="flex gap-2">
                   <Button
                     onClick={analyzePhoto}
-                    disabled={isAnalyzing || selectedImages.length === 0}
+                    disabled={isAnalyzing || isPreparingImages || selectedImages.length === 0}
                     className="flex-1"
                   >
                     {isAnalyzing ? (
@@ -216,7 +279,9 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, userId }: P
                         Analyzing...
                       </>
                     ) : (
-                      `Analyze ${selectedImages.length > 1 ? 'All Photos' : 'Photo'}`
+                      isPreparingImages
+                        ? 'Preparing...'
+                        : `Analyze ${selectedImages.length > 1 ? 'All Photos' : 'Photo'}`
                     )}
                   </Button>
                   <Button

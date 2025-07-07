@@ -120,8 +120,6 @@ const MultiProviderSettings = () => {
     const hasToken = providerTokens[provider];
     const isSelected = selectedProvider === provider;
 
-    type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
-
     let variant: BadgeVariant = 'default';
     let label = '';
     let extraClass = '';
@@ -144,7 +142,7 @@ const MultiProviderSettings = () => {
     }
 
     return (
-      <Badge variant={variant} className={cn(extraClass)}>
+      <Badge className={cn(badgeVariants({ variant }), extraClass)}>
         {label}
       </Badge>
     );
@@ -198,9 +196,9 @@ const MultiProviderSettings = () => {
                       <div key={provider} className="flex items-center justify-between p-2 border rounded">
                         <span className="text-sm">{AI_PROVIDERS[provider].name}</span>
                         {hasToken ? (
-                          <Badge variant="outline" className="text-green-600 border-green-600">✓</Badge>
+                          <Badge className={cn(badgeVariants({ variant: 'outline' }), 'text-green-600 border-green-600')}>✓</Badge>
                         ) : (
-                          <Badge variant="outline" className="text-gray-400 border-gray-400">○</Badge>
+                          <Badge className={cn(badgeVariants({ variant: 'outline' }), 'text-gray-400 border-gray-400')}>○</Badge>
                         )}
                       </div>
                     );

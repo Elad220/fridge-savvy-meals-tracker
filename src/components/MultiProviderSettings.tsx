@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, type ComponentProps } from 'react';
 import type { VariantProps } from 'class-variance-authority';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Badge, badgeVariants } from '@/components/ui/badge';
-import type { BadgeProps } from '@/components/ui/badge';
+import { Badge as BadgeBase, badgeVariants, type BadgeProps } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Key, Shield, Trash2, Globe, ExternalLink, Bot, Settings as SettingsIcon, Bell } from 'lucide-react';
@@ -16,14 +15,11 @@ import { AIProviderFactory } from '@/lib/ai-providers/factory';
 import UserProfile from './UserProfile';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import type { ComponentProps } from 'react';
-import React from 'react';
-import { Badge as RawBadge } from '@/components/ui/badge';
 
 type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
 
-// Locally re-declare Badge with its full prop type so TS keeps className
-const Badge: React.FC<BadgeProps> = RawBadge;
+// Local alias with proper props
+const Badge: React.FC<BadgeProps> = BadgeBase as React.FC<BadgeProps>;
 
 const MultiProviderSettings = () => {
   const { 

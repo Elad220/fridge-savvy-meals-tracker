@@ -294,56 +294,77 @@ class AIRecommendationsService {
   }
 
   private async getUserData(userId: string) {
-    // Get all relevant user data from database
-    const [
-      { data: foodItems },
-      { data: actionHistory },
-      { data: consumptionPatterns },
-      { data: mealCombinations },
-      { data: userPreferences },
-      { data: mealPlans }
-    ] = await Promise.all([
-      this.supabase
-        .from('food_items')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false }),
-      this.supabase
-        .from('action_history')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(100),
-      this.supabase
-        .from('consumption_patterns')
-        .select('*')
-        .eq('user_id', userId),
-      this.supabase
-        .from('meal_combinations')
-        .select('*')
-        .eq('user_id', userId)
-        .order('frequency', { ascending: false }),
-      this.supabase
-        .from('user_preferences')
-        .select('*')
-        .eq('user_id', userId)
-        .single(),
-      this.supabase
-        .from('meal_plans')
-        .select('*')
-        .eq('user_id', userId)
-        .order('planned_date', { ascending: false })
-        .limit(50)
-    ]);
+    try {
+      // Get all relevant user data from database
+      const [
+        { data: foodItems, error: foodError },
+        { data: actionHistory, error: actionError },
+        { data: consumptionPatterns, error: consumptionError },
+        { data: mealCombinations, error: mealError },
+        { data: userPreferences, error: preferenceError },
+        { data: mealPlans, error: planError }
+      ] = await Promise.all([
+        this.supabase
+          .from('food_items')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false }),
+        this.supabase
+          .from('action_history')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(100),
+        this.supabase
+          .from('consumption_patterns')
+          .select('*')
+          .eq('user_id', userId),
+        this.supabase
+          .from('meal_combinations')
+          .select('*')
+          .eq('user_id', userId)
+          .order('frequency', { ascending: false }),
+        this.supabase
+          .from('user_preferences')
+          .select('*')
+          .eq('user_id', userId)
+          .single(),
+        this.supabase
+          .from('meal_plans')
+          .select('*')
+          .eq('user_id', userId)
+          .order('planned_date', { ascending: false })
+          .limit(50)
+      ]);
 
-    return {
-      foodItems: foodItems || [],
-      actionHistory: actionHistory || [],
-      consumptionPatterns: consumptionPatterns || [],
-      mealCombinations: mealCombinations || [],
-      userPreferences: userPreferences || {},
-      mealPlans: mealPlans || []
-    };
+      // Log any errors but don't fail completely
+      if (foodError) console.error('Error fetching food items:', foodError);
+      if (actionError) console.error('Error fetching action history:', actionError);
+      if (consumptionError) console.error('Error fetching consumption patterns:', consumptionError);
+      if (mealError) console.error('Error fetching meal combinations:', mealError);
+      if (preferenceError) console.error('Error fetching user preferences:', preferenceError);
+      if (planError) console.error('Error fetching meal plans:', planError);
+
+      return {
+        foodItems: foodItems || [],
+        actionHistory: actionHistory || [],
+        consumptionPatterns: consumptionPatterns || [],
+        mealCombinations: mealCombinations || [],
+        userPreferences: userPreferences || {},
+        mealPlans: mealPlans || []
+      };
+    } catch (error) {
+      console.error('Error in getUserData:', error);
+      // Return empty data if there's an error
+      return {
+        foodItems: [],
+        actionHistory: [],
+        consumptionPatterns: [],
+        mealCombinations: [],
+        userPreferences: {},
+        mealPlans: []
+      };
+    }
   }
 
   async generateRecommendations(userId: string): Promise<any> {
@@ -566,15 +587,53 @@ serve(async (req) => {
     // Create AI recommendations service
     const aiService = new AIRecommendationsService(supabase);
 
-    // Generate AI-powered recommendations
-    const result = await aiService.generateRecommendations(userId);
+    try {
+      // Generate AI-powered recommendations
+      const result = await aiService.generateRecommendations(userId);
 
-    return new Response(JSON.stringify(result), {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json'
-      }
-    });
+      return new Response(JSON.stringify(result), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (error) {
+      console.error('Error generating AI recommendations:', error);
+      
+      // Return a fallback response instead of failing completely
+      const fallbackResult = {
+        shopping_recommendations: [],
+        low_stock_alerts: [],
+        meal_suggestions: [],
+        insights: {
+          consumptionTrends: "Unable to analyze consumption patterns at this time.",
+          inventoryHealth: "Please check your inventory manually.",
+          shoppingPatterns: "No shopping pattern data available.",
+          mealPreferences: "No meal preference data available.",
+          suggestions: "Try adding some food items to get personalized recommendations."
+        },
+        next_actions: [
+          {
+            action: "Add some food items to your inventory",
+            priority: "medium",
+            reason: "This will help the AI provide better recommendations"
+          }
+        ],
+        metadata: {
+          provider: 'fallback',
+          model: 'none',
+          usage: undefined,
+          error: error.message
+        }
+      };
+
+      return new Response(JSON.stringify(fallbackResult), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      });
+    }
   } catch (error) {
     console.error('Error in ai-recommendations function:', error);
     return new Response(JSON.stringify({

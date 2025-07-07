@@ -93,6 +93,7 @@ export const useAIRecommendations = (userId: string | undefined) => {
         throw new Error('No authentication token available');
       }
 
+      console.log('Calling AI recommendations Edge Function...');
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-recommendations`, {
         method: 'POST',
         headers: {
@@ -102,12 +103,16 @@ export const useAIRecommendations = (userId: string | undefined) => {
         body: JSON.stringify({ userId }),
       });
 
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate recommendations');
+        console.error('Edge Function error:', errorData);
+        throw new Error(errorData.error || errorData.message || 'Failed to generate recommendations');
       }
 
       const aiResult = await response.json();
+      console.log('AI result:', aiResult);
 
       // Transform the AI response to match our interface
       const newRecommendations: AIRecommendations = {

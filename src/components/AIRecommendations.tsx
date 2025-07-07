@@ -5,25 +5,19 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShoppingCart, Clock, AlertTriangle, ChefHat, TrendingUp, Sparkles, X } from 'lucide-react';
-import { useAIRecommendations, LowStockAlert } from '@/hooks/useAIRecommendations';
-import { FoodItem } from '@/types';
-import { ActionHistoryItem } from '@/hooks/useActionHistory';
+import { ShoppingCart, Clock, AlertTriangle, ChefHat, TrendingUp, Sparkles, X, Lightbulb, CheckCircle } from 'lucide-react';
+import { useAIRecommendations, LowStockAlert, Insight, NextAction } from '@/hooks/useAIRecommendations';
 
 interface AIRecommendationsProps {
   userId: string;
-  foodItems: FoodItem[];
-  actionHistory: ActionHistoryItem[];
   onAddToShoppingList?: (items: { name: string; quantity: number; unit: string }[]) => void;
 }
 
 export const AIRecommendations = ({ 
   userId, 
-  foodItems, 
-  actionHistory,
   onAddToShoppingList 
 }: AIRecommendationsProps) => {
-  const { recommendations, loading, refreshRecommendations } = useAIRecommendations(userId, foodItems, actionHistory);
+  const { recommendations, loading, refreshRecommendations } = useAIRecommendations(userId);
   const [showLowStockAlert, setShowLowStockAlert] = useState(false);
   const [selectedLowStockItem, setSelectedLowStockItem] = useState<LowStockAlert | null>(null);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
@@ -103,6 +97,11 @@ export const AIRecommendations = ({
                   <p className="text-sm">
                     Recommended to stock: <span className="font-medium">{selectedLowStockItem.recommendedAmount} {selectedLowStockItem.unit}</span>
                   </p>
+                  {selectedLowStockItem.urgency && (
+                    <Badge variant={selectedLowStockItem.urgency === 'high' ? 'destructive' : 'default'} className="mt-2">
+                      {selectedLowStockItem.urgency} urgency
+                    </Badge>
+                  )}
                 </div>
               </DialogDescription>
               <div className="flex justify-end gap-2">
@@ -140,7 +139,7 @@ export const AIRecommendations = ({
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="shopping" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="shopping" className="flex items-center gap-1">
                 <ShoppingCart className="w-4 h-4" />
                 Shopping
@@ -152,6 +151,10 @@ export const AIRecommendations = ({
               <TabsTrigger value="insights" className="flex items-center gap-1">
                 <TrendingUp className="w-4 h-4" />
                 Insights
+              </TabsTrigger>
+              <TabsTrigger value="actions" className="flex items-center gap-1">
+                <CheckCircle className="w-4 h-4" />
+                Actions
               </TabsTrigger>
             </TabsList>
 
@@ -171,6 +174,11 @@ export const AIRecommendations = ({
                       <div className="flex-1">
                         <p className="font-medium">{item.name}</p>
                         <p className="text-sm text-muted-foreground">{item.reason}</p>
+                        {item.confidence && (
+                          <Badge variant="outline" className="mt-1 text-xs">
+                            {item.confidence} confidence
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant={item.priority === 'high' ? 'destructive' : item.priority === 'medium' ? 'default' : 'secondary'}>
@@ -194,7 +202,7 @@ export const AIRecommendations = ({
             {/* Meal Recommendations */}
             <TabsContent value="meals" className="space-y-4">
               <div className="text-sm text-muted-foreground mb-3">
-                Your frequently prepared meals
+                AI-suggested meals based on your preferences and available ingredients
               </div>
               {recommendations.meals.length === 0 ? (
                 <p className="text-center py-4 text-muted-foreground">
@@ -211,11 +219,16 @@ export const AIRecommendations = ({
                             <Clock className="w-3 h-3 mr-1" />
                             {meal.prepTime}
                           </Badge>
-                          <Badge>
-                            Made {meal.frequency}x
-                          </Badge>
+                          {meal.difficulty && (
+                            <Badge variant="secondary">
+                              {meal.difficulty}
+                            </Badge>
+                          )}
                         </div>
                       </div>
+                      {meal.reason && (
+                        <p className="text-sm text-muted-foreground mb-2">{meal.reason}</p>
+                      )}
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">Ingredients:</p>
                         <div className="flex flex-wrap gap-1">
@@ -226,11 +239,6 @@ export const AIRecommendations = ({
                           ))}
                         </div>
                       </div>
-                      {meal.lastMade && (
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Last made: {new Date(meal.lastMade).toLocaleDateString()}
-                        </p>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -240,7 +248,7 @@ export const AIRecommendations = ({
             {/* Insights */}
             <TabsContent value="insights" className="space-y-4">
               <div className="text-sm text-muted-foreground mb-3">
-                Consumption patterns and inventory insights
+                AI analysis of your consumption patterns and inventory health
               </div>
               <div className="space-y-3">
                 {/* Low Stock Summary */}
@@ -263,41 +271,104 @@ export const AIRecommendations = ({
                   </Alert>
                 )}
 
-                {/* Consumption Rate */}
-                <Card>
-                  <CardContent className="pt-4">
-                    <h4 className="font-medium mb-2 flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4" />
-                      Top Consumed Items
-                    </h4>
-                    <div className="space-y-2">
-                      {actionHistory
-                        .filter(action => action.actionType === 'remove')
-                        .reduce((acc, action) => {
-                          const existing = acc.find(item => item.name === action.itemName);
-                          if (existing) {
-                            existing.count++;
-                          } else {
-                            acc.push({ name: action.itemName, count: 1 });
-                          }
-                          return acc;
-                        }, [] as { name: string; count: number }[])
-                        .sort((a, b) => b.count - a.count)
-                        .slice(0, 5)
-                        .map((item, index) => (
-                          <div key={index} className="flex justify-between text-sm">
-                            <span>{item.name}</span>
-                            <Badge variant="secondary">{item.count} times</Badge>
-                          </div>
-                        ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* AI Insights */}
+                {recommendations.insights && (
+                  <div className="space-y-3">
+                    {recommendations.insights.consumptionTrends && (
+                      <Card>
+                        <CardContent className="pt-4">
+                          <h4 className="font-medium mb-2 flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4" />
+                            Consumption Trends
+                          </h4>
+                          <p className="text-sm text-muted-foreground">{recommendations.insights.consumptionTrends}</p>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {recommendations.insights.inventoryHealth && (
+                      <Card>
+                        <CardContent className="pt-4">
+                          <h4 className="font-medium mb-2 flex items-center gap-2">
+                            <Lightbulb className="w-4 h-4" />
+                            Inventory Health
+                          </h4>
+                          <p className="text-sm text-muted-foreground">{recommendations.insights.inventoryHealth}</p>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {recommendations.insights.shoppingPatterns && (
+                      <Card>
+                        <CardContent className="pt-4">
+                          <h4 className="font-medium mb-2 flex items-center gap-2">
+                            <ShoppingCart className="w-4 h-4" />
+                            Shopping Patterns
+                          </h4>
+                          <p className="text-sm text-muted-foreground">{recommendations.insights.shoppingPatterns}</p>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {recommendations.insights.mealPreferences && (
+                      <Card>
+                        <CardContent className="pt-4">
+                          <h4 className="font-medium mb-2 flex items-center gap-2">
+                            <ChefHat className="w-4 h-4" />
+                            Meal Preferences
+                          </h4>
+                          <p className="text-sm text-muted-foreground">{recommendations.insights.mealPreferences}</p>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {recommendations.insights.suggestions && (
+                      <Card>
+                        <CardContent className="pt-4">
+                          <h4 className="font-medium mb-2 flex items-center gap-2">
+                            <Sparkles className="w-4 h-4" />
+                            Suggestions
+                          </h4>
+                          <p className="text-sm text-muted-foreground">{recommendations.insights.suggestions}</p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
               </div>
+            </TabsContent>
+
+            {/* Next Actions */}
+            <TabsContent value="actions" className="space-y-4">
+              <div className="text-sm text-muted-foreground mb-3">
+                Recommended actions to improve your food management
+              </div>
+              {recommendations.nextActions.length === 0 ? (
+                <p className="text-center py-4 text-muted-foreground">
+                  No specific actions recommended at this time.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {recommendations.nextActions.map((action, index) => (
+                    <div key={index} className="flex items-start justify-between p-3 bg-secondary rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium">{action.action}</p>
+                        <p className="text-sm text-muted-foreground mt-1">{action.reason}</p>
+                      </div>
+                      <Badge variant={action.priority === 'high' ? 'destructive' : action.priority === 'medium' ? 'default' : 'secondary'}>
+                        {action.priority}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
             </TabsContent>
           </Tabs>
 
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex justify-between items-center">
+            <p className="text-xs text-muted-foreground">
+              Generated at: {recommendations.generatedAt.toLocaleString()}
+            </p>
             <Button
               variant="outline"
               size="sm"

@@ -10,14 +10,17 @@ export interface ItemRecommendation {
   unit: string;
   reason: string;
   priority: 'high' | 'medium' | 'low';
+  confidence?: 'high' | 'medium' | 'low';
 }
 
 export interface MealRecommendation {
   name: string;
   ingredients: string[];
   prepTime: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  reason?: string;
   lastMade?: Date;
-  frequency: number;
+  frequency?: number;
 }
 
 export interface LowStockAlert {
@@ -26,145 +29,38 @@ export interface LowStockAlert {
   unit: string;
   recommendedAmount: number;
   daysUntilOut: number;
+  urgency?: 'high' | 'medium' | 'low';
+}
+
+export interface Insight {
+  consumptionTrends?: string;
+  inventoryHealth?: string;
+  shoppingPatterns?: string;
+  mealPreferences?: string;
+  suggestions?: string;
+}
+
+export interface NextAction {
+  action: string;
+  priority: 'high' | 'medium' | 'low';
+  reason: string;
 }
 
 interface AIRecommendations {
   shopping: ItemRecommendation[];
   meals: MealRecommendation[];
   lowStock: LowStockAlert[];
+  insights: Insight;
+  nextActions: NextAction[];
   generatedAt: Date;
 }
 
-export const useAIRecommendations = (
-  userId: string | undefined,
-  foodItems: FoodItem[],
-  actionHistory: ActionHistoryItem[]
-) => {
+export const useAIRecommendations = (userId: string | undefined) => {
   const [recommendations, setRecommendations] = useState<AIRecommendations | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  // Analyze consumption patterns
-  const analyzeConsumptionPatterns = () => {
-    const patterns: Map<string, { count: number; dates: Date[] }> = new Map();
-    
-    // Analyze removed items from history
-    actionHistory
-      .filter(action => action.actionType === 'remove')
-      .forEach(action => {
-        const itemName = action.itemName.toLowerCase();
-        const existing = patterns.get(itemName) || { count: 0, dates: [] };
-        patterns.set(itemName, {
-          count: existing.count + 1,
-          dates: [...existing.dates, action.createdAt]
-        });
-      });
-
-    return patterns;
-  };
-
-  // Check for low stock items
-  const checkLowStock = (): LowStockAlert[] => {
-    const lowStockAlerts: LowStockAlert[] = [];
-    const consumptionPatterns = analyzeConsumptionPatterns();
-
-    // Group items by name
-    const itemGroups = new Map<string, FoodItem[]>();
-    foodItems
-      .filter(item => item.label === 'raw material')
-      .forEach(item => {
-        const key = item.name.toLowerCase();
-        const existing = itemGroups.get(key) || [];
-        itemGroups.set(key, [...existing, item]);
-      });
-
-    // Check each item type
-    itemGroups.forEach((items, itemName) => {
-      const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
-      const pattern = consumptionPatterns.get(itemName);
-      
-      if (pattern && pattern.count >= 2) {
-        // Calculate consumption rate
-        const dates = pattern.dates.sort((a, b) => a.getTime() - b.getTime());
-        const daysBetweenConsumption = dates.length > 1 
-          ? (dates[dates.length - 1].getTime() - dates[0].getTime()) / (1000 * 60 * 60 * 24) / (dates.length - 1)
-          : 7; // Default to weekly if not enough data
-        
-        const consumptionRate = pattern.count / (daysBetweenConsumption || 7);
-        const daysUntilOut = totalAmount / consumptionRate;
-        
-        // Alert if less than 3 days of stock
-        if (daysUntilOut < 3 && totalAmount > 0) {
-          lowStockAlerts.push({
-            itemName: items[0].name,
-            currentAmount: totalAmount,
-            unit: items[0].unit,
-            recommendedAmount: Math.ceil(consumptionRate * 7), // Week's worth
-            daysUntilOut: Math.round(daysUntilOut)
-          });
-        }
-      }
-    });
-
-    return lowStockAlerts;
-  };
-
-  // Generate shopping recommendations
-  const generateShoppingRecommendations = (): ItemRecommendation[] => {
-    const recommendations: ItemRecommendation[] = [];
-    const consumptionPatterns = analyzeConsumptionPatterns();
-    
-    // Analyze frequently consumed items
-    consumptionPatterns.forEach((pattern, itemName) => {
-      if (pattern.count >= 3) { // Item consumed at least 3 times
-        const currentStock = foodItems
-          .filter(item => item.name.toLowerCase() === itemName && item.label === 'raw material')
-          .reduce((sum, item) => sum + item.amount, 0);
-        
-        if (currentStock === 0) {
-          recommendations.push({
-            name: itemName,
-            quantity: Math.ceil(pattern.count / 2), // Suggest half of historical consumption
-            unit: 'items',
-            reason: `You've consumed this ${pattern.count} times recently`,
-            priority: pattern.count > 5 ? 'high' : 'medium'
-          });
-        }
-      }
-    });
-
-    return recommendations;
-  };
-
-  // Generate meal recommendations
-  const generateMealRecommendations = async (): Promise<MealRecommendation[]> => {
-    if (!userId) return [];
-
-    try {
-      // Fetch meal combinations from database
-      const { data: mealCombinations, error } = await supabase
-        .from('meal_combinations')
-        .select('*')
-        .eq('user_id', userId)
-        .order('frequency', { ascending: false })
-        .limit(5);
-
-      if (error) throw error;
-
-      return mealCombinations?.map(meal => ({
-        name: meal.meal_name,
-        ingredients: meal.ingredients as string[],
-        prepTime: '30 mins', // Default, could be stored in DB
-        lastMade: meal.last_prepared ? new Date(meal.last_prepared) : undefined,
-        frequency: meal.frequency
-      })) || [];
-    } catch (error) {
-      console.error('Error fetching meal combinations:', error);
-      return [];
-    }
-  };
-
-  // Main function to generate all recommendations
+  // Generate AI-powered recommendations using the Edge Function
   const generateRecommendations = async () => {
     if (!userId || loading) return;
 
@@ -175,6 +71,7 @@ export const useAIRecommendations = (
         .from('ai_recommendations')
         .select('*')
         .eq('user_id', userId)
+        .eq('recommendation_type', 'ai_powered')
         .gte('expires_at', new Date().toISOString())
         .order('generated_at', { ascending: false })
         .limit(1);
@@ -188,15 +85,85 @@ export const useAIRecommendations = (
         return;
       }
 
-      // Generate new recommendations
-      const lowStock = checkLowStock();
-      const shopping = generateShoppingRecommendations();
-      const meals = await generateMealRecommendations();
+      // Call the AI recommendations Edge Function
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
 
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-recommendations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate recommendations');
+      }
+
+      const aiResult = await response.json();
+
+      // Transform the AI response to match our interface
       const newRecommendations: AIRecommendations = {
-        shopping,
-        meals,
-        lowStock,
+        shopping: aiResult.shopping_recommendations?.map((item: {
+          name: string;
+          quantity: number;
+          unit: string;
+          reason: string;
+          priority: 'high' | 'medium' | 'low';
+          confidence?: 'high' | 'medium' | 'low';
+        }) => ({
+          name: item.name,
+          quantity: item.quantity,
+          unit: item.unit,
+          reason: item.reason,
+          priority: item.priority,
+          confidence: item.confidence
+        })) || [],
+        meals: aiResult.meal_suggestions?.map((meal: {
+          name: string;
+          ingredients: string[];
+          prep_time: string;
+          difficulty?: 'easy' | 'medium' | 'hard';
+          reason?: string;
+        }) => ({
+          name: meal.name,
+          ingredients: meal.ingredients,
+          prepTime: meal.prep_time,
+          difficulty: meal.difficulty,
+          reason: meal.reason
+        })) || [],
+        lowStock: aiResult.low_stock_alerts?.map((alert: {
+          item_name: string;
+          current_amount: number;
+          unit: string;
+          recommended_amount: number;
+          days_until_out: number;
+          urgency?: 'high' | 'medium' | 'low';
+        }) => ({
+          itemName: alert.item_name,
+          currentAmount: alert.current_amount,
+          unit: alert.unit,
+          recommendedAmount: alert.recommended_amount,
+          daysUntilOut: alert.days_until_out,
+          urgency: alert.urgency
+        })) || [],
+        insights: aiResult.insights || {},
+        nextActions: aiResult.next_actions?.map((action: {
+          action: string;
+          priority: 'high' | 'medium' | 'low';
+          reason: string;
+        }) => ({
+          action: action.action,
+          priority: action.priority,
+          reason: action.reason
+        })) || [],
         generatedAt: new Date()
       };
 
@@ -205,16 +172,17 @@ export const useAIRecommendations = (
         .from('ai_recommendations')
         .insert({
           user_id: userId,
-          recommendation_type: 'all',
-          recommendations: newRecommendations
+          recommendation_type: 'ai_powered',
+          recommendations: newRecommendations,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
         });
 
       setRecommendations(newRecommendations);
     } catch (error) {
-      console.error('Error generating recommendations:', error);
+      console.error('Error generating AI recommendations:', error);
       toast({
         title: "Error",
-        description: "Failed to generate recommendations",
+        description: "Failed to generate AI recommendations. Please try again later.",
         variant: "destructive"
       });
     } finally {
@@ -275,17 +243,33 @@ export const useAIRecommendations = (
     }
   };
 
+  // Clear cached recommendations when data changes
+  const clearCache = async () => {
+    if (!userId) return;
+
+    try {
+      await supabase
+        .from('ai_recommendations')
+        .delete()
+        .eq('user_id', userId)
+        .eq('recommendation_type', 'ai_powered');
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+    }
+  };
+
   useEffect(() => {
-    if (userId && foodItems.length > 0) {
+    if (userId) {
       generateRecommendations();
     }
-  }, [userId, foodItems.length, actionHistory.length]);
+  }, [userId]);
 
   return {
     recommendations,
     loading,
     refreshRecommendations: generateRecommendations,
     updateConsumptionPattern,
-    updateMealCombination
+    updateMealCombination,
+    clearCache
   };
 };

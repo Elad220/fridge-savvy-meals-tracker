@@ -538,8 +538,6 @@ const Index = () => {
             {user?.id && (
               <AIRecommendations
                 userId={user.id}
-                foodItems={foodItems}
-                actionHistory={recentActions}
                 onAddToShoppingList={(items) => {
                   // Handle adding items to shopping list
                   toast({

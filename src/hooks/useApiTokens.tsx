@@ -278,10 +278,9 @@ export const useApiTokens = () => {
   // toggling the setting in one part of the app immediately reflects
   // everywhere without requiring a full page refresh.
   useEffect(() => {
-    const handler = (event: Event) => {
-      // The detail property carries the new boolean value
-      const enabled = (event as CustomEvent<boolean>).detail;
-      setAiRecommendationsEnabled(enabled);
+    const handler = (event: CustomEvent<boolean>) => {
+      // The detail property carries the new boolean value sent via custom event
+      setAiRecommendationsEnabled(event.detail);
     };
 
     if (typeof window !== 'undefined') {

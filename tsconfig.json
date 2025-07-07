@@ -14,15 +14,6 @@
     "skipLibCheck": true,
     "allowJs": true,
     "noUnusedLocals": false,
-    "strictNullChecks": false,
-    "moduleResolution": "bundler"
-  },
-  "include": [
-    "src",
-    "src/**/*.test.ts",
-    "src/**/*.test.tsx",
-    "src/**/*.spec.ts",
-    "src/**/*.spec.tsx",
-    "vitest.config.ts"
-  ]
+    "strictNullChecks": false
+  }
 }

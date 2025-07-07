@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -274,6 +275,26 @@ export const useApiTokens = () => {
     };
   }, [user?.id]);
 
+  // Sync AI recommendations preference across multiple hook instances so that
+  // toggling the setting in one part of the app immediately reflects
+  // everywhere without requiring a full page refresh.
+  useEffect(() => {
+    const handler = (event: CustomEvent<boolean>) => {
+      // The detail property carries the new boolean value sent via custom event
+      setAiRecommendationsEnabled(event.detail);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('aiRecommendationsEnabledChanged', handler);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('aiRecommendationsEnabledChanged', handler);
+      }
+    };
+  }, []);
+
   // ================= AI Recommendations Preference =================
   const saveAiRecommendationsEnabled = async (enabled: boolean) => {
     if (!user) return false;
@@ -287,6 +308,12 @@ export const useApiTokens = () => {
       if (error) throw error;
 
       setAiRecommendationsEnabled(enabled);
+      // Notify other hook instances in the same window about the preference change
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('aiRecommendationsEnabledChanged', { detail: enabled })
+        );
+      }
       toast({
         title: 'Preference saved',
         description: `AI recommendations have been ${enabled ? 'enabled' : 'disabled'}.`,

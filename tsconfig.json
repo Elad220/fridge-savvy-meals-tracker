@@ -9,7 +9,8 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "types": ["vite/client", "react", "react-dom", "date-fns"],
     "noImplicitAny": false,

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ShoppingCart, Clock, AlertTriangle, ChefHat, TrendingUp, Sparkles, X, Lightbulb, CheckCircle } from 'lucide-react';
 import { useAIRecommendations, LowStockAlert, Insight, NextAction } from '@/hooks/useAIRecommendations';
+import { useToast } from '@/hooks/use-toast';
 
 interface AIRecommendationsProps {
   userId: string;
@@ -17,39 +18,74 @@ export const AIRecommendations = ({
   userId, 
   onAddToShoppingList 
 }: AIRecommendationsProps) => {
+  console.log('AIRecommendations component rendered with userId:', userId);
+  
   const { recommendations, loading, refreshRecommendations } = useAIRecommendations(userId);
-  const [showLowStockAlert, setShowLowStockAlert] = useState(false);
-  const [selectedLowStockItem, setSelectedLowStockItem] = useState<LowStockAlert | null>(null);
+  const { toast } = useToast();
+  
+  console.log('AIRecommendations hook result:', { recommendations, loading });
+  
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
 
-  // Show low stock alerts when they appear
+  // Show low stock alerts as toast notifications
   useEffect(() => {
     if (recommendations?.lowStock && recommendations.lowStock.length > 0) {
       const nonDismissedAlerts = recommendations.lowStock.filter(
         alert => !dismissedAlerts.has(alert.itemName)
       );
-      if (nonDismissedAlerts.length > 0) {
-        setSelectedLowStockItem(nonDismissedAlerts[0]);
-        setShowLowStockAlert(true);
-      }
+      
+      nonDismissedAlerts.forEach(alert => {
+        // Only show alerts for raw ingredients (not cooked meals)
+        if (alert.urgency === 'high' || alert.urgency === 'medium') {
+          toast({
+            title: `Low Stock Alert: ${alert.itemName}`,
+            description: `You have ${alert.currentAmount} ${alert.unit} remaining (${alert.daysUntilOut} days left). Consider restocking ${alert.recommendedAmount} ${alert.unit}.`,
+            variant: alert.urgency === 'high' ? 'destructive' : 'default',
+            duration: 8000, // Show for 8 seconds
+            action: (
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setDismissedAlerts(prev => new Set([...prev, alert.itemName]));
+                    toast({
+                      title: "Alert dismissed",
+                      description: "You won't see this alert again for this item.",
+                    });
+                  }}
+                >
+                  Dismiss
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (onAddToShoppingList) {
+                      onAddToShoppingList([{
+                        name: alert.itemName,
+                        quantity: alert.recommendedAmount,
+                        unit: alert.unit
+                      }]);
+                      setDismissedAlerts(prev => new Set([...prev, alert.itemName]));
+                      toast({
+                        title: "Added to shopping list",
+                        description: `${alert.itemName} has been added to your shopping list.`,
+                      });
+                    }
+                  }}
+                >
+                  Add to List
+                </Button>
+              </div>
+            ),
+          });
+          
+          // Mark as dismissed to prevent showing again
+          setDismissedAlerts(prev => new Set([...prev, alert.itemName]));
+        }
+      });
     }
-  }, [recommendations?.lowStock]);
-
-  const handleDismissAlert = (itemName: string) => {
-    setDismissedAlerts(prev => new Set([...prev, itemName]));
-    setShowLowStockAlert(false);
-    
-    // Show next alert if available
-    const remaining = recommendations?.lowStock.filter(
-      alert => alert.itemName !== itemName && !dismissedAlerts.has(alert.itemName)
-    );
-    if (remaining && remaining.length > 0) {
-      setTimeout(() => {
-        setSelectedLowStockItem(remaining[0]);
-        setShowLowStockAlert(true);
-      }, 300);
-    }
-  };
+  }, [recommendations?.lowStock, dismissedAlerts, toast, onAddToShoppingList]);
 
   const handleAddToShopping = (items: { name: string; quantity: number; unit: string }[]) => {
     if (onAddToShoppingList) {
@@ -58,6 +94,7 @@ export const AIRecommendations = ({
   };
 
   if (loading) {
+    console.log('AIRecommendations: Showing loading state');
     return (
       <Card className="mb-6">
         <CardContent className="pt-6">
@@ -71,64 +108,14 @@ export const AIRecommendations = ({
   }
 
   if (!recommendations) {
+    console.log('AIRecommendations: No recommendations, returning null');
     return null;
   }
 
+  console.log('AIRecommendations: Rendering recommendations:', recommendations);
+
   return (
     <>
-      {/* Low Stock Alert Dialog */}
-      <Dialog open={showLowStockAlert} onOpenChange={setShowLowStockAlert}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-orange-600">
-              <AlertTriangle className="w-5 h-5" />
-              Low Stock Alert
-            </DialogTitle>
-          </DialogHeader>
-          {selectedLowStockItem && (
-            <div className="space-y-4">
-              <DialogDescription>
-                <div className="bg-orange-50 dark:bg-orange-950/20 p-4 rounded-lg">
-                  <p className="font-semibold text-lg mb-2">{selectedLowStockItem.itemName}</p>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    You have <span className="font-medium text-orange-600">{selectedLowStockItem.currentAmount} {selectedLowStockItem.unit}</span> remaining.
-                    Based on your consumption patterns, this will last approximately <span className="font-medium text-orange-600">{selectedLowStockItem.daysUntilOut} days</span>.
-                  </p>
-                  <p className="text-sm">
-                    Recommended to stock: <span className="font-medium">{selectedLowStockItem.recommendedAmount} {selectedLowStockItem.unit}</span>
-                  </p>
-                  {selectedLowStockItem.urgency && (
-                    <Badge variant={selectedLowStockItem.urgency === 'high' ? 'destructive' : 'default'} className="mt-2">
-                      {selectedLowStockItem.urgency} urgency
-                    </Badge>
-                  )}
-                </div>
-              </DialogDescription>
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => handleDismissAlert(selectedLowStockItem.itemName)}
-                >
-                  Dismiss
-                </Button>
-                <Button
-                  onClick={() => {
-                    handleAddToShopping([{
-                      name: selectedLowStockItem.itemName,
-                      quantity: selectedLowStockItem.recommendedAmount,
-                      unit: selectedLowStockItem.unit
-                    }]);
-                    handleDismissAlert(selectedLowStockItem.itemName);
-                  }}
-                >
-                  Add to Shopping List
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
       {/* Main Recommendations Card */}
       <Card className="mb-6">
         <CardHeader>

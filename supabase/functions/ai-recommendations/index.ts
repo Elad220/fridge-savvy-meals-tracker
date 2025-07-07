@@ -423,8 +423,13 @@ class AIRecommendationsService {
   private buildAnalysisPrompt(userData: any, language: string): string {
     const { foodItems, actionHistory, consumptionPatterns, mealCombinations, userPreferences, mealPlans } = userData;
 
+    // Filter for raw ingredients only (not cooked meals)
+    const rawIngredients = foodItems.filter((item: any) => 
+      item.item_type === 'raw_material' || !item.item_type
+    );
+
     // Calculate current inventory summary
-    const currentInventory = foodItems.reduce((acc: any, item: any) => {
+    const currentInventory = rawIngredients.reduce((acc: any, item: any) => {
       const key = item.name.toLowerCase();
       if (!acc[key]) {
         acc[key] = {
@@ -470,7 +475,7 @@ class AIRecommendationsService {
     return `Analyze the following user data and provide intelligent recommendations for food management and shopping. Respond in ${language}.
 
 User Data:
-- Current Inventory: ${JSON.stringify(Object.values(currentInventory))}
+- Current Inventory (Raw Ingredients Only): ${JSON.stringify(Object.values(currentInventory))}
 - Consumption Patterns: ${JSON.stringify(consumptionSummary)}
 - Recent Activity: ${JSON.stringify(recentActivity)}
 - Meal Combinations: ${JSON.stringify(mealInsights)}
@@ -534,7 +539,8 @@ Guidelines:
 7. Suggest items that complement current inventory
 8. Consider expiration dates and freshness
 9. Provide specific quantities based on typical usage patterns
-10. Include confidence levels for recommendations`;
+10. Include confidence levels for recommendations
+11. IMPORTANT: Only generate low stock alerts for raw ingredients (not cooked meals). The current inventory data only includes raw ingredients.`;
   }
 }
 

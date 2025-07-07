@@ -82,7 +82,8 @@ export const useAIRecommendations = (userId: string | undefined) => {
       }
 
       console.log('Calling AI recommendations Edge Function...');
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-recommendations`, {
+      console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+      const response = await fetch(`https://wwhqiddmkziladwfeggn.supabase.co/functions/v1/ai-recommendations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

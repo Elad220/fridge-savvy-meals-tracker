@@ -15,6 +15,7 @@ import { AIProvider, AI_PROVIDERS } from '@/types/aiProvider';
 import { AIProviderFactory } from '@/lib/ai-providers/factory';
 import UserProfile from './UserProfile';
 import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 
 type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
 
@@ -118,14 +119,35 @@ const MultiProviderSettings = () => {
   const getProviderStatusBadge = (provider: AIProvider) => {
     const hasToken = providerTokens[provider];
     const isSelected = selectedProvider === provider;
-    
+
+    type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
+
+    let variant: BadgeVariant = 'default';
+    let label = '';
+    let extraClass = '';
+
     if (isSelected && hasToken) {
-      return <Badge className="bg-green-600 text-white border-green-600">Active</Badge>;
+      // Active provider with a saved token
+      variant = 'default';
+      label = 'Active';
+      extraClass = 'bg-green-600 text-white border-green-600';
     } else if (hasToken) {
-      return <Badge variant="outline" className="text-blue-600 border-blue-600">Configured</Badge>;
+      // Provider has a token but isn\'t the active one
+      variant = 'outline';
+      label = 'Configured';
+      extraClass = 'text-blue-600 border-blue-600';
     } else {
-      return <Badge variant="outline" className="text-orange-600 border-orange-600">Not Set</Badge>;
+      // No token stored yet
+      variant = 'outline';
+      label = 'Not Set';
+      extraClass = 'text-orange-600 border-orange-600';
     }
+
+    return (
+      <Badge variant={variant} className={cn(extraClass)}>
+        {label}
+      </Badge>
+    );
   };
 
   return (

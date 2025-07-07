@@ -30,6 +30,7 @@ const Index = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showPhotoAnalysis, setShowPhotoAnalysis] = useState(false);
   const [showVoiceRecording, setShowVoiceRecording] = useState(false);
+  const [showBulkPhotoAnalysis, setShowBulkPhotoAnalysis] = useState(false);
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlan | null>(null);
   const [activeTab, setActiveTab] = useState<'inventory' | 'meals' | 'settings'>('inventory');
@@ -529,15 +530,57 @@ const Index = () => {
     setShowVoiceRecording(false);
   };
 
+  /**
+   * Extracts a list of ingredient strings from a meal note.
+   * Handles several common formats such as:
+   *  - "Ingredients: chicken, onions, garlic"
+   *  - "INGREDIENTS - chicken; onions; garlic"
+   *  - Bullet lists or multi-line lists
+   *  - Square/round brackets e.g. "[chicken, onions]"
+   */
   const parseIngredientsFromNotes = (notes?: string): string[] => {
     if (!notes) return [];
-    const match = notes.match(/Ingredients:\s*([^\n]+)/i);
-    if (!match) return [];
-    return match[1]
+
+    // Normalise whitespace & remove brackets
+    const cleaned = notes
+      .replace(/[\[\]\(\)]/g, '')
+      .replace(/\r/g, '')
+      .toLowerCase();
+
+    // If a section header exists, isolate the section following it.
+    const headerRegex = /ingredients?[:\-]?/i;
+    let section = cleaned;
+    const headerIdx = cleaned.search(headerRegex);
+    if (headerIdx !== -1) {
+      section = cleaned.slice(headerIdx + cleaned.match(headerRegex)![0].length);
+    }
+
+    // Stop at other common headers (instructions, method, tips, etc.)
+    const stopIdx = section.search(/(^|\n)(instructions?|method|steps?|tips?|directions?|prep time|cook time|difficulty)/i);
+    if (stopIdx !== -1) {
+      section = section.slice(0, stopIdx);
+    }
+
+    // Replace various delimiters with commas for easy splitting
+    const tokens = section
+      .replace(/[•;\n\u2022]/g, ',') // bullets, semicolons, new lines → commas
       .split(',')
-      .map(ing => ing.trim().toLowerCase())
-      .filter(ing => ing.length > 0);
+      .map(t => t.trim())
+      .filter(t => t.length > 0 && t !== 'and');
+
+    return Array.from(new Set(tokens)); // remove duplicates
   };
+
+  // Very naive plural -> singular converter for simple English rules
+  const singularize = (word: string): string => {
+    if (word.endsWith('ies')) return word.slice(0, -3) + 'y'; // berries → berry
+    if (word.endsWith('oes')) return word.slice(0, -2);        // tomatoes → tomato
+    if (word.endsWith('ses')) return word.slice(0, -2);        // classes → class
+    if (word.endsWith('s') && !word.endsWith('ss')) return word.slice(0, -1); // beans → bean
+    return word;
+  };
+
+  const normalise = (str: string) => singularize(str.trim().toLowerCase());
 
   const handleCookMeal = async (meal: MealPlan) => {
     const ingredients = parseIngredientsFromNotes(meal.notes);
@@ -554,19 +597,26 @@ const Index = () => {
     let anyDeducted = false;
 
     for (const ing of ingredients) {
-      // Try to find a matching food item (case-insensitive)
-      const item = foodItems.find(fi => fi.name.toLowerCase() === ing);
-      if (!item) {
-        continue; // Ingredient not in inventory
+      const ingNorm = normalise(ing);
+
+      // Find best matching inventory item using normalised names
+      const matchingItem = foodItems.find(fi => {
+        const itemNorm = normalise(fi.name);
+        return itemNorm === ingNorm || itemNorm.includes(ingNorm) || ingNorm.includes(itemNorm);
+      });
+
+      if (!matchingItem) {
+        continue; // Not found – skip
       }
 
       anyDeducted = true;
 
-      if (item.amount > 1) {
-        const updatedItem = { ...item, amount: item.amount - 1 };
+      // Simple deduction: subtract one unit/serving
+      if (matchingItem.amount > 1) {
+        const updatedItem = { ...matchingItem, amount: matchingItem.amount - 1 };
         await updateFoodItem(updatedItem);
       } else {
-        await removeFoodItem(item.id);
+        await removeFoodItem(matchingItem.id);
       }
     }
 

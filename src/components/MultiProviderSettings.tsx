@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import type { VariantProps } from 'class-variance-authority';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import type { BadgeProps } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,6 +15,8 @@ import { AIProvider, AI_PROVIDERS } from '@/types/aiProvider';
 import { AIProviderFactory } from '@/lib/ai-providers/factory';
 import UserProfile from './UserProfile';
 import { Switch } from '@/components/ui/switch';
+
+type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
 
 const MultiProviderSettings = () => {
   const { 
@@ -112,7 +115,7 @@ const MultiProviderSettings = () => {
     }));
   };
 
-  const getProviderStatusBadge = (provider: AIProvider): React.ReactElement<BadgeProps> => {
+  const getProviderStatusBadge = (provider: AIProvider) => {
     const hasToken = providerTokens[provider];
     const isSelected = selectedProvider === provider;
     

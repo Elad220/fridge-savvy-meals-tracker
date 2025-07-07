@@ -1,8 +1,9 @@
 {
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
+    "module": "ESNext",
     "moduleResolution": "node",
-    "types": ["vitest", "vite/client", "react", "react-dom"],
+    "types": ["vitest", "vitest/globals", "vite/client", "react", "react-dom"],
     "isolatedModules": false
   },
   "include": [

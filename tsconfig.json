@@ -10,6 +10,7 @@
       "@/*": ["./src/*"]
     },
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "types": ["vite/client", "react", "react-dom", "date-fns"],
     "noImplicitAny": false,
     "noUnusedParameters": false,

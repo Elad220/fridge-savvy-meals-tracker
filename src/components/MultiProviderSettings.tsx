@@ -1,17 +1,25 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, type ComponentProps } from 'react';
+import type { VariantProps } from 'class-variance-authority';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
+import { Badge as BadgeBase, badgeVariants, type BadgeProps } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Key, Shield, Trash2, Globe, ExternalLink, Bot, Settings as SettingsIcon } from 'lucide-react';
+import { Key, Shield, Trash2, Globe, ExternalLink, Bot, Settings as SettingsIcon, Bell } from 'lucide-react';
 import { useApiTokens } from '@/hooks/useApiTokens';
 import { AIProvider, AI_PROVIDERS } from '@/types/aiProvider';
 import { AIProviderFactory } from '@/lib/ai-providers/factory';
 import UserProfile from './UserProfile';
+import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
+
+type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
+
+// Local alias with proper props
+const Badge: React.FC<BadgeProps> = BadgeBase as React.FC<BadgeProps>;
 
 const MultiProviderSettings = () => {
   const { 
@@ -22,7 +30,8 @@ const MultiProviderSettings = () => {
     removeTokenForProvider, 
     getLanguage, 
     saveLanguage,
-    hasAnyToken,
+    aiRecommendationsEnabled,
+    saveAiRecommendationsEnabled,
   } = useApiTokens();
 
   const [tokens, setTokens] = useState<Record<string, string>>({});
@@ -31,6 +40,7 @@ const MultiProviderSettings = () => {
   const [isSaving, setIsSaving] = useState<Record<string, boolean>>({});
   const [isRemoving, setIsRemoving] = useState<Record<string, boolean>>({});
   const [isSavingLanguage, setIsSavingLanguage] = useState(false);
+  const [isSavingAiPref, setIsSavingAiPref] = useState(false);
   const [activeTab, setActiveTab] = useState('providers');
 
   const supportedProviders = AIProviderFactory.getSupportedProviders();
@@ -82,6 +92,12 @@ const MultiProviderSettings = () => {
     setIsSavingLanguage(false);
   };
 
+  const handleToggleAiRecommendations = async (enabled: boolean) => {
+    setIsSavingAiPref(true);
+    await saveAiRecommendationsEnabled(enabled);
+    setIsSavingAiPref(false);
+  };
+
   const handleRemoveToken = async (provider: AIProvider) => {
     setIsRemoving(prev => ({ ...prev, [provider]: true }));
     await removeTokenForProvider(provider);
@@ -105,14 +121,33 @@ const MultiProviderSettings = () => {
   const getProviderStatusBadge = (provider: AIProvider) => {
     const hasToken = providerTokens[provider];
     const isSelected = selectedProvider === provider;
-    
+
+    let variant: BadgeVariant = 'default';
+    let label = '';
+    let extraClass = '';
+
     if (isSelected && hasToken) {
-      return <Badge className="bg-green-600 text-white border-green-600">Active</Badge>;
+      // Active provider with a saved token
+      variant = 'default';
+      label = 'Active';
+      extraClass = 'bg-green-600 text-white border-green-600';
     } else if (hasToken) {
-      return <Badge variant="outline" className="text-blue-600 border-blue-600">Configured</Badge>;
+      // Provider has a token but isn\'t the active one
+      variant = 'outline';
+      label = 'Configured';
+      extraClass = 'text-blue-600 border-blue-600';
     } else {
-      return <Badge variant="outline" className="text-orange-600 border-orange-600">Not Set</Badge>;
+      // No token stored yet
+      variant = 'outline';
+      label = 'Not Set';
+      extraClass = 'text-orange-600 border-orange-600';
     }
+
+    const badgeProps: ComponentProps<typeof Badge> = {
+      className: cn(badgeVariants({ variant }), extraClass),
+    };
+
+    return <Badge {...badgeProps}>{label}</Badge>;
   };
 
   return (
@@ -163,9 +198,9 @@ const MultiProviderSettings = () => {
                       <div key={provider} className="flex items-center justify-between p-2 border rounded">
                         <span className="text-sm">{AI_PROVIDERS[provider].name}</span>
                         {hasToken ? (
-                          <Badge variant="outline" className="text-green-600 border-green-600">✓</Badge>
+                          <Badge className={cn(badgeVariants({ variant: 'outline' }), 'text-green-600 border-green-600')}>✓</Badge>
                         ) : (
-                          <Badge variant="outline" className="text-gray-400 border-gray-400">○</Badge>
+                          <Badge className={cn(badgeVariants({ variant: 'outline' }), 'text-gray-400 border-gray-400')}>○</Badge>
                         )}
                       </div>
                     );
@@ -247,6 +282,31 @@ const MultiProviderSettings = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                AI Recommendations
+              </CardTitle>
+              <CardDescription>
+                Enable or disable AI-powered recommendations in the dashboard to
+                avoid unintended usage.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <Switch
+                  checked={aiRecommendationsEnabled}
+                  onCheckedChange={handleToggleAiRecommendations}
+                  disabled={isSavingAiPref}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {aiRecommendationsEnabled ? 'Enabled' : 'Disabled'}
+                </span>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

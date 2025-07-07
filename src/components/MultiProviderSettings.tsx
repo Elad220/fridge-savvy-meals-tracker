@@ -17,8 +17,13 @@ import UserProfile from './UserProfile';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import type { ComponentProps } from 'react';
+import React from 'react';
+import { Badge as RawBadge } from '@/components/ui/badge';
 
 type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
+
+// Locally re-declare Badge with its full prop type so TS keeps className
+const Badge: React.FC<BadgeProps> = RawBadge;
 
 const MultiProviderSettings = () => {
   const { 

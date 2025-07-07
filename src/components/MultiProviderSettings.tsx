@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Badge, badgeVariants, BadgeProps } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
+import type { BadgeProps } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Key, Shield, Trash2, Globe, ExternalLink, Bot, Settings as SettingsIcon, Bell } from 'lucide-react';
@@ -195,19 +196,9 @@ const MultiProviderSettings = () => {
                       <div key={provider} className="flex items-center justify-between p-2 border rounded">
                         <span className="text-sm">{AI_PROVIDERS[provider].name}</span>
                         {hasToken ? (
-                          {(() => {
-                            const props: BadgeProps = {
-                              className: cn(badgeVariants({ variant: 'outline' }), 'text-green-600 border-green-600'),
-                            };
-                            return <Badge {...props}>✓</Badge>;
-                          })()}
+                          <Badge className={cn(badgeVariants({ variant: 'outline' }), 'text-green-600 border-green-600')}>✓</Badge>
                         ) : (
-                          {(() => {
-                            const props: BadgeProps = {
-                              className: cn(badgeVariants({ variant: 'outline' }), 'text-gray-400 border-gray-400'),
-                            };
-                            return <Badge {...props}>○</Badge>;
-                          })()}
+                          <Badge className={cn(badgeVariants({ variant: 'outline' }), 'text-gray-400 border-gray-400')}>○</Badge>
                         )}
                       </div>
                     );

@@ -6,6 +6,7 @@ export default defineConfig({
     globals: true,
     coverage: {
       reporter: ['text', 'json', 'html']
-    }
+    },
+    tsconfig: './tsconfig.vitest.json'
   }
 });

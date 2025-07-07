@@ -529,6 +529,69 @@ const Index = () => {
     setShowVoiceRecording(false);
   };
 
+  const parseIngredientsFromNotes = (notes?: string): string[] => {
+    if (!notes) return [];
+    const match = notes.match(/Ingredients:\s*([^\n]+)/i);
+    if (!match) return [];
+    return match[1]
+      .split(',')
+      .map(ing => ing.trim().toLowerCase())
+      .filter(ing => ing.length > 0);
+  };
+
+  const handleCookMeal = async (meal: MealPlan) => {
+    const ingredients = parseIngredientsFromNotes(meal.notes);
+
+    if (ingredients.length === 0) {
+      toast({
+        title: 'No ingredients found',
+        description: 'Unable to determine ingredients for this meal from the notes.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    let anyDeducted = false;
+
+    for (const ing of ingredients) {
+      // Try to find a matching food item (case-insensitive)
+      const item = foodItems.find(fi => fi.name.toLowerCase() === ing);
+      if (!item) {
+        continue; // Ingredient not in inventory
+      }
+
+      anyDeducted = true;
+
+      if (item.amount > 1) {
+        const updatedItem = { ...item, amount: item.amount - 1 };
+        await updateFoodItem(updatedItem);
+      } else {
+        await removeFoodItem(item.id);
+      }
+    }
+
+    if (anyDeducted) {
+      toast({
+        title: 'Meal cooked!',
+        description: `Ingredients for "${meal.name}" have been deducted from your inventory.`,
+      });
+    } else {
+      toast({
+        title: 'No matching ingredients',
+        description: 'None of the required ingredients were found in your inventory.',
+        variant: 'destructive'
+      });
+    }
+
+    // Update meal combination analytics if ingredients were parsed
+    if (ingredients.length > 0) {
+      updateMealCombination(meal.name, ingredients);
+    }
+
+    // Remove the meal plan after cooking
+    removeMealPlan(meal.id);
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'inventory':
@@ -573,6 +636,7 @@ const Index = () => {
             onEditMealPlan={setEditingMealPlan}
             onNavigateToSettings={() => setActiveTab('settings')}
             onMoveToInventory={handleMoveToInventory}
+            onCookMeal={handleCookMeal}
           />
         );
       case 'settings':

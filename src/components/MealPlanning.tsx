@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MealPlan, FoodItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Trash2, Calendar, Edit, Clock, PackagePlus } from 'lucide-react';
+import { Trash2, Calendar, Edit, Clock, PackagePlus, Utensils } from 'lucide-react';
 import { MoveToInventoryModal } from './MoveToInventoryModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { RecipeGenerator } from './RecipeGenerator';
@@ -14,6 +14,7 @@ interface MealPlanningProps {
   onEditMealPlan: (meal: MealPlan) => void;
   onNavigateToSettings: () => void;
   onMoveToInventory: (meal: MealPlan, foodItem: Omit<FoodItem, 'id' | 'userId'>) => void;
+  onCookMeal: (meal: MealPlan) => void;
 }
 
 export const MealPlanning = ({ 
@@ -23,7 +24,8 @@ export const MealPlanning = ({
   onAddMealPlan, 
   onEditMealPlan, 
   onNavigateToSettings,
-  onMoveToInventory 
+  onMoveToInventory,
+  onCookMeal 
 }: MealPlanningProps) => {
   const [moveToInventoryModalOpen, setMoveToInventoryModalOpen] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<MealPlan | null>(null);
@@ -142,6 +144,15 @@ export const MealPlanning = ({
                 >
                   <Edit className="w-4 h-4 mr-1" />
                   Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onCookMeal(meal)}
+                  className="text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-950/20"
+                >
+                  <Utensils className="w-4 h-4 mr-1" />
+                  Cook
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

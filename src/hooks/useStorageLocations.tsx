@@ -18,21 +18,40 @@ const DEFAULT_STORAGE_LOCATIONS = [
 
 const STORAGE_KEY = 'custom-storage-locations';
 
+// A simple event name for broadcasting updates to custom storage locations
+const STORAGE_EVENT = 'custom-storage-locations-updated';
+
+// Helper to read custom locations from localStorage safely
+const readCustomLocationsFromStorage = (): string[] => {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return [];
+  try {
+    const parsed = JSON.parse(saved);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.warn('Failed to parse custom storage locations:', err);
+    return [];
+  }
+};
+
 export const useStorageLocations = () => {
   const [customLocations, setCustomLocations] = useState<string[]>([]);
 
-  // Load custom locations from localStorage on mount
+  // Load custom locations on mount **and** subscribe to updates from other hook instances
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setCustomLocations(Array.isArray(parsed) ? parsed : []);
-      } catch (error) {
-        console.warn('Failed to parse custom storage locations:', error);
-        setCustomLocations([]);
-      }
-    }
+    setCustomLocations(readCustomLocationsFromStorage());
+
+    const handleUpdate = (e: Event) => {
+      // When another hook instance adds a location it will dispatch the event.
+      // Simply re-read from localStorage to get the latest list.
+      setCustomLocations(readCustomLocationsFromStorage());
+    };
+
+    window.addEventListener(STORAGE_EVENT, handleUpdate);
+
+    return () => {
+      window.removeEventListener(STORAGE_EVENT, handleUpdate);
+    };
   }, []);
 
   // Save custom locations to localStorage whenever they change
@@ -44,20 +63,27 @@ export const useStorageLocations = () => {
     const trimmedLocation = location.trim();
     if (!trimmedLocation) return false;
     
-    // Check if location already exists (case-insensitive)
     const allLocations = [...DEFAULT_STORAGE_LOCATIONS, ...customLocations];
     const exists = allLocations.some(
       loc => loc.toLowerCase() === trimmedLocation.toLowerCase()
     );
     
     if (exists) return false;
-    
-    setCustomLocations(prev => [...prev, trimmedLocation]);
+
+    const updated = [...customLocations, trimmedLocation];
+    setCustomLocations(updated);
+    // Persist to localStorage
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    // Notify other hook instances in the same tab
+    window.dispatchEvent(new Event(STORAGE_EVENT));
     return true;
   };
 
   const removeCustomLocation = (location: string) => {
-    setCustomLocations(prev => prev.filter(loc => loc !== location));
+    const updated = customLocations.filter(loc => loc !== location);
+    setCustomLocations(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    window.dispatchEvent(new Event(STORAGE_EVENT));
   };
 
   // Get all locations (default + custom, with "Other" at the end)

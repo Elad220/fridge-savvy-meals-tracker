@@ -16,6 +16,7 @@ import { AIProviderFactory } from '@/lib/ai-providers/factory';
 import UserProfile from './UserProfile';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import type { ComponentProps } from 'react';
 
 type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
 
@@ -141,7 +142,7 @@ const MultiProviderSettings = () => {
       extraClass = 'text-orange-600 border-orange-600';
     }
 
-    const badgeProps: BadgeProps = {
+    const badgeProps: ComponentProps<typeof Badge> = {
       className: cn(badgeVariants({ variant }), extraClass),
     };
 
@@ -196,9 +197,19 @@ const MultiProviderSettings = () => {
                       <div key={provider} className="flex items-center justify-between p-2 border rounded">
                         <span className="text-sm">{AI_PROVIDERS[provider].name}</span>
                         {hasToken ? (
-                          <Badge className={cn(badgeVariants({ variant: 'outline' }), 'text-green-600 border-green-600')}>✓</Badge>
+                          {(() => {
+                            const bp: ComponentProps<typeof Badge> = {
+                              className: cn(badgeVariants({ variant: 'outline' }), 'text-green-600 border-green-600'),
+                            };
+                            return <Badge {...bp}>✓</Badge>;
+                          })()}
                         ) : (
-                          <Badge className={cn(badgeVariants({ variant: 'outline' }), 'text-gray-400 border-gray-400')}>○</Badge>
+                          {(() => {
+                            const bp: ComponentProps<typeof Badge> = {
+                              className: cn(badgeVariants({ variant: 'outline' }), 'text-gray-400 border-gray-400'),
+                            };
+                            return <Badge {...bp}>○</Badge>;
+                          })()}
                         )}
                       </div>
                     );

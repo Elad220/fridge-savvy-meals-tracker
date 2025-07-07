@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { MealPlan, FoodItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Trash2, Calendar, Edit, Clock, PackagePlus } from 'lucide-react';
+import { Trash2, Calendar, Edit, Clock, PackagePlus, BellPlus } from 'lucide-react';
 import { MoveToInventoryModal } from './MoveToInventoryModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { RecipeGenerator } from './RecipeGenerator';
+import { toast } from '@/hooks/use-toast';
+import { generateMealPlanICS } from '@/lib/calendar';
 
 interface MealPlanningProps {
   mealPlans: MealPlan[];
@@ -40,6 +42,36 @@ export const MealPlanning = ({
       setSelectedMeal(null);
     }
   };
+
+  const handleAddReminder = (meal: MealPlan) => {
+    const icsContent = generateMealPlanICS(meal);
+
+    if (!icsContent) {
+      toast({
+        title: 'Date missing',
+        description: 'Please set a date for this meal before creating a reminder.',
+      });
+      return;
+    }
+
+    const blob = new Blob([icsContent], {
+      type: 'text/calendar;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${meal.name.replace(/\s+/g, '_')}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: 'Reminder created',
+      description: 'An event file has been downloaded. Open it to add the reminder to your calendar.',
+    });
+  };
+
   const sortedMealPlans = [...mealPlans].sort((a, b) => {
     if (!a.plannedDate && !b.plannedDate) return 0;
     if (!a.plannedDate) return 1;
@@ -142,6 +174,15 @@ export const MealPlanning = ({
                 >
                   <Edit className="w-4 h-4 mr-1" />
                   Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleAddReminder(meal)}
+                  className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950/20"
+                >
+                  <BellPlus className="w-4 h-4 mr-1" />
+                  Add Reminder
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

@@ -23,7 +23,6 @@ const MultiProviderSettings = () => {
     removeTokenForProvider, 
     getLanguage, 
     saveLanguage,
-    hasAnyToken,
     aiRecommendationsEnabled,
     saveAiRecommendationsEnabled,
   } = useApiTokens();

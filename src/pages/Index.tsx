@@ -38,7 +38,7 @@ const Index = () => {
   const { recentActions, loading: historyLoading, refetch: refetchHistory } = useActionHistory(user?.id);
   const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id, undefined, refetchHistory);
   const { mealPlans, loading: mealLoading, addMealPlan, updateMealPlan, removeMealPlan } = useMealPlans(user?.id);
-  const { updateConsumptionPattern, updateMealCombination } = useAIRecommendations(user?.id, foodItems, recentActions);
+  const { updateConsumptionPattern, updateMealCombination } = useAIRecommendations(user?.id);
   const { aiRecommendationsEnabled } = useApiTokens();
 
   useEffect(() => {

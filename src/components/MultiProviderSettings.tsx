@@ -7,11 +7,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Key, Shield, Trash2, Globe, ExternalLink, Bot, Settings as SettingsIcon } from 'lucide-react';
+import { Key, Shield, Trash2, Globe, ExternalLink, Bot, Settings as SettingsIcon, Bell } from 'lucide-react';
 import { useApiTokens } from '@/hooks/useApiTokens';
 import { AIProvider, AI_PROVIDERS } from '@/types/aiProvider';
 import { AIProviderFactory } from '@/lib/ai-providers/factory';
 import UserProfile from './UserProfile';
+import { Switch } from '@/components/ui/switch';
 
 const MultiProviderSettings = () => {
   const { 
@@ -23,6 +24,8 @@ const MultiProviderSettings = () => {
     getLanguage, 
     saveLanguage,
     hasAnyToken,
+    aiRecommendationsEnabled,
+    saveAiRecommendationsEnabled,
   } = useApiTokens();
 
   const [tokens, setTokens] = useState<Record<string, string>>({});
@@ -31,6 +34,7 @@ const MultiProviderSettings = () => {
   const [isSaving, setIsSaving] = useState<Record<string, boolean>>({});
   const [isRemoving, setIsRemoving] = useState<Record<string, boolean>>({});
   const [isSavingLanguage, setIsSavingLanguage] = useState(false);
+  const [isSavingAiPref, setIsSavingAiPref] = useState(false);
   const [activeTab, setActiveTab] = useState('providers');
 
   const supportedProviders = AIProviderFactory.getSupportedProviders();
@@ -80,6 +84,12 @@ const MultiProviderSettings = () => {
     setIsSavingLanguage(true);
     await saveLanguage(selectedLanguage);
     setIsSavingLanguage(false);
+  };
+
+  const handleToggleAiRecommendations = async (enabled: boolean) => {
+    setIsSavingAiPref(true);
+    await saveAiRecommendationsEnabled(enabled);
+    setIsSavingAiPref(false);
   };
 
   const handleRemoveToken = async (provider: AIProvider) => {
@@ -247,6 +257,31 @@ const MultiProviderSettings = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                AI Recommendations
+              </CardTitle>
+              <CardDescription>
+                Enable or disable AI-powered recommendations in the dashboard to
+                avoid unintended usage.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <Switch
+                  checked={aiRecommendationsEnabled}
+                  onCheckedChange={handleToggleAiRecommendations}
+                  disabled={isSavingAiPref}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {aiRecommendationsEnabled ? 'Enabled' : 'Disabled'}
+                </span>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

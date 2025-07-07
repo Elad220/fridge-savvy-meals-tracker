@@ -22,6 +22,7 @@ import { FoodItem, MealPlan } from '@/types';
 import { AIRecommendations } from '@/components/AIRecommendations';
 import { useAIRecommendations } from '@/hooks/useAIRecommendations';
 import { toast } from '@/hooks/use-toast';
+import { useApiTokens } from '@/hooks/useApiTokens';
 
 const Index = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -38,6 +39,7 @@ const Index = () => {
   const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id, undefined, refetchHistory);
   const { mealPlans, loading: mealLoading, addMealPlan, updateMealPlan, removeMealPlan } = useMealPlans(user?.id);
   const { updateConsumptionPattern, updateMealCombination } = useAIRecommendations(user?.id, foodItems, recentActions);
+  const { aiRecommendationsEnabled } = useApiTokens();
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -510,7 +512,7 @@ const Index = () => {
         });
       }
     });
-    setShowBulkPhotoAnalysis(false);
+    setShowPhotoAnalysis(false);
   };
 
   const handleVoiceRecordingComplete = (items: Omit<FoodItem, 'id' | 'userId'>[]) => {
@@ -535,7 +537,7 @@ const Index = () => {
         return (
           <div className="space-y-6">
             {/* AI Recommendations Section */}
-            {user?.id && (
+            {user?.id && aiRecommendationsEnabled && (
               <AIRecommendations
                 userId={user.id}
                 onAddToShoppingList={(items) => {

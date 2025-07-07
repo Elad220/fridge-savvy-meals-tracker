@@ -10,6 +10,8 @@ export const useApiTokens = () => {
   const [providerTokens, setProviderTokens] = useState<Record<string, boolean>>({});
   const [selectedProvider, setSelectedProvider] = useState<AIProvider>('gemini');
   const [loading, setLoading] = useState(true);
+  // Preference: Whether AI recommendations are enabled for the user. Default to true so feature works out-of-the-box.
+  const [aiRecommendationsEnabled, setAiRecommendationsEnabled] = useState<boolean>(true);
 
   // Legacy support - check if user has Gemini token
   const hasGeminiToken = providerTokens['gemini'] || false;
@@ -255,6 +257,72 @@ export const useApiTokens = () => {
     return () => { isMounted = false; };
   }, [user?.id, checkForTokens]);
 
+  // Load saved AI recommendations preference on mount
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPreference = async () => {
+      if (user && isMounted) {
+        const enabled = await getAiRecommendationsEnabled();
+        setAiRecommendationsEnabled(enabled);
+      }
+    };
+
+    loadPreference();
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
+  // ================= AI Recommendations Preference =================
+  const saveAiRecommendationsEnabled = async (enabled: boolean) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase.rpc('store_api_token', {
+        p_token_name: 'ai_recommendations_enabled',
+        p_api_token: enabled ? 'true' : 'false',
+      });
+
+      if (error) throw error;
+
+      setAiRecommendationsEnabled(enabled);
+      toast({
+        title: 'Preference saved',
+        description: `AI recommendations have been ${enabled ? 'enabled' : 'disabled'}.`,
+      });
+      return true;
+    } catch (error: any) {
+      console.error('Error saving AI recommendations preference:', error);
+      toast({
+        title: 'Error saving preference',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  const getAiRecommendationsEnabled = async (): Promise<boolean> => {
+    if (!user) return true; // default enabled for unauthenticated scenario
+
+    try {
+      const { data, error } = await supabase.rpc('get_decrypted_api_token', {
+        p_token_name: 'ai_recommendations_enabled',
+      });
+
+      if (error) throw error;
+
+      // If not set, default to true
+      if (data === null || data === undefined) return true;
+
+      return data === 'true';
+    } catch (error: any) {
+      console.error('Error getting AI recommendations preference:', error);
+      return true;
+    }
+  };
+
   // Memoize the returned object to prevent unnecessary re-renders
   return useMemo(() => ({
     // Legacy support for existing components
@@ -280,6 +348,10 @@ export const useApiTokens = () => {
     saveLanguage,
     getLanguage,
     
+    // AI Recommendations preference
+    aiRecommendationsEnabled,
+    saveAiRecommendationsEnabled,
+    
     // Utility
     refreshTokenStatus: checkForTokens,
   }), [
@@ -288,5 +360,6 @@ export const useApiTokens = () => {
     selectedProvider,
     loading,
     checkForTokens,
+    aiRecommendationsEnabled,
   ]);
 };

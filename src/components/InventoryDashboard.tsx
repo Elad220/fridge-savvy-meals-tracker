@@ -202,52 +202,50 @@ export const InventoryDashboard = ({
         )}
       </div>
 
-      <div className="glass-card p-4">
-        <div className="flex flex-col gap-3 md:flex-row md:gap-4">
-          <div className="relative flex-1">
-            <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <div className="glass-card p-2">
+        <div className="flex flex-row gap-1 items-center flex-wrap">
+          <div className="relative flex-1 min-w-[150px]">
+            <SearchIcon className="absolute left-2 top-2 h-3 w-3 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search items..."
-              className="w-full bg-background pl-8"
+              className="w-full bg-background pl-7 py-1 text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:gap-2">
-            <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="eatByDate">Eat By Date</SelectItem>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="storageLocation">Storage Location</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterBy} onValueChange={(value: any) => setFilterBy(value)}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Items</SelectItem>
-                <SelectItem value="fresh">Fresh</SelectItem>
-                <SelectItem value="use-soon">Use Soon</SelectItem>
-                <SelectItem value="use-or-throw">Use or Throw</SelectItem>
-                <SelectItem value="expired">Expired</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={foodTypeFilter} onValueChange={(value: any) => setFoodTypeFilter(value)}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Food Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="cooked meal">Cooked Meals</SelectItem>
-                <SelectItem value="raw material">Raw Materials</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-28 py-1 text-sm">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="eatByDate">Eat By Date</SelectItem>
+              <SelectItem value="name">Name</SelectItem>
+              <SelectItem value="storageLocation">Storage Location</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterBy} onValueChange={setFilterBy}>
+            <SelectTrigger className="w-28 py-1 text-sm">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Items</SelectItem>
+              <SelectItem value="fresh">Fresh</SelectItem>
+              <SelectItem value="use-soon">Use Soon</SelectItem>
+              <SelectItem value="use-or-throw">Use or Throw</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={foodTypeFilter} onValueChange={setFoodTypeFilter}>
+            <SelectTrigger className="w-28 py-1 text-sm">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="cooked meal">Cooked Meals</SelectItem>
+              <SelectItem value="raw material">Raw Materials</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

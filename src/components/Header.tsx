@@ -43,7 +43,7 @@ export const Header = ({ user, onLogout, activeTab, onTabChange }: HeaderProps) 
             </nav>
           </div>
           
-          <div className="flex items-center space-x-2 md:space-x-4">
+          <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4">
             <span className="text-xs md:text-sm text-muted-foreground hidden sm:block">Welcome, {user.name}</span>
             <ThemeToggle />
             <Button
@@ -52,7 +52,7 @@ export const Header = ({ user, onLogout, activeTab, onTabChange }: HeaderProps) 
               onClick={() => onTabChange('settings')}
               className={activeTab === 'settings' ? 'bg-muted' : ''}
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="sr-only">Settings</span>
             </Button>
             <Button

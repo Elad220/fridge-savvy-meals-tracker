@@ -123,21 +123,21 @@ export const AIRecommendations = ({
           AI-Powered Recommendations
         </h3>
         <Tabs defaultValue="shopping" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="shopping" className="flex items-center gap-1">
-              <ShoppingCart className="w-4 h-4" />
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 overflow-x-auto no-scrollbar">
+            <TabsTrigger value="shopping" className="flex items-center gap-0.5 text-xs sm:text-sm">
+              <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
               Shopping
             </TabsTrigger>
-            <TabsTrigger value="meals" className="flex items-center gap-1">
-              <ChefHat className="w-4 h-4" />
+            <TabsTrigger value="meals" className="flex items-center gap-0.5 text-xs sm:text-sm">
+              <ChefHat className="w-3 h-3 sm:w-4 sm:h-4" />
               Meals
             </TabsTrigger>
-            <TabsTrigger value="insights" className="flex items-center gap-1">
-              <TrendingUp className="w-4 h-4" />
+            <TabsTrigger value="insights" className="flex items-center gap-0.5 text-xs sm:text-sm">
+              <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
               Insights
             </TabsTrigger>
-            <TabsTrigger value="actions" className="flex items-center gap-1">
-              <CheckCircle className="w-4 h-4" />
+            <TabsTrigger value="actions" className="flex items-center gap-0.5 text-xs sm:text-sm">
+              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
               Actions
             </TabsTrigger>
           </TabsList>

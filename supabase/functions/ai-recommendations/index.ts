@@ -367,10 +367,10 @@ class AIRecommendationsService {
     }
   }
 
-  async generateRecommendations(userId: string): Promise<any> {
+  async generateRecommendations(userId: string, force: boolean = false): Promise<any> {
     // Check if we should generate recommendations based on time and inventory changes
     const shouldGenerate = await this.shouldGenerateRecommendations(userId);
-    if (!shouldGenerate) {
+    if (!shouldGenerate && !force) {
       console.log('Skipping recommendation generation - recent recommendations available and no inventory changes');
       return {
         shopping_recommendations: [],
@@ -408,7 +408,9 @@ class AIRecommendationsService {
     }
 
     const providerInstance = AIProviderFactory.createProvider(provider, credentials);
+    // Fetch user data
     const userData = await this.getUserData(userId);
+    console.log('User data for recommendations:', JSON.stringify(userData, null, 2));
 
     // Get user's preferred language
     const { data: languageData } = await this.supabase.rpc('get_decrypted_api_token', {
@@ -448,7 +450,59 @@ class AIRecommendationsService {
       };
     } catch (error) {
       console.error('Error generating AI recommendations:', error);
-      throw error;
+      // User-friendly error for model overload
+      const errorMsg = typeof error === 'object' && error !== null ? (error.message || '') : String(error);
+      const errorStatus = (typeof error === 'object' && error !== null && error.status) ? error.status : undefined;
+      if (
+        (errorMsg && errorMsg.toLowerCase().includes('overloaded')) ||
+        (errorMsg && errorMsg.toLowerCase().includes('unavailable')) ||
+        errorStatus === 503
+      ) {
+        return new Response(JSON.stringify({
+          error: 'The AI model is currently overloaded. Please try again in a few minutes.',
+          provider: 'gemini',
+          status: 503
+        }), {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          },
+          status: 503
+        });
+      }
+      // Return a fallback response instead of failing completely
+      const fallbackResult = {
+        shopping_recommendations: [],
+        low_stock_alerts: [],
+        meal_suggestions: [],
+        insights: {
+          consumptionTrends: "Unable to analyze consumption patterns at this time.",
+          inventoryHealth: "Please check your inventory manually.",
+          shoppingPatterns: "No shopping pattern data available.",
+          mealPreferences: "No meal preference data available.",
+          suggestions: "Try adding some food items to get personalized recommendations."
+        },
+        next_actions: [
+          {
+            action: "Add some food items to your inventory",
+            priority: "medium",
+            reason: "This will help the AI provide better recommendations"
+          }
+        ],
+        metadata: {
+          provider: 'fallback',
+          model: 'none',
+          usage: undefined,
+          error: errorMsg
+        }
+      };
+
+      return new Response(JSON.stringify(fallbackResult), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      });
     }
   }
 
@@ -642,7 +696,7 @@ serve(async (req) => {
   }
 
   try {
-    const { userId } = await req.json();
+    const { userId, force } = await req.json();
 
     if (!userId) {
       return new Response(JSON.stringify({
@@ -683,8 +737,8 @@ serve(async (req) => {
     const aiService = new AIRecommendationsService(supabase);
 
     try {
-      // Generate AI-powered recommendations
-      const result = await aiService.generateRecommendations(userId);
+      // Generate AI-powered recommendations, honoring force param
+      const result = await aiService.generateRecommendations(userId, force);
 
       // If recommendations were actually generated (not skipped due to cooldown), save them to cache
       if (result.metadata?.provider !== 'cached') {

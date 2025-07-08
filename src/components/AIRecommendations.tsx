@@ -150,7 +150,7 @@ export const AIRecommendations = ({
               <div className="text-sm text-muted-foreground mb-3">
                 Based on your consumption patterns and current inventory
               </div>
-              {recommendations.shopping.length === 0 ? (
+              {(recommendations.shopping?.length ?? 0) === 0 ? (
                 <p className="text-center py-4 text-muted-foreground">
                   No shopping recommendations at this time. Your inventory looks well-stocked!
                 </p>
@@ -359,7 +359,10 @@ export const AIRecommendations = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={refreshRecommendations}
+              onClick={() => {
+                console.log('Refresh button clicked');
+                refreshRecommendations();
+              }}
             >
               Refresh Recommendations
             </Button>

@@ -553,18 +553,6 @@ const Index = () => {
         return (
           <div className="space-y-6">
             {/* AI Recommendations Section */}
-            {user?.id && aiRecommendationsEnabled && (
-              <AIRecommendations
-                userId={user.id}
-                onAddToShoppingList={(items) => {
-                  // Handle adding items to shopping list
-                  toast({
-                    title: "Added to shopping list",
-                    description: `${items.length} item(s) added to your shopping list.`,
-                  });
-                }}
-              />
-            )}
             
             <InventoryDashboard
               foodItems={foodItems}

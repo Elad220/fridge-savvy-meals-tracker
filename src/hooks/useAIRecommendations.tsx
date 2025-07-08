@@ -162,6 +162,15 @@ export const useAIRecommendations = (userId: string | undefined) => {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Edge Function error:', errorData);
+        if (errorData.status === 503 && errorData.provider === 'gemini') {
+          toast({
+            title: "AI Model Overloaded",
+            description: "The AI model is currently overloaded. Please try again in a few minutes.",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
         throw new Error(errorData.error || errorData.message || 'Failed to generate recommendations');
       }
 
@@ -253,6 +262,97 @@ export const useAIRecommendations = (userId: string | undefined) => {
     }
   };
 
+  // Force-generate AI-powered recommendations, always calling the Edge Function
+  const forceGenerateRecommendations = async () => {
+    console.log('Manual refresh triggered', { userId, loading });
+    if (!userId || loading) return;
+    setLoading(true);
+    try {
+      // Call the AI recommendations Edge Function
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+      const response = await fetch(`https://wwhqiddmkziladwfeggn.supabase.co/functions/v1/ai-recommendations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId, force: true }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.status === 503 && errorData.provider === 'gemini') {
+          toast({
+            title: "AI Model Overloaded",
+            description: "The AI model is currently overloaded. Please try again in a few minutes.",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
+        throw new Error(errorData.error || errorData.message || 'Failed to generate recommendations');
+      }
+      const aiResult = await response.json();
+      const newRecommendations: AIRecommendations = {
+        shopping: aiResult.shopping_recommendations?.map((item: any) => ({
+          name: item.name,
+          quantity: item.quantity,
+          unit: item.unit,
+          reason: item.reason,
+          priority: item.priority,
+          confidence: item.confidence
+        })) || [],
+        meals: aiResult.meal_suggestions?.map((meal: any) => ({
+          name: meal.name,
+          ingredients: meal.ingredients,
+          prepTime: meal.prep_time,
+          difficulty: meal.difficulty,
+          reason: meal.reason
+        })) || [],
+        lowStock: aiResult.low_stock_alerts?.map((alert: any) => ({
+          itemName: alert.item_name,
+          currentAmount: alert.current_amount,
+          unit: alert.unit,
+          recommendedAmount: alert.recommended_amount,
+          daysUntilOut: alert.days_until_out,
+          urgency: alert.urgency
+        })) || [],
+        insights: aiResult.insights || {},
+        nextActions: aiResult.next_actions?.map((action: any) => ({
+          action: action.action,
+          priority: action.priority,
+          reason: action.reason
+        })) || [],
+        generatedAt: new Date()
+      };
+      // Save the recommendations to cache
+      try {
+        await supabase.from('ai_recommendations').upsert({
+          user_id: userId,
+          recommendation_type: 'comprehensive',
+          recommendations: newRecommendations,
+          generated_at: newRecommendations.generatedAt.toISOString(),
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        });
+      } catch (cacheError) {
+        console.error('Error saving recommendations to cache:', cacheError);
+      }
+      setRecommendations(newRecommendations);
+    } catch (error) {
+      console.error('Error generating AI recommendations:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate AI recommendations. Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Load cached recommendations if available and recent
   const loadCachedRecommendations = async () => {
     if (!userId) return;
@@ -278,9 +378,68 @@ export const useAIRecommendations = (userId: string | undefined) => {
 
         // If cached recommendations are recent, use them
         if (generatedAt > tenHoursAgo) {
-          console.log('Loading cached recommendations from:', generatedAt);
+          let rec = cached.recommendations;
+          if (typeof rec === 'string') {
+            try {
+              rec = JSON.parse(rec);
+            } catch (e) {
+              console.error('Failed to parse cached recommendations JSON:', e, rec);
+              rec = {};
+            }
+          }
+          const recObj = rec as Partial<AIRecommendations & {
+            shopping_recommendations?: any[];
+            meal_suggestions?: any[];
+            low_stock_alerts?: any[];
+            next_actions?: any[];
+          }>;
+          console.log('Loaded cached recommendations:', recObj);
           setRecommendations({
-            ...cached.recommendations,
+            shopping: Array.isArray(recObj.shopping)
+              ? recObj.shopping
+              : Array.isArray(recObj.shopping_recommendations)
+                ? recObj.shopping_recommendations.map(item => ({
+                    name: item.name,
+                    quantity: item.quantity,
+                    unit: item.unit,
+                    reason: item.reason,
+                    priority: item.priority,
+                    confidence: item.confidence
+                  }))
+                : [],
+            meals: Array.isArray(recObj.meals)
+              ? recObj.meals
+              : Array.isArray(recObj.meal_suggestions)
+                ? recObj.meal_suggestions.map(meal => ({
+                    name: meal.name,
+                    ingredients: meal.ingredients,
+                    prepTime: meal.prep_time,
+                    difficulty: meal.difficulty,
+                    reason: meal.reason
+                  }))
+                : [],
+            lowStock: Array.isArray(recObj.lowStock)
+              ? recObj.lowStock
+              : Array.isArray(recObj.low_stock_alerts)
+                ? recObj.low_stock_alerts.map(alert => ({
+                    itemName: alert.item_name,
+                    currentAmount: alert.current_amount,
+                    unit: alert.unit,
+                    recommendedAmount: alert.recommended_amount,
+                    daysUntilOut: alert.days_until_out,
+                    urgency: alert.urgency
+                  }))
+                : [],
+            insights: recObj.insights ?? {},
+            nextActions: Array.isArray(recObj.nextActions)
+              ? recObj.nextActions
+              : Array.isArray(recObj.next_actions)
+                ? recObj.next_actions.map(action => ({
+                    action: action.action,
+                    priority: action.priority,
+                    reason: action.reason
+                  }))
+                : [],
             generatedAt
           });
           return;
@@ -347,7 +506,7 @@ export const useAIRecommendations = (userId: string | undefined) => {
   return {
     recommendations,
     loading,
-    refreshRecommendations: generateRecommendations,
+    refreshRecommendations: forceGenerateRecommendations,
     updateConsumptionPattern,
     updateMealCombination,
     clearCache,

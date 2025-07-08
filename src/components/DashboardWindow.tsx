@@ -51,7 +51,7 @@ export const DashboardWindow: React.FC<DashboardWindowProps> = ({
 
   const windowContent = (
     <div 
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm transition-all duration-300 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-200/60 dark:bg-gray-900/60 backdrop-blur-sm transition-all duration-300 ${
         isMinimized ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
       onClick={(e) => e.target === e.currentTarget && onClose()}

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search as SearchIcon, Trash2 } from 'lucide-react';
+import { Search as SearchIcon, Trash2, ExternalLink } from 'lucide-react';
 
 interface InventoryDashboardProps {
   foodItems: FoodItem[];
@@ -122,35 +122,48 @@ export const InventoryDashboard = ({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="space-y-1">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-          <div className="bg-green-50 dark:bg-green-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
-            <div className="text-lg md:text-2xl font-bold text-green-700 dark:text-green-400">{statusCounts.fresh}</div>
-            <div className="text-xs text-green-600 dark:text-green-500">Fresh</div>
+    <div className="space-y-4">{/* Quick stats overview - more compact */}
+      <div className="glass-card p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-foreground">Quick Overview</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const event = new CustomEvent('openDashboardWindow', { 
+                detail: { statusCounts, recentActions, historyLoading, userId }
+              });
+              window.dispatchEvent(event);
+            }}
+            className="glass-button text-xs"
+          >
+            <ExternalLink className="w-3 h-3 mr-1" />
+            View Details
+          </Button>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          <div className="text-center">
+            <div className="text-xl font-bold text-green-600">{statusCounts.fresh}</div>
+            <div className="text-xs text-muted-foreground">Fresh</div>
           </div>
-          <div className="bg-yellow-50 dark:bg-yellow-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
-            <div className="text-lg md:text-2xl font-bold text-yellow-700 dark:text-yellow-400">{statusCounts['use-soon']}</div>
-            <div className="text-xs text-yellow-600 dark:text-yellow-500">Use Soon</div>
+          <div className="text-center">
+            <div className="text-xl font-bold text-yellow-600">{statusCounts['use-soon']}</div>
+            <div className="text-xs text-muted-foreground">Use Soon</div>
           </div>
-          <div className="bg-orange-50 dark:bg-orange-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
-            <div className="text-lg md:text-2xl font-bold text-orange-700 dark:text-orange-400">{statusCounts['use-or-throw']}</div>
-            <div className="text-xs text-orange-600 dark:text-orange-500">Use or Throw</div>
+          <div className="text-center">
+            <div className="text-xl font-bold text-orange-600">{statusCounts['use-or-throw']}</div>
+            <div className="text-xs text-muted-foreground">Critical</div>
           </div>
-          <div className="bg-red-50 dark:bg-red-950/20 p-3 md:p-4 rounded-lg shadow-sm border">
-            <div className="text-lg md:text-2xl font-bold text-red-700 dark:text-red-400">{statusCounts.expired}</div>
-            <div className="text-xs text-red-600 dark:text-red-500">Expired</div>
+          <div className="text-center">
+            <div className="text-xl font-bold text-red-600">{statusCounts.expired}</div>
+            <div className="text-xs text-muted-foreground">Expired</div>
           </div>
         </div>
-        
-        <div className="bg-card p-2 rounded-lg shadow-sm border max-w-md mx-auto -mb-2">
-          <div className="text-2xl md:text-3xl font-bold text-foreground text-center">{foodItems.length}</div>
-          <div className="text-sm text-muted-foreground text-center">Total Items</div>
+        <div className="text-center pt-2 border-t border-border/50">
+          <div className="text-2xl font-bold text-primary">{foodItems.length}</div>
+          <div className="text-sm text-muted-foreground">Total Items</div>
         </div>
       </div>
-
-      {/* Recent Actions Card */}
-      <RecentActionsCard actions={recentActions} loading={historyLoading} />
 
       {/* Bulk selection controls */}
       <div className="flex flex-wrap gap-2 items-center">
@@ -189,7 +202,7 @@ export const InventoryDashboard = ({
         )}
       </div>
 
-      <div className="bg-card p-3 md:p-4 rounded-lg shadow-sm border">
+      <div className="glass-card p-4">
         <div className="flex flex-col gap-3 md:flex-row md:gap-4">
           <div className="relative flex-1">
             <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -239,7 +252,7 @@ export const InventoryDashboard = ({
       </div>
 
       {filteredAndSortedItems.length === 0 ? (
-        <div className="text-center py-12 bg-card rounded-lg shadow-sm border">
+        <div className="text-center py-12 glass-card">
           <div className="text-muted-foreground text-6xl mb-4">🍽️</div>
           <h3 className="text-lg font-medium text-foreground mb-2">No food items found</h3>
           <p className="text-muted-foreground">

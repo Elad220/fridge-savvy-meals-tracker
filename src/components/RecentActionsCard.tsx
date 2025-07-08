@@ -1,5 +1,4 @@
 import { Clock, Plus, Trash2, Pencil } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ActionHistoryItem } from '@/hooks/useActionHistory';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -10,59 +9,48 @@ interface RecentActionsCardProps {
 
 export const RecentActionsCard = ({ actions, loading }: RecentActionsCardProps) => {
   if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Clock className="w-4 h-4" />
-            Recent Actions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center gap-2 p-2">
-                <div className="w-4 h-4 bg-muted rounded animate-pulse" />
-                <div className="h-4 bg-muted rounded flex-1 animate-pulse" />
-              </div>
-            ))}
+  return (
+    <div className="glass-card p-4">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground mb-4">
+        <Clock className="w-4 h-4" />
+        Recent Actions
+      </h3>
+      <div className="space-y-2">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="flex items-center gap-2 p-2">
+            <div className="w-4 h-4 bg-muted rounded animate-pulse" />
+            <div className="h-4 bg-muted rounded flex-1 animate-pulse" />
           </div>
-        </CardContent>
-      </Card>
-    );
+        ))}
+      </div>
+    </div>
+  );
   }
 
   if (actions.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Clock className="w-4 h-4" />
-            Recent Actions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">No recent actions</p>
-        </CardContent>
-      </Card>
-    );
+  return (
+    <div className="glass-card p-4">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground mb-4">
+        <Clock className="w-4 h-4" />
+        Recent Actions
+      </h3>
+      <p className="text-sm text-muted-foreground">No recent actions</p>
+    </div>
+  );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-sm">
-          <Clock className="w-4 h-4" />
-          Recent Actions
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          {actions.map((action) => (
-            <div 
-              key={action.id} 
-              className="flex items-center gap-2 p-2 rounded-md bg-muted/50 text-sm"
-            >
+    <div className="glass-card p-4">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground mb-4">
+        <Clock className="w-4 h-4" />
+        Recent Actions
+      </h3>
+      <div className="space-y-2">
+        {actions.map((action) => (
+          <div 
+            key={action.id} 
+            className="flex items-center gap-2 p-2 rounded-md bg-background/30 text-sm"
+          >
               {action.actionType === 'add' && action.itemDetails?.isUpdate ? (
                 <Pencil className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               ) : action.actionType === 'add' ? (
@@ -86,7 +74,6 @@ export const RecentActionsCard = ({ actions, loading }: RecentActionsCardProps) 
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 };

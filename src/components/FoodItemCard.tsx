@@ -75,7 +75,7 @@ export const FoodItemCard = ({ item, onRemove, onEdit }: FoodItemCardProps) => {
   const config = statusConfig[status];
 
   return (
-    <div className={`${config.bgColor} ${config.borderColor} border-2 rounded-lg p-4 transition-all hover:shadow-md dark:hover:shadow-lg`}>
+    <div className={`glass-card p-4 transition-all duration-200 hover:scale-105 ${config.borderColor} border-2`}>
       <div className="flex justify-between items-start mb-3">
         <h3 className="font-semibold text-foreground text-lg">{item.name}</h3>
         <span className={`${config.badgeColor} px-2 py-1 rounded-full text-xs font-medium`}>

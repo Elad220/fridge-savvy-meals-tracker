@@ -12,7 +12,7 @@ interface HeaderProps {
 
 export const Header = ({ user, onLogout, activeTab, onTabChange }: HeaderProps) => {
   return (
-    <header className="bg-background border-b border-border shadow-sm">
+    <header className="glass-card border-b shadow-lg">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-12 md:h-16">
           <div className="flex items-center space-x-4 md:space-x-8">

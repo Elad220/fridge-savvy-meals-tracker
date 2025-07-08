@@ -23,6 +23,7 @@ import { AIRecommendations } from '@/components/AIRecommendations';
 import { useAIRecommendations } from '@/hooks/useAIRecommendations';
 import { toast } from '@/hooks/use-toast';
 import { useApiTokens } from '@/hooks/useApiTokens';
+import { DashboardWindow } from '@/components/DashboardWindow';
 
 const Index = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -34,12 +35,27 @@ const Index = () => {
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlan | null>(null);
   const [activeTab, setActiveTab] = useState<'inventory' | 'meals' | 'settings'>('inventory');
+  const [isDashboardWindowOpen, setIsDashboardWindowOpen] = useState(false);
+  const [dashboardData, setDashboardData] = useState<any>(null);
 
   const { recentActions, loading: historyLoading, refetch: refetchHistory } = useActionHistory(user?.id);
   const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id, undefined, refetchHistory);
   const { mealPlans, loading: mealLoading, addMealPlan, updateMealPlan, removeMealPlan } = useMealPlans(user?.id);
   const { updateConsumptionPattern, updateMealCombination } = useAIRecommendations(user?.id);
   const { aiRecommendationsEnabled } = useApiTokens();
+
+  // Dashboard window event listener
+  useEffect(() => {
+    const handleOpenDashboardWindow = (event: CustomEvent) => {
+      setDashboardData(event.detail);
+      setIsDashboardWindowOpen(true);
+    };
+
+    window.addEventListener('openDashboardWindow', handleOpenDashboardWindow as EventListener);
+    return () => {
+      window.removeEventListener('openDashboardWindow', handleOpenDashboardWindow as EventListener);
+    };
+  }, []);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -583,7 +599,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex flex-col">
       <Header
         user={headerUser}
         onLogout={handleLogout}
@@ -670,6 +686,18 @@ const Index = () => {
             onClose={() => setShowVoiceRecording(false)}
             onAnalysisComplete={handleVoiceRecordingComplete}
             userId={user.id}
+          />
+        )}
+
+        {/* Dashboard Window */}
+        {isDashboardWindowOpen && dashboardData && (
+          <DashboardWindow
+            isOpen={isDashboardWindowOpen}
+            onClose={() => setIsDashboardWindowOpen(false)}
+            recentActions={dashboardData.recentActions || recentActions}
+            historyLoading={dashboardData.historyLoading || historyLoading}
+            userId={dashboardData.userId || user.id}
+            statusCounts={dashboardData.statusCounts}
           />
         )}
       </main>

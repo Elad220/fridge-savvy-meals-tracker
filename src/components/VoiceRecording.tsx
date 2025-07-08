@@ -252,7 +252,7 @@ export const VoiceRecording = ({ isOpen, onClose, onAnalysisComplete, userId }: 
   return (
     <>
       <Dialog open={isOpen && !showEditForm} onOpenChange={onClose}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md glass-card">
           <DialogHeader>
             <DialogTitle>Voice Recording</DialogTitle>
           </DialogHeader>

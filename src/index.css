@@ -37,7 +37,7 @@
     --radius: 0.75rem;
 
     /* Glass morphism tokens */
-    --glass-bg: 255 255 255 / 0.1;
+    --glass-bg: 255 255 255 / 0.2;
     --glass-border: 255 255 255 / 0.2;
     --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
     --glass-blur: 16px;
@@ -94,7 +94,7 @@
     --ring: 142 86% 28%;
 
     /* Glass morphism tokens for dark mode */
-    --glass-bg: 0 0 0 / 0.2;
+    --glass-bg: 30 30 40 / 0.1;
     --glass-border: 255 255 255 / 0.1;
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     --glass-blur: 16px;
@@ -143,7 +143,7 @@
   }
   
   .glass-card {
-    @apply glass rounded-xl border border-border/50 bg-background/80 backdrop-blur-md;
+    @apply glass rounded-xl border border-border/50 backdrop-blur-md;
   }
   
   .glass-button {

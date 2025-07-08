@@ -49,7 +49,7 @@ export const RecentActionsCard = ({ actions, loading }: RecentActionsCardProps) 
         {actions.map((action) => (
           <div 
             key={action.id} 
-            className="flex items-center gap-2 p-2 rounded-md bg-background/30 text-sm"
+            className="flex items-center gap-2 p-2 rounded-md bg-background/10 text-sm"
           >
               {action.actionType === 'add' && action.itemDetails?.isUpdate ? (
                 <Pencil className="w-4 h-4 text-blue-600 dark:text-blue-400" />

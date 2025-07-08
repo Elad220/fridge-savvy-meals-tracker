@@ -345,7 +345,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, onBulkAnaly
   return (
     <>
       <Dialog open={isOpen && dialogMode === 'main'} onOpenChange={onClose}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto overflow-x-hidden">
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto overflow-x-hidden glass-card">
           <DialogHeader>
             <DialogTitle>Analyze Food Photo</DialogTitle>
           </DialogHeader>

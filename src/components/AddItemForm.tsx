@@ -154,7 +154,7 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md glass-card">
         <DialogHeader>
           <DialogTitle>
             {type === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}

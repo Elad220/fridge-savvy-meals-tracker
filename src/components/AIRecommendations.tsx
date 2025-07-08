@@ -152,7 +152,7 @@ export const AIRecommendations = ({
             ) : (
               <div className="space-y-2">
                 {recommendations.shopping.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2 p-2 rounded-md bg-background/30 text-sm">
+                  <div key={index} className="flex items-center gap-2 p-2 rounded-md bg-background/10 text-sm">
                     <ShoppingCart className="w-4 h-4 text-green-600 dark:text-green-400" />
                     <span className="flex-1">
                       <span className="font-medium">{item.name}</span>{' '}
@@ -189,7 +189,7 @@ export const AIRecommendations = ({
             ) : (
               <div className="space-y-2">
                 {recommendations.meals.map((meal, index) => (
-                  <div key={index} className="p-2 rounded-md bg-background/30 text-sm">
+                  <div key={index} className="p-2 rounded-md bg-background/10 text-sm">
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-medium">{meal.name}</h4>
                       <div className="flex items-center gap-2">

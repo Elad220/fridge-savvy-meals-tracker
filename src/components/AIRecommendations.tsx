@@ -12,11 +12,13 @@ import { useToast } from '@/hooks/use-toast';
 interface AIRecommendationsProps {
   userId: string;
   onAddToShoppingList?: (items: { name: string; quantity: number; unit: string }[]) => void;
+  onRefreshRecommendations?: () => Promise<void>;
 }
 
 export const AIRecommendations = ({ 
   userId, 
-  onAddToShoppingList 
+  onAddToShoppingList,
+  onRefreshRecommendations
 }: AIRecommendationsProps) => {
   console.log('AIRecommendations component rendered with userId:', userId);
   
@@ -90,6 +92,14 @@ export const AIRecommendations = ({
   const handleAddToShopping = (items: { name: string; quantity: number; unit: string }[]) => {
     if (onAddToShoppingList) {
       onAddToShoppingList(items);
+    }
+  };
+
+  const handleRefreshRecommendations = async () => {
+    if (onRefreshRecommendations) {
+      await onRefreshRecommendations();
+    } else {
+      await refreshRecommendations();
     }
   };
 
@@ -337,7 +347,7 @@ export const AIRecommendations = ({
             size="sm"
             onClick={() => {
               console.log('Refresh button clicked');
-              refreshRecommendations();
+              handleRefreshRecommendations();
             }}
           >
             Refresh Recommendations

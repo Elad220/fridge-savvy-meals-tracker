@@ -683,7 +683,8 @@ Guidelines:
 8. Consider expiration dates and freshness
 9. Provide specific quantities based on typical usage patterns
 10. Include confidence levels for recommendations
-11. IMPORTANT: Only generate low stock alerts for raw ingredients (not cooked meals). The current inventory data only includes raw ingredients.`;
+11. Typical inventory for a week should be 4 tomatoes, 4 cucumbers, 4 lemons, 2 bell peppers,1 for sweet potato, 1 for zucchini, 3 for bananas, 2 for apples, 2 for pears
+12. IMPORTANT: Only generate low stock alerts for raw ingredients (not cooked meals). The current inventory data only includes raw ingredients.`;
   }
 }
 

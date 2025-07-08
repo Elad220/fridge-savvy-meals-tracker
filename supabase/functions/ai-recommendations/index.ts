@@ -368,6 +368,38 @@ class AIRecommendationsService {
   }
 
   async generateRecommendations(userId: string): Promise<any> {
+    // Check if we should generate recommendations based on time and inventory changes
+    const shouldGenerate = await this.shouldGenerateRecommendations(userId);
+    if (!shouldGenerate) {
+      console.log('Skipping recommendation generation - recent recommendations available and no inventory changes');
+      return {
+        shopping_recommendations: [],
+        low_stock_alerts: [],
+        meal_suggestions: [],
+        insights: {
+          consumptionTrends: "Using recent recommendations - no new analysis needed.",
+          inventoryHealth: "Recommendations are up to date.",
+          shoppingPatterns: "No changes detected since last analysis.",
+          mealPreferences: "Recent recommendations are still relevant.",
+          suggestions: "Check back in a few hours for fresh recommendations."
+        },
+        next_actions: [
+          {
+            action: "Recommendations are recent and inventory unchanged",
+            priority: "low",
+            reason: "No new recommendations needed at this time"
+          }
+        ],
+        metadata: {
+          provider: 'cached',
+          model: 'none',
+          usage: undefined,
+          generatedAt: new Date().toISOString(),
+          reason: 'Using recent recommendations - no inventory changes detected'
+        }
+      };
+    }
+
     const provider = await this.getCurrentProvider();
     const credentials = await this.getProviderCredentials(provider);
 
@@ -417,6 +449,63 @@ class AIRecommendationsService {
     } catch (error) {
       console.error('Error generating AI recommendations:', error);
       throw error;
+    }
+  }
+
+  // Check if recommendations should be generated based on time and inventory changes
+  private async shouldGenerateRecommendations(userId: string): Promise<boolean> {
+    try {
+      // Get the most recent AI recommendations for this user
+      const { data: recentRecommendations, error: recommendationsError } = await this.supabase
+        .from('ai_recommendations')
+        .select('generated_at')
+        .eq('user_id', userId)
+        .eq('recommendation_type', 'comprehensive')
+        .order('generated_at', { ascending: false })
+        .limit(1);
+
+      if (recommendationsError) {
+        console.error('Error fetching recent recommendations:', recommendationsError);
+        return true; // Generate if we can't check
+      }
+
+      // If no previous recommendations, generate them
+      if (!recentRecommendations || recentRecommendations.length === 0) {
+        return true;
+      }
+
+      const lastGeneratedAt = new Date(recentRecommendations[0].generated_at);
+      const tenHoursAgo = new Date(Date.now() - 10 * 60 * 60 * 1000);
+
+      // If recommendations are older than 10 hours, generate new ones
+      if (lastGeneratedAt < tenHoursAgo) {
+        return true;
+      }
+
+      // Check if there have been any inventory changes since the last generation
+      const { data: recentActions, error: actionsError } = await this.supabase
+        .from('action_history')
+        .select('created_at')
+        .eq('user_id', userId)
+        .gte('created_at', lastGeneratedAt.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (actionsError) {
+        console.error('Error checking recent actions:', actionsError);
+        return true; // Generate if we can't check
+      }
+
+      // If there have been inventory changes since last generation, generate new recommendations
+      if (recentActions && recentActions.length > 0) {
+        return true;
+      }
+
+      // No recent changes and recommendations are fresh, don't generate
+      return false;
+    } catch (error) {
+      console.error('Error checking if recommendations should be generated:', error);
+      return true; // Generate if we can't check
     }
   }
 
@@ -596,6 +685,22 @@ serve(async (req) => {
     try {
       // Generate AI-powered recommendations
       const result = await aiService.generateRecommendations(userId);
+
+      // If recommendations were actually generated (not skipped due to cooldown), save them to cache
+      if (result.metadata?.provider !== 'cached') {
+        try {
+          await supabase.from('ai_recommendations').upsert({
+            user_id: userId,
+            recommendation_type: 'comprehensive',
+            recommendations: result,
+            generated_at: result.metadata?.generatedAt || new Date().toISOString(),
+            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+          });
+          console.log('Recommendations saved to cache');
+        } catch (cacheError) {
+          console.error('Error saving recommendations to cache:', cacheError);
+        }
+      }
 
       return new Response(JSON.stringify(result), {
         headers: {

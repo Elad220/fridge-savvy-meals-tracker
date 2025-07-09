@@ -39,9 +39,9 @@ const Index = () => {
   const [dashboardData, setDashboardData] = useState<any>(null);
 
   const { recentActions, loading: historyLoading, refetch: refetchHistory } = useActionHistory(user?.id);
-  const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id, undefined, refetchHistory);
+  const { updateConsumptionPattern, updateMealCombination, clearCacheOnInventoryChange } = useAIRecommendations(user?.id);
+  const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id, clearCacheOnInventoryChange, refetchHistory);
   const { mealPlans, loading: mealLoading, addMealPlan, updateMealPlan, removeMealPlan } = useMealPlans(user?.id);
-  const { updateConsumptionPattern, updateMealCombination } = useAIRecommendations(user?.id);
   const { aiRecommendationsEnabled } = useApiTokens();
 
   // Dashboard window event listener
@@ -490,6 +490,9 @@ const Index = () => {
     
     // Remove from meal plans
     removeMealPlan(meal.id);
+    
+    // Clear AI recommendations cache to force refresh
+    clearCacheOnInventoryChange();
   };
 
   const handleOpenPhotoAnalysis = () => {
@@ -512,6 +515,9 @@ const Index = () => {
       });
     }
     
+    // Clear AI recommendations cache to force refresh
+    clearCacheOnInventoryChange();
+    
     setShowPhotoAnalysis(false);
   };
 
@@ -528,6 +534,10 @@ const Index = () => {
         });
       }
     });
+    
+    // Clear AI recommendations cache to force refresh
+    clearCacheOnInventoryChange();
+    
     setShowPhotoAnalysis(false);
   };
 
@@ -544,6 +554,10 @@ const Index = () => {
         });
       }
     });
+    
+    // Clear AI recommendations cache to force refresh
+    clearCacheOnInventoryChange();
+    
     setShowVoiceRecording(false);
   };
 

@@ -19,7 +19,6 @@ interface DashboardWindowProps {
     'use-or-throw': number;
     expired: number;
   };
-  onRefreshRecommendations?: () => Promise<void>;
 }
 
 export const DashboardWindow: React.FC<DashboardWindowProps> = ({
@@ -28,19 +27,10 @@ export const DashboardWindow: React.FC<DashboardWindowProps> = ({
   recentActions,
   historyLoading,
   userId,
-  statusCounts,
-  onRefreshRecommendations
+  statusCounts
 }) => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [windowElement, setWindowElement] = useState<HTMLDivElement | null>(null);
-
-  // Refresh recommendations when modal opens
-  useEffect(() => {
-    if (isOpen && userId && onRefreshRecommendations) {
-      console.log('DashboardWindow: Modal opened, refreshing recommendations');
-      onRefreshRecommendations();
-    }
-  }, [isOpen, userId, onRefreshRecommendations]);
 
   useEffect(() => {
     if (isOpen) {
@@ -136,11 +126,7 @@ export const DashboardWindow: React.FC<DashboardWindowProps> = ({
           {userId && (
             <div>
               <h3 className="text-lg font-semibold text-foreground mb-4">AI Insights</h3>
-              <AIRecommendations 
-                userId={userId} 
-                onRefreshRecommendations={onRefreshRecommendations}
-                forceRefresh={true}
-              />
+              <AIRecommendations userId={userId} />
             </div>
           )}
         </div>

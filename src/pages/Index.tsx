@@ -41,7 +41,7 @@ const Index = () => {
   const { recentActions, loading: historyLoading, refetch: refetchHistory } = useActionHistory(user?.id);
   const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id, undefined, refetchHistory);
   const { mealPlans, loading: mealLoading, addMealPlan, updateMealPlan, removeMealPlan } = useMealPlans(user?.id);
-  const { updateConsumptionPattern, updateMealCombination, refreshRecommendations, clearCache, clearCacheOnInventoryChange } = useAIRecommendations(user?.id);
+  const { updateConsumptionPattern, updateMealCombination } = useAIRecommendations(user?.id);
   const { aiRecommendationsEnabled } = useApiTokens();
 
   // Dashboard window event listener
@@ -132,46 +132,6 @@ const Index = () => {
   const handleLogout = async () => {
     await signOut();
     navigate('/auth');
-  };
-
-  // Enhanced handlers that trigger AI recommendation refresh
-  const handleAddFoodItem = async (item: Omit<FoodItem, 'id' | 'userId'>) => {
-    await addFoodItem(item);
-    // Clear cache and refresh AI recommendations after adding an item
-    await clearCacheOnInventoryChange();
-    await refreshRecommendations();
-  };
-
-  const handleUpdateFoodItem = async (updatedItem: FoodItem) => {
-    await updateFoodItem(updatedItem);
-    // Clear cache and refresh AI recommendations after updating an item
-    await clearCacheOnInventoryChange();
-    await refreshRecommendations();
-  };
-
-  const handleRemoveFoodItem = async (id: string) => {
-    await removeFoodItem(id);
-    // Clear cache and refresh AI recommendations after removing an item
-    await clearCacheOnInventoryChange();
-    await refreshRecommendations();
-  };
-
-  const handleAddMealPlan = async (mealPlan: Omit<MealPlan, 'id' | 'userId'>) => {
-    await addMealPlan(mealPlan);
-    // Refresh AI recommendations after adding a meal plan
-    await refreshRecommendations();
-  };
-
-  const handleUpdateMealPlan = async (updatedMealPlan: MealPlan) => {
-    await updateMealPlan(updatedMealPlan);
-    // Refresh AI recommendations after updating a meal plan
-    await refreshRecommendations();
-  };
-
-  const handleRemoveMealPlan = async (id: string) => {
-    await removeMealPlan(id);
-    // Refresh AI recommendations after removing a meal plan
-    await refreshRecommendations();
   };
 
   if (authLoading) {
@@ -514,22 +474,22 @@ const Index = () => {
     name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
   };
 
-  const handleEditFoodItem = async (updatedItem: FoodItem) => {
-    await handleUpdateFoodItem(updatedItem);
+  const handleEditFoodItem = (updatedItem: FoodItem) => {
+    updateFoodItem(updatedItem);
     setEditingItem(null);
   };
 
-  const handleEditMealPlan = async (updatedMealPlan: MealPlan) => {
-    await handleUpdateMealPlan(updatedMealPlan);
+  const handleEditMealPlan = (updatedMealPlan: MealPlan) => {
+    updateMealPlan(updatedMealPlan);
     setEditingMealPlan(null);
   };
 
-  const handleMoveToInventory = async (meal: MealPlan, foodItem: Omit<FoodItem, 'id' | 'userId'>) => {
+  const handleMoveToInventory = (meal: MealPlan, foodItem: Omit<FoodItem, 'id' | 'userId'>) => {
     // Add the food item to inventory
-    await handleAddFoodItem(foodItem);
+    addFoodItem(foodItem);
     
     // Remove from meal plans
-    await handleRemoveMealPlan(meal.id);
+    removeMealPlan(meal.id);
   };
 
   const handleOpenPhotoAnalysis = () => {
@@ -540,8 +500,8 @@ const Index = () => {
     setShowVoiceRecording(true);
   };
 
-  const handlePhotoAnalysisComplete = async (item: Omit<FoodItem, 'id' | 'userId'>) => {
-    await handleAddFoodItem(item);
+  const handlePhotoAnalysisComplete = (item: Omit<FoodItem, 'id' | 'userId'>) => {
+    addFoodItem(item);
     
     // Update consumption pattern for raw materials
     if (item.label === 'raw material') {
@@ -555,9 +515,9 @@ const Index = () => {
     setShowPhotoAnalysis(false);
   };
 
-  const handleBulkPhotoAnalysisComplete = async (items: Omit<FoodItem, 'id' | 'userId'>[]) => {
-    for (const item of items) {
-      await handleAddFoodItem(item);
+  const handleBulkPhotoAnalysisComplete = (items: Omit<FoodItem, 'id' | 'userId'>[]) => {
+    items.forEach(item => {
+      addFoodItem(item);
       
       // Update consumption pattern for raw materials
       if (item.label === 'raw material') {
@@ -567,13 +527,13 @@ const Index = () => {
           userId: user.id
         });
       }
-    }
+    });
     setShowPhotoAnalysis(false);
   };
 
-  const handleVoiceRecordingComplete = async (items: Omit<FoodItem, 'id' | 'userId'>[]) => {
-    for (const item of items) {
-      await handleAddFoodItem(item);
+  const handleVoiceRecordingComplete = (items: Omit<FoodItem, 'id' | 'userId'>[]) => {
+    items.forEach(item => {
+      addFoodItem(item);
       
       // Update consumption pattern for raw materials
       if (item.label === 'raw material') {
@@ -583,7 +543,7 @@ const Index = () => {
           userId: user.id
         });
       }
-    }
+    });
     setShowVoiceRecording(false);
   };
 
@@ -592,11 +552,13 @@ const Index = () => {
       case 'inventory':
         return (
           <div className="space-y-6">
+            {/* AI Recommendations Section */}
+            
             <InventoryDashboard
               foodItems={foodItems}
-              onRemoveItem={handleRemoveFoodItem}
+              onRemoveItem={removeFoodItem}
               onEditItem={setEditingItem}
-              onAddItem={handleAddFoodItem}
+              onAddItem={addFoodItem}
               userId={user.id}
               onNavigateToSettings={() => setActiveTab('settings')}
               recentActions={recentActions}
@@ -610,8 +572,8 @@ const Index = () => {
           <MealPlanning
             mealPlans={mealPlans}
             foodItems={foodItems}
-            onRemoveMealPlan={handleRemoveMealPlan}
-            onAddMealPlan={handleAddMealPlan}
+            onRemoveMealPlan={removeMealPlan}
+            onAddMealPlan={addMealPlan}
             onEditMealPlan={setEditingMealPlan}
             onNavigateToSettings={() => setActiveTab('settings')}
             onMoveToInventory={handleMoveToInventory}
@@ -674,7 +636,7 @@ const Index = () => {
         {showAddForm && activeTab !== 'settings' && (
           <AddItemForm
             type={activeTab}
-            onSubmit={activeTab === 'inventory' ? handleAddFoodItem : handleAddMealPlan}
+            onSubmit={activeTab === 'inventory' ? addFoodItem : addMealPlan}
             onClose={() => setShowAddForm(false)}
             onMealCombinationUpdate={updateMealCombination}
           />
@@ -715,18 +677,20 @@ const Index = () => {
           />
         )}
 
+        {/* Dashboard Window */}
         {isDashboardWindowOpen && dashboardData && (
           <DashboardWindow
             isOpen={isDashboardWindowOpen}
             onClose={() => setIsDashboardWindowOpen(false)}
-            recentActions={recentActions}
-            historyLoading={historyLoading}
-            userId={user.id}
+            recentActions={dashboardData.recentActions || recentActions}
+            historyLoading={dashboardData.historyLoading || historyLoading}
+            userId={dashboardData.userId || user.id}
             statusCounts={dashboardData.statusCounts}
-            onRefreshRecommendations={refreshRecommendations}
           />
         )}
       </main>
+
+      <Footer />
     </div>
   );
 };

@@ -13,16 +13,18 @@ interface AIRecommendationsProps {
   userId: string;
   onAddToShoppingList?: (items: { name: string; quantity: number; unit: string }[]) => void;
   onRefreshRecommendations?: () => Promise<void>;
+  forceRefresh?: boolean;
 }
 
 export const AIRecommendations = ({ 
   userId, 
   onAddToShoppingList,
-  onRefreshRecommendations
+  onRefreshRecommendations,
+  forceRefresh = false
 }: AIRecommendationsProps) => {
-  console.log('AIRecommendations component rendered with userId:', userId);
+  console.log('AIRecommendations component rendered with userId:', userId, 'forceRefresh:', forceRefresh);
   
-  const { recommendations, loading, refreshRecommendations } = useAIRecommendations(userId);
+  const { recommendations, loading, refreshRecommendations } = useAIRecommendations(userId, forceRefresh);
   const { toast } = useToast();
   
   console.log('AIRecommendations hook result:', { recommendations, loading });

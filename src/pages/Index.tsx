@@ -592,14 +592,6 @@ const Index = () => {
       case 'inventory':
         return (
           <div className="space-y-6">
-            {/* AI Recommendations Section */}
-            {aiRecommendationsEnabled && user.id && (
-              <AIRecommendations 
-                userId={user.id} 
-                onRefreshRecommendations={refreshRecommendations}
-              />
-            )}
-            
             <InventoryDashboard
               foodItems={foodItems}
               onRemoveItem={handleRemoveFoodItem}

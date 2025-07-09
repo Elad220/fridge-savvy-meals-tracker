@@ -41,7 +41,7 @@ const Index = () => {
   const { recentActions, loading: historyLoading, refetch: refetchHistory } = useActionHistory(user?.id);
   const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id, undefined, refetchHistory);
   const { mealPlans, loading: mealLoading, addMealPlan, updateMealPlan, removeMealPlan } = useMealPlans(user?.id);
-  const { updateConsumptionPattern, updateMealCombination, refreshRecommendations, clearCache } = useAIRecommendations(user?.id);
+  const { updateConsumptionPattern, updateMealCombination, refreshRecommendations, clearCache, clearCacheOnInventoryChange } = useAIRecommendations(user?.id);
   const { aiRecommendationsEnabled } = useApiTokens();
 
   // Dashboard window event listener
@@ -137,19 +137,22 @@ const Index = () => {
   // Enhanced handlers that trigger AI recommendation refresh
   const handleAddFoodItem = async (item: Omit<FoodItem, 'id' | 'userId'>) => {
     await addFoodItem(item);
-    // Refresh AI recommendations after adding an item
+    // Clear cache and refresh AI recommendations after adding an item
+    await clearCacheOnInventoryChange();
     await refreshRecommendations();
   };
 
   const handleUpdateFoodItem = async (updatedItem: FoodItem) => {
     await updateFoodItem(updatedItem);
-    // Refresh AI recommendations after updating an item
+    // Clear cache and refresh AI recommendations after updating an item
+    await clearCacheOnInventoryChange();
     await refreshRecommendations();
   };
 
   const handleRemoveFoodItem = async (id: string) => {
     await removeFoodItem(id);
-    // Refresh AI recommendations after removing an item
+    // Clear cache and refresh AI recommendations after removing an item
+    await clearCacheOnInventoryChange();
     await refreshRecommendations();
   };
 

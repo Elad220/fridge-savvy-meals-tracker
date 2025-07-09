@@ -19,6 +19,7 @@ interface DashboardWindowProps {
     'use-or-throw': number;
     expired: number;
   };
+  onRefreshRecommendations?: () => Promise<void>;
 }
 
 export const DashboardWindow: React.FC<DashboardWindowProps> = ({
@@ -27,7 +28,8 @@ export const DashboardWindow: React.FC<DashboardWindowProps> = ({
   recentActions,
   historyLoading,
   userId,
-  statusCounts
+  statusCounts,
+  onRefreshRecommendations
 }) => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [windowElement, setWindowElement] = useState<HTMLDivElement | null>(null);
@@ -126,7 +128,10 @@ export const DashboardWindow: React.FC<DashboardWindowProps> = ({
           {userId && (
             <div>
               <h3 className="text-lg font-semibold text-foreground mb-4">AI Insights</h3>
-              <AIRecommendations userId={userId} />
+              <AIRecommendations 
+                userId={userId} 
+                onRefreshRecommendations={onRefreshRecommendations}
+              />
             </div>
           )}
         </div>

@@ -55,7 +55,7 @@ interface AIRecommendations {
   generatedAt: Date;
 }
 
-export const useAIRecommendations = (userId: string | undefined) => {
+export const useAIRecommendations = (userId: string | undefined, forceRefresh: boolean = false) => {
   const [recommendations, setRecommendations] = useState<AIRecommendations | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -356,6 +356,13 @@ export const useAIRecommendations = (userId: string | undefined) => {
   // Load cached recommendations if available and recent
   const loadCachedRecommendations = async () => {
     if (!userId) return;
+
+    // If forceRefresh is true, skip cache and generate fresh recommendations
+    if (forceRefresh) {
+      console.log('Force refresh enabled, skipping cache');
+      generateRecommendations();
+      return;
+    }
 
     try {
       const { data: cachedRecommendations, error } = await supabase

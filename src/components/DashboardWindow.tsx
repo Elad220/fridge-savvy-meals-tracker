@@ -34,6 +34,14 @@ export const DashboardWindow: React.FC<DashboardWindowProps> = ({
   const [isMinimized, setIsMinimized] = useState(false);
   const [windowElement, setWindowElement] = useState<HTMLDivElement | null>(null);
 
+  // Refresh recommendations when modal opens
+  useEffect(() => {
+    if (isOpen && userId && onRefreshRecommendations) {
+      console.log('DashboardWindow: Modal opened, refreshing recommendations');
+      onRefreshRecommendations();
+    }
+  }, [isOpen, userId, onRefreshRecommendations]);
+
   useEffect(() => {
     if (isOpen) {
       const newWindow = document.createElement('div');
@@ -131,6 +139,7 @@ export const DashboardWindow: React.FC<DashboardWindowProps> = ({
               <AIRecommendations 
                 userId={userId} 
                 onRefreshRecommendations={onRefreshRecommendations}
+                forceRefresh={true}
               />
             </div>
           )}

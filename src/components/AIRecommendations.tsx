@@ -54,6 +54,7 @@ export const AIRecommendations = ({
                       description: "You won't see this alert again for this item.",
                     });
                   }}
+                  className={alert.urgency === 'high' ? 'border-white text-white bg-white/20 hover:bg-white/30' : ''}
                 >
                   Dismiss
                 </Button>

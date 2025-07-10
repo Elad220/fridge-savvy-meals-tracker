@@ -150,6 +150,11 @@
     @apply glass rounded-lg border border-primary/20 bg-primary/10 backdrop-blur-sm hover:bg-primary/20 transition-all duration-300;
   }
   
+  /* Remove shadow from glass-button in light mode */
+  :root .glass-button {
+    box-shadow: none;
+  }
+  
   .float-animation {
     animation: float 6s ease-in-out infinite;
     will-change: transform;

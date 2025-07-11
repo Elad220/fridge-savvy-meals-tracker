@@ -8,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2, Plus } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { FoodItem } from '@/types';
+import { FoodItem, FOOD_UNITS } from '@/types';
 import { StorageLocationSelect } from './StorageLocationSelect';
+import { AmountInput } from '@/components/ui/amount-input';
 
 interface BulkPhotoAnalysisEditFormProps {
   isOpen: boolean;
@@ -37,6 +38,8 @@ interface EditableItem {
   freshnessDays: number;
   storageLocation: string;
   notes: string;
+  dateCookedStored: string;
+  eatByDate: string;
 }
 
 export const BulkPhotoAnalysisEditForm = ({
@@ -49,16 +52,24 @@ export const BulkPhotoAnalysisEditForm = ({
 
   useEffect(() => {
     if (analysisData) {
-      const editableItems: EditableItem[] = analysisData.items.map((item, index) => ({
-        id: `photo-item-${index}`,
-        name: item.suggested_name || 'Food Item',
-        itemType: item.item_type,
-        quantity: item.estimated_amount || 1,
-        unit: item.estimated_unit || 'item',
-        freshnessDays: 4, // Default value since backend doesn't provide this
-        storageLocation: 'Refrigerator',
-        notes: `Photo analysis with ${analysisData.confidence} confidence`,
-      }));
+      const today = new Date().toISOString().split('T')[0];
+      const editableItems: EditableItem[] = analysisData.items.map((item, index) => {
+        const eatByDate = new Date();
+        eatByDate.setDate(eatByDate.getDate() + 4);
+        
+        return {
+          id: `photo-item-${index}`,
+          name: item.suggested_name || 'Food Item',
+          itemType: item.item_type,
+          quantity: item.estimated_amount || 1,
+          unit: item.estimated_unit || 'item',
+          freshnessDays: 4, // Default value since backend doesn't provide this
+          storageLocation: 'Fridge - Middle Shelf',
+          notes: `Photo analysis with ${analysisData.confidence} confidence`,
+          dateCookedStored: today,
+          eatByDate: eatByDate.toISOString().split('T')[0],
+        };
+      });
       setItems(editableItems);
     }
   }, [analysisData]);
@@ -74,6 +85,10 @@ export const BulkPhotoAnalysisEditForm = ({
   };
 
   const addNewItem = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const eatByDate = new Date();
+    eatByDate.setDate(eatByDate.getDate() + 4);
+    
     const newItem: EditableItem = {
       id: `photo-item-${Date.now()}`,
       name: '',
@@ -81,8 +96,10 @@ export const BulkPhotoAnalysisEditForm = ({
       quantity: 1,
       unit: 'item',
       freshnessDays: 4,
-      storageLocation: 'Refrigerator',
+      storageLocation: 'Fridge - Middle Shelf',
       notes: 'Manually added',
+      dateCookedStored: today,
+      eatByDate: eatByDate.toISOString().split('T')[0],
     };
     setItems(prev => [...prev, newItem]);
   };
@@ -99,11 +116,10 @@ export const BulkPhotoAnalysisEditForm = ({
       return;
     }
 
-    const today = new Date();
     const foodItems: Omit<FoodItem, 'id' | 'userId'>[] = validItems.map(item => ({
       name: item.name.trim(),
-      dateCookedStored: today,
-      eatByDate: new Date(today.getTime() + (item.freshnessDays * 24 * 60 * 60 * 1000)),
+      dateCookedStored: new Date(item.dateCookedStored),
+      eatByDate: new Date(item.eatByDate),
       amount: item.quantity,
       unit: item.unit,
       storageLocation: item.storageLocation,
@@ -115,15 +131,11 @@ export const BulkPhotoAnalysisEditForm = ({
     onSubmit(foodItems);
   };
 
-  const unitOptions = [
-    'item', 'piece', 'serving', 'cup', 'oz', 'lb', 'g', 'kg', 'ml', 'l', 'tsp', 'tbsp', 'can', 'bottle', 'box', 'bag', 'pack'
-  ];
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto glass-card">
         <DialogHeader>
-          <DialogTitle>Edit Photo Analysis Items</DialogTitle>
+          <DialogTitle>Review Photo Analysis Items</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
@@ -187,14 +199,11 @@ export const BulkPhotoAnalysisEditForm = ({
                       
                       <div>
                         <Label htmlFor={`quantity-${item.id}`}>Quantity</Label>
-                        <Input
+                        <AmountInput
                           id={`quantity-${item.id}`}
-                          type="number"
-                          min="0"
-                          step="0.1"
-                          value={item.quantity}
-                          onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                          className="mt-1"
+                          value={item.quantity.toString()}
+                          onChange={(value) => updateItem(item.id, 'quantity', parseFloat(value) || 0)}
+                          placeholder="e.g., 2"
                         />
                       </div>
                       
@@ -208,11 +217,33 @@ export const BulkPhotoAnalysisEditForm = ({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {unitOptions.map(unit => (
+                            {FOOD_UNITS.map(unit => (
                               <SelectItem key={unit} value={unit}>{unit}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor={`dateCookedStored-${item.id}`}>Date Cooked/Stored</Label>
+                        <Input
+                          id={`dateCookedStored-${item.id}`}
+                          type="date"
+                          value={item.dateCookedStored}
+                          onChange={(e) => updateItem(item.id, 'dateCookedStored', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor={`eatByDate-${item.id}`}>Eat By Date</Label>
+                        <Input
+                          id={`eatByDate-${item.id}`}
+                          type="date"
+                          value={item.eatByDate}
+                          onChange={(e) => updateItem(item.id, 'eatByDate', e.target.value)}
+                          className="mt-1"
+                        />
                       </div>
                       
                       <div>
@@ -260,12 +291,12 @@ export const BulkPhotoAnalysisEditForm = ({
             </div>
           )}
           
-          <div className="flex gap-2 pt-4">
-            <Button onClick={handleSubmit} className="flex-1">
-              Add {items.filter(item => item.name.trim()).length} Item{items.filter(item => item.name.trim()).length === 1 ? '' : 's'} to Inventory
-            </Button>
-            <Button onClick={onClose} variant="outline">
+          <div className="flex gap-3 pt-4">
+            <Button onClick={onClose} variant="outline" className="flex-1">
               Cancel
+            </Button>
+            <Button onClick={handleSubmit} className="flex-1 bg-green-600 hover:bg-green-700">
+              Add {items.filter(item => item.name.trim()).length} Item{items.filter(item => item.name.trim()).length === 1 ? '' : 's'} to Inventory
             </Button>
           </div>
         </div>

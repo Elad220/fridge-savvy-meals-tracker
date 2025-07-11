@@ -4,12 +4,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { MealPlan } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MealPlan, MealPlanIngredient } from '@/types';
+import { Plus, Trash2 } from 'lucide-react';
 
 interface EditMealPlanFormProps {
   item: MealPlan;
   onSubmit: (item: MealPlan) => void;
   onClose: () => void;
+}
+
+interface EditableMealPlanIngredient {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  notes: string;
 }
 
 export const EditMealPlanForm = ({ item, onSubmit, onClose }: EditMealPlanFormProps) => {
@@ -18,6 +28,22 @@ export const EditMealPlanForm = ({ item, onSubmit, onClose }: EditMealPlanFormPr
     plannedDate: item.plannedDate?.toISOString().split('T')[0] || '',
     destinationTime: item.destinationTime ? new Date(item.destinationTime).toTimeString().slice(0, 5) : '',
     notes: item.notes || '',
+  });
+
+  // Convert existing ingredients to editable format
+  const [mealPlanIngredients, setMealPlanIngredients] = useState<EditableMealPlanIngredient[]>(() => {
+    if (!item.ingredients) return [];
+    return item.ingredients.map((ing, index) => ({
+      id: `ingredient-${index}`,
+      name: ing.name,
+      quantity: ing.quantity,
+      unit: ing.unit,
+      notes: ing.notes || ''
+    }));
+  });
+
+  const [preparationSteps, setPreparationSteps] = useState<string[]>(() => {
+    return item.preparationSteps || [];
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -29,12 +55,27 @@ export const EditMealPlanForm = ({ item, onSubmit, onClose }: EditMealPlanFormPr
       destinationTime.setHours(hours, minutes);
     }
 
+    // Convert editable ingredients to MealPlanIngredient format
+    const ingredients: MealPlanIngredient[] = mealPlanIngredients
+      .filter(ing => ing.name.trim())
+      .map(ing => ({
+        name: ing.name.trim(),
+        quantity: ing.quantity,
+        unit: ing.unit,
+        notes: ing.notes.trim() || undefined,
+      }));
+
+    // Filter out empty preparation steps
+    const steps = preparationSteps.filter(step => step.trim());
+
     const updatedItem: MealPlan = {
       ...item,
       name: formData.name,
       plannedDate: formData.plannedDate ? new Date(formData.plannedDate) : undefined,
       destinationTime: formData.destinationTime ? destinationTime : undefined,
       notes: formData.notes || undefined,
+      ingredients: ingredients.length > 0 ? ingredients : undefined,
+      preparationSteps: steps.length > 0 ? steps : undefined,
     };
 
     onSubmit(updatedItem);
@@ -44,14 +85,51 @@ export const EditMealPlanForm = ({ item, onSubmit, onClose }: EditMealPlanFormPr
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Meal plan ingredient management
+  const addMealPlanIngredient = () => {
+    const newIngredient: EditableMealPlanIngredient = {
+      id: `ingredient-${Date.now()}`,
+      name: '',
+      quantity: 1,
+      unit: 'item',
+      notes: ''
+    };
+    setMealPlanIngredients(prev => [...prev, newIngredient]);
+  };
+
+  const updateMealPlanIngredient = (id: string, field: keyof EditableMealPlanIngredient, value: string | number) => {
+    setMealPlanIngredients(prev => prev.map(ingredient => 
+      ingredient.id === id ? { ...ingredient, [field]: value } : ingredient
+    ));
+  };
+
+  const removeMealPlanIngredient = (id: string) => {
+    setMealPlanIngredients(prev => prev.filter(ingredient => ingredient.id !== id));
+  };
+
+  // Preparation steps management
+  const addPreparationStep = () => {
+    setPreparationSteps(prev => [...prev, '']);
+  };
+
+  const updatePreparationStep = (index: number, value: string) => {
+    setPreparationSteps(prev => prev.map((step, i) => 
+      i === index ? value : step
+    ));
+  };
+
+  const removePreparationStep = (index: number) => {
+    setPreparationSteps(prev => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Meal Plan</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <Label htmlFor="name">Meal Name *</Label>
             <Input
@@ -63,25 +141,138 @@ export const EditMealPlanForm = ({ item, onSubmit, onClose }: EditMealPlanFormPr
             />
           </div>
 
-          <div>
-            <Label htmlFor="plannedDate">Planned Date (Optional)</Label>
-            <Input
-              id="plannedDate"
-              type="date"
-              value={formData.plannedDate}
-              onChange={(e) => handleInputChange('plannedDate', e.target.value)}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="plannedDate">Planned Date (Optional)</Label>
+              <Input
+                id="plannedDate"
+                type="date"
+                value={formData.plannedDate}
+                onChange={(e) => handleInputChange('plannedDate', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="destinationTime">Destination Time (Optional)</Label>
+              <Input
+                id="destinationTime"
+                type="time"
+                value={formData.destinationTime}
+                onChange={(e) => handleInputChange('destinationTime', e.target.value)}
+              />
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="destinationTime">Destination Time (Optional)</Label>
-            <Input
-              id="destinationTime"
-              type="time"
-              value={formData.destinationTime}
-              onChange={(e) => handleInputChange('destinationTime', e.target.value)}
-            />
-          </div>
+          {/* Ingredients */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Ingredients</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {mealPlanIngredients.map((ingredient) => (
+                <div key={ingredient.id} className="grid grid-cols-12 gap-2 items-end">
+                  <div className="col-span-4">
+                    <Label htmlFor={`ingredient-name-${ingredient.id}`}>Name</Label>
+                    <Input
+                      id={`ingredient-name-${ingredient.id}`}
+                      value={ingredient.name}
+                      onChange={(e) => updateMealPlanIngredient(ingredient.id, 'name', e.target.value)}
+                      placeholder="Ingredient name"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor={`ingredient-quantity-${ingredient.id}`}>Qty</Label>
+                    <Input
+                      id={`ingredient-quantity-${ingredient.id}`}
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={ingredient.quantity}
+                      onChange={(e) => updateMealPlanIngredient(ingredient.id, 'quantity', parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor={`ingredient-unit-${ingredient.id}`}>Unit</Label>
+                    <Input
+                      id={`ingredient-unit-${ingredient.id}`}
+                      value={ingredient.unit}
+                      onChange={(e) => updateMealPlanIngredient(ingredient.id, 'unit', e.target.value)}
+                      placeholder="unit"
+                    />
+                  </div>
+                  <div className="col-span-3">
+                    <Label htmlFor={`ingredient-notes-${ingredient.id}`}>Notes</Label>
+                    <Input
+                      id={`ingredient-notes-${ingredient.id}`}
+                      value={ingredient.notes}
+                      onChange={(e) => updateMealPlanIngredient(ingredient.id, 'notes', e.target.value)}
+                      placeholder="Optional notes"
+                    />
+                  </div>
+                  <div className="col-span-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeMealPlanIngredient(ingredient.id)}
+                      className="w-full h-10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              
+              <Button
+                variant="outline"
+                onClick={addMealPlanIngredient}
+                className="w-full"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Ingredient
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Preparation Steps */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Preparation Steps</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {preparationSteps.map((step, index) => (
+                <div key={index} className="flex gap-2">
+                  <div className="flex-1">
+                    <Label htmlFor={`step-${index}`}>Step {index + 1}</Label>
+                    <Textarea
+                      id={`step-${index}`}
+                      value={step}
+                      onChange={(e) => updatePreparationStep(index, e.target.value)}
+                      placeholder={`Step ${index + 1} description`}
+                      rows={2}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removePreparationStep(index)}
+                      className="h-10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              
+              <Button
+                variant="outline"
+                onClick={addPreparationStep}
+                className="w-full"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Preparation Step
+              </Button>
+            </CardContent>
+          </Card>
 
           <div>
             <Label htmlFor="notes">Description (Optional)</Label>

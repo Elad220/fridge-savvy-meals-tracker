@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ChefHat, Clock, Star, Utensils, Plus } from 'lucide-react';
-import { FoodItem, MealPlan } from '@/types';
+import { FoodItem, MealPlan, MealPlanIngredient } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useApiTokens } from '@/hooks/useApiTokens';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +16,16 @@ interface Recipe {
   ingredients: string[];
   cookingTime: string;
   difficulty: string;
+}
+
+interface RecipeDetails {
+  instructions?: string[];
+  nutrition?: Record<string, string>;
+  tips?: string[];
+  prepTime?: string;
+  cookTime?: string;
+  servings?: string;
+  ingredients?: string[];
 }
 
 interface RecipeGeneratorProps {
@@ -32,11 +42,7 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [recipeDetails, setRecipeDetails] = useState<{
-    instructions?: string[];
-    nutrition?: Record<string, string>;
-    tips?: string[];
-  } | null>(null);
+  const [recipeDetails, setRecipeDetails] = useState<RecipeDetails | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [generatedRecipes, setGeneratedRecipes] = useState<Recipe[]>([]);
   const [showRecipes, setShowRecipes] = useState(false);
@@ -68,11 +74,12 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
         title: 'Recipes generated!',
         description: `Found ${data.recipes?.length || 0} recipes for your ingredients.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       console.error('Error generating recipes:', error);
       toast({
         title: 'Error generating recipes',
-        description: error.message || 'Please try again later.',
+        description: errorMessage || 'Please try again later.',
         variant: 'destructive',
       });
     } finally {
@@ -97,11 +104,12 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
       if (error) throw error;
 
       setRecipeDetails(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       console.error('Error loading recipe details:', error);
       toast({
         title: 'Error loading recipe details',
-        description: error.message || 'Please try again later.',
+        description: errorMessage || 'Please try again later.',
         variant: 'destructive',
       });
     } finally {
@@ -112,9 +120,19 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
   const addRecipeToMealPlan = () => {
     if (!selectedRecipe || !onAddMealPlan) return;
 
+    // Convert recipe ingredients to MealPlanIngredient format
+    const ingredients: MealPlanIngredient[] = selectedRecipe.ingredients.map(ingredient => ({
+      name: ingredient,
+      quantity: 1,
+      unit: 'item',
+      notes: `From recipe: ${selectedRecipe.name}`
+    }));
+
     const newMealPlan: Omit<MealPlan, 'id' | 'userId'> = {
       name: selectedRecipe.name,
-      notes: `Generated recipe: ${selectedRecipe.description}\n\nIngredients: ${selectedRecipe.ingredients.join(', ')}\n\nDifficulty: ${selectedRecipe.difficulty}\nCooking Time: ${selectedRecipe.cookingTime}`,
+      notes: `Generated recipe: ${selectedRecipe.description}\n\nDifficulty: ${selectedRecipe.difficulty}\nCooking Time: ${selectedRecipe.cookingTime}`,
+      ingredients: ingredients,
+      preparationSteps: recipeDetails?.instructions || undefined,
     };
 
     onAddMealPlan(newMealPlan);
@@ -275,41 +293,47 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
                 </div>
               ) : recipeDetails ? (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className="text-sm text-muted-foreground">Prep Time</div>
-                      <div className="font-medium">{recipeDetails.prepTime}</div>
+                  {recipeDetails.prepTime && recipeDetails.cookTime && recipeDetails.servings && (
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <div className="text-sm text-muted-foreground">Prep Time</div>
+                        <div className="font-medium">{recipeDetails.prepTime}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-muted-foreground">Cook Time</div>
+                        <div className="font-medium">{recipeDetails.cookTime}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-muted-foreground">Servings</div>
+                        <div className="font-medium">{recipeDetails.servings}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Cook Time</div>
-                      <div className="font-medium">{recipeDetails.cookTime}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Servings</div>
-                      <div className="font-medium">{recipeDetails.servings}</div>
-                    </div>
-                  </div>
+                  )}
 
-                  <div>
-                    <h5 className="font-medium mb-2 flex items-center gap-2">
-                      <Utensils className="w-4 h-4" />
-                      Ingredients
-                    </h5>
-                    <ul className="list-disc list-inside space-y-1 text-sm">
-                      {recipeDetails.ingredients?.map((ingredient: string, index: number) => (
-                        <li key={index}>{ingredient}</li>
-                      ))}
-                    </ul>
-                  </div>
+                  {recipeDetails.ingredients && recipeDetails.ingredients.length > 0 && (
+                    <div>
+                      <h5 className="font-medium mb-2 flex items-center gap-2">
+                        <Utensils className="w-4 h-4" />
+                        Ingredients
+                      </h5>
+                      <ul className="list-disc list-inside space-y-1 text-sm">
+                        {recipeDetails.ingredients.map((ingredient: string, index: number) => (
+                          <li key={index}>{ingredient}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-                  <div>
-                    <h5 className="font-medium mb-2">Instructions</h5>
-                    <ol className="list-decimal list-inside space-y-2 text-sm">
-                      {recipeDetails.instructions?.map((step: string, index: number) => (
-                        <li key={index} className="leading-relaxed">{step}</li>
-                      ))}
-                    </ol>
-                  </div>
+                  {recipeDetails.instructions && recipeDetails.instructions.length > 0 && (
+                    <div>
+                      <h5 className="font-medium mb-2">Instructions</h5>
+                      <ol className="list-decimal list-inside space-y-2 text-sm">
+                        {recipeDetails.instructions.map((step: string, index: number) => (
+                          <li key={index} className="leading-relaxed">{step}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
 
                   {recipeDetails.tips && recipeDetails.tips.length > 0 && (
                     <div>

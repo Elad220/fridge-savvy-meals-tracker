@@ -20,12 +20,21 @@ export interface FoodItem {
   freshnessDays?: number; // Custom freshness period in days
 }
 
+export interface MealPlanIngredient {
+  name: string;
+  quantity: number;
+  unit: string;
+  notes?: string;
+}
+
 export interface MealPlan {
   id: string;
   name: string;
   plannedDate?: Date;
   destinationTime?: Date;
   notes?: string;
+  ingredients?: MealPlanIngredient[];
+  preparationSteps?: string[];
   userId: string;
 }
 

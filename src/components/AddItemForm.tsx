@@ -6,23 +6,36 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AmountInput } from '@/components/ui/amount-input';
 import { StorageLocationSelect } from '@/components/StorageLocationSelect';
-import { FoodItem, MealPlan, FOOD_UNITS } from '@/types';
-import { X } from 'lucide-react';
+import { FoodItem, MealPlan, MealPlanIngredient, FOOD_UNITS } from '@/types';
+import { X, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface AddItemFormProps {
   type: 'inventory' | 'meals';
-  onSubmit: (item: any) => void;
+  onSubmit: (item: Omit<FoodItem, 'id' | 'userId'> | Omit<MealPlan, 'id' | 'userId'>) => void;
   onClose: () => void;
   onMealCombinationUpdate?: (mealName: string, ingredients: string[]) => void;
+}
+
+interface EditableMealPlanIngredient {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  notes: string;
 }
 
 export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }: AddItemFormProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(true);
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [ingredientInput, setIngredientInput] = useState('');
+  
+  // Meal plan specific state
+  const [mealPlanIngredients, setMealPlanIngredients] = useState<EditableMealPlanIngredient[]>([]);
+  const [preparationSteps, setPreparationSteps] = useState<string[]>([]);
   
   const calculateEatByDate = (cookedDate: string, freshnessDays: number) => {
     const cooked = new Date(cookedDate);
@@ -69,6 +82,43 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
     }
   };
 
+  // Meal plan ingredient management
+  const addMealPlanIngredient = () => {
+    const newIngredient: EditableMealPlanIngredient = {
+      id: `ingredient-${Date.now()}`,
+      name: '',
+      quantity: 1,
+      unit: 'item',
+      notes: ''
+    };
+    setMealPlanIngredients(prev => [...prev, newIngredient]);
+  };
+
+  const updateMealPlanIngredient = (id: string, field: keyof EditableMealPlanIngredient, value: string | number) => {
+    setMealPlanIngredients(prev => prev.map(ingredient => 
+      ingredient.id === id ? { ...ingredient, [field]: value } : ingredient
+    ));
+  };
+
+  const removeMealPlanIngredient = (id: string) => {
+    setMealPlanIngredients(prev => prev.filter(ingredient => ingredient.id !== id));
+  };
+
+  // Preparation steps management
+  const addPreparationStep = () => {
+    setPreparationSteps(prev => [...prev, '']);
+  };
+
+  const updatePreparationStep = (index: number, value: string) => {
+    setPreparationSteps(prev => prev.map((step, i) => 
+      i === index ? value : step
+    ));
+  };
+
+  const removePreparationStep = (index: number) => {
+    setPreparationSteps(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -106,11 +156,26 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
           onMealCombinationUpdate(formData.name, ingredients);
         }
       } else {
+        // Convert editable ingredients to MealPlanIngredient format
+        const ingredients: MealPlanIngredient[] = mealPlanIngredients
+          .filter(ing => ing.name.trim())
+          .map(ing => ({
+            name: ing.name.trim(),
+            quantity: ing.quantity,
+            unit: ing.unit,
+            notes: ing.notes.trim() || undefined,
+          }));
+
+        // Filter out empty preparation steps
+        const steps = preparationSteps.filter(step => step.trim());
+
         const mealPlan: Omit<MealPlan, 'id' | 'userId'> = {
           name: formData.name,
           plannedDate: formData.plannedDate ? new Date(formData.plannedDate) : undefined,
           destinationTime: formData.destinationTime ? new Date(`${formData.plannedDate}T${formData.destinationTime}`) : undefined,
           notes: formData.notes || undefined,
+          ingredients: ingredients.length > 0 ? ingredients : undefined,
+          preparationSteps: steps.length > 0 ? steps : undefined,
         };
 
         await onSubmit(mealPlan);
@@ -154,14 +219,14 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-      <DialogContent className="sm:max-w-md glass-card">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto glass-card">
         <DialogHeader>
           <DialogTitle>
             {type === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <Label htmlFor="name">
               {type === 'inventory' ? 'Food Name' : 'Meal Name'} *
@@ -331,6 +396,118 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
                   />
                 </div>
               </div>
+
+              {/* Ingredients */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Ingredients</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {mealPlanIngredients.map((ingredient) => (
+                    <div key={ingredient.id} className="grid grid-cols-12 gap-2 items-end">
+                      <div className="col-span-4">
+                        <Label htmlFor={`ingredient-name-${ingredient.id}`}>Name</Label>
+                        <Input
+                          id={`ingredient-name-${ingredient.id}`}
+                          value={ingredient.name}
+                          onChange={(e) => updateMealPlanIngredient(ingredient.id, 'name', e.target.value)}
+                          placeholder="Ingredient name"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <Label htmlFor={`ingredient-quantity-${ingredient.id}`}>Qty</Label>
+                        <Input
+                          id={`ingredient-quantity-${ingredient.id}`}
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          value={ingredient.quantity}
+                          onChange={(e) => updateMealPlanIngredient(ingredient.id, 'quantity', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <Label htmlFor={`ingredient-unit-${ingredient.id}`}>Unit</Label>
+                        <Input
+                          id={`ingredient-unit-${ingredient.id}`}
+                          value={ingredient.unit}
+                          onChange={(e) => updateMealPlanIngredient(ingredient.id, 'unit', e.target.value)}
+                          placeholder="unit"
+                        />
+                      </div>
+                      <div className="col-span-3">
+                        <Label htmlFor={`ingredient-notes-${ingredient.id}`}>Notes</Label>
+                        <Input
+                          id={`ingredient-notes-${ingredient.id}`}
+                          value={ingredient.notes}
+                          onChange={(e) => updateMealPlanIngredient(ingredient.id, 'notes', e.target.value)}
+                          placeholder="Optional notes"
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeMealPlanIngredient(ingredient.id)}
+                          className="w-full h-10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <Button
+                    variant="outline"
+                    onClick={addMealPlanIngredient}
+                    className="w-full"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Ingredient
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Preparation Steps */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Preparation Steps</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {preparationSteps.map((step, index) => (
+                    <div key={index} className="flex gap-2">
+                      <div className="flex-1">
+                        <Label htmlFor={`step-${index}`}>Step {index + 1}</Label>
+                        <Textarea
+                          id={`step-${index}`}
+                          value={step}
+                          onChange={(e) => updatePreparationStep(index, e.target.value)}
+                          placeholder={`Step ${index + 1} description`}
+                          rows={2}
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removePreparationStep(index)}
+                          className="h-10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <Button
+                    variant="outline"
+                    onClick={addPreparationStep}
+                    className="w-full"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Preparation Step
+                  </Button>
+                </CardContent>
+              </Card>
             </>
           )}
 

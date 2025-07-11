@@ -29,14 +29,17 @@ export const useMealPlans = (userId: string | undefined) => {
         plannedDate: plan.planned_date ? new Date(plan.planned_date) : undefined,
         destinationTime: plan.destination_time ? new Date(`${plan.planned_date}T${plan.destination_time}`) : undefined,
         notes: plan.notes || undefined,
+        ingredients: plan.ingredients || undefined,
+        preparationSteps: plan.preparation_steps || undefined,
         userId: plan.user_id,
       }));
 
       setMealPlans(transformedPlans);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: 'Error loading meal plans',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -56,6 +59,8 @@ export const useMealPlans = (userId: string | undefined) => {
           planned_date: plan.plannedDate ? plan.plannedDate.toISOString().split('T')[0] : null,
           destination_time: plan.destinationTime ? plan.destinationTime.toTimeString().slice(0, 8) : null,
           notes: plan.notes || null,
+          ingredients: plan.ingredients || [],
+          preparation_steps: plan.preparationSteps || [],
         })
         .select()
         .single();
@@ -68,6 +73,8 @@ export const useMealPlans = (userId: string | undefined) => {
         plannedDate: data.planned_date ? new Date(data.planned_date) : undefined,
         destinationTime: data.destination_time ? new Date(`${data.planned_date}T${data.destination_time}`) : undefined,
         notes: data.notes || undefined,
+        ingredients: data.ingredients || undefined,
+        preparationSteps: data.preparation_steps || undefined,
         userId: data.user_id,
       };
 
@@ -77,10 +84,11 @@ export const useMealPlans = (userId: string | undefined) => {
         title: 'Meal plan added',
         description: `${plan.name} has been added to your meal plans.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: 'Error adding meal plan',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
     }
@@ -95,6 +103,8 @@ export const useMealPlans = (userId: string | undefined) => {
           planned_date: updatedPlan.plannedDate ? updatedPlan.plannedDate.toISOString().split('T')[0] : null,
           destination_time: updatedPlan.destinationTime ? updatedPlan.destinationTime.toTimeString().slice(0, 8) : null,
           notes: updatedPlan.notes || null,
+          ingredients: updatedPlan.ingredients || [],
+          preparation_steps: updatedPlan.preparationSteps || [],
         })
         .eq('id', updatedPlan.id);
 
@@ -108,10 +118,11 @@ export const useMealPlans = (userId: string | undefined) => {
         title: 'Meal plan updated',
         description: `${updatedPlan.name} has been updated.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: 'Error updating meal plan',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
     }
@@ -133,10 +144,11 @@ export const useMealPlans = (userId: string | undefined) => {
         title: 'Meal plan removed',
         description: 'The meal plan has been removed.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: 'Error removing meal plan',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
     }

@@ -434,7 +434,7 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
                           <SelectTrigger>
                             <SelectValue placeholder="Select unit" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent side="bottom">
                             {FOOD_UNITS.map((unit) => (
                               <SelectItem key={unit} value={unit}>
                                 {unit}

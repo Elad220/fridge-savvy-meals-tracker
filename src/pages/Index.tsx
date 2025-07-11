@@ -50,7 +50,7 @@ const Index = () => {
 
   const { recentActions, loading: historyLoading, refetch: refetchHistory } = useActionHistory(user?.id);
   const { updateConsumptionPattern, updateMealCombination, clearCacheOnInventoryChange } = useAIRecommendations(user?.id);
-  const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id, clearCacheOnInventoryChange, refetchHistory);
+  const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem, refetch } = useFoodItems(user?.id, clearCacheOnInventoryChange, refetchHistory);
   const { mealPlans, loading: mealLoading, addMealPlan, updateMealPlan, removeMealPlan } = useMealPlans(user?.id);
   const { aiRecommendationsEnabled } = useApiTokens();
 
@@ -566,11 +566,93 @@ const Index = () => {
     const consumedItems: string[] = [];
     const insufficientItems: string[] = [];
 
+    // Helper function to get fresh inventory data
+    const getFreshInventory = async () => {
+      // Trigger a refetch to get the latest inventory state
+      await refetch();
+      return foodItems;
+    };
+
+    // Helper function for precise ingredient matching
+    const isExactMatch = (itemName: string, ingredientName: string): boolean => {
+      const normalizedItemName = itemName.toLowerCase().trim();
+      const normalizedIngredientName = ingredientName.toLowerCase().trim();
+      
+      // Exact match
+      if (normalizedItemName === normalizedIngredientName) {
+        return true;
+      }
+      
+      // Check if ingredient name is a complete word in item name
+      const itemWords = normalizedItemName.split(/\s+/);
+      const ingredientWords = normalizedIngredientName.split(/\s+/);
+      
+      // If ingredient has multiple words, all must be present in item
+      if (ingredientWords.length > 1) {
+        return ingredientWords.every(word => 
+          itemWords.some(itemWord => itemWord === word || itemWord.startsWith(word))
+        );
+      }
+      
+      // For single word ingredients, check for exact word match or common variations
+      const ingredientWord = ingredientWords[0];
+      
+      // Direct word match
+      if (itemWords.includes(ingredientWord)) {
+        return true;
+      }
+      
+      // Check for common variations (e.g., "tomato" vs "tomatoes")
+      const commonVariations: Record<string, string[]> = {
+        'tomato': ['tomatoes'],
+        'potato': ['potatoes'],
+        'onion': ['onions'],
+        'carrot': ['carrots'],
+        'pepper': ['peppers'],
+        'garlic': ['garlic'],
+        'salt': ['salt'],
+        'sugar': ['sugar'],
+        'flour': ['flour'],
+        'oil': ['oil'],
+        'butter': ['butter'],
+        'milk': ['milk'],
+        'egg': ['eggs'],
+        'chicken': ['chicken'],
+        'beef': ['beef'],
+        'pork': ['pork'],
+        'fish': ['fish'],
+        'rice': ['rice'],
+        'pasta': ['pasta'],
+        'bread': ['bread'],
+      };
+      
+      // Check if ingredient is a base form and item contains a variation
+      for (const [base, variations] of Object.entries(commonVariations)) {
+        if (base === ingredientWord && variations.some(variation => itemWords.includes(variation))) {
+          return true;
+        }
+        if (variations.includes(ingredientWord) && itemWords.includes(base)) {
+          return true;
+        }
+      }
+      
+      // Check for item name starting with ingredient (but not the reverse to avoid "salt" matching "salted butter")
+      if (normalizedItemName.startsWith(ingredientWord + ' ') || 
+          normalizedItemName.endsWith(' ' + ingredientWord) ||
+          normalizedItemName.includes(' ' + ingredientWord + ' ')) {
+        return true;
+      }
+      
+      return false;
+    };
+
     for (const ingredient of meal.ingredients) {
-      // Find matching items in inventory (case-insensitive name matching)
-      const matchingItems = foodItems.filter(item => 
-        item.name.toLowerCase().includes(ingredient.name.toLowerCase()) ||
-        ingredient.name.toLowerCase().includes(item.name.toLowerCase())
+      // Get fresh inventory data for each ingredient
+      const currentInventory = await getFreshInventory();
+      
+      // Find matching items using precise matching
+      const matchingItems = currentInventory.filter(item => 
+        isExactMatch(item.name, ingredient.name)
       );
 
       if (matchingItems.length === 0) {
@@ -621,6 +703,9 @@ const Index = () => {
           remainingQuantity -= consumeQuantity;
           consumed = true;
           consumedItems.push(`${ingredient.name} (${consumeQuantity} ${ingredient.unit})`);
+          
+          // Get fresh inventory after each modification to avoid stale data
+          await getFreshInventory();
         }
       }
 

@@ -29,7 +29,7 @@ import { ActionHistoryItem } from '@/hooks/useActionHistory';
 import { RecipeGenerator } from '@/components/RecipeGenerator';
 import { MealPlanVoiceRecordingButton } from '@/components/MealPlanVoiceRecordingButton';
 import { MealPlanVoiceRecording } from '@/components/MealPlanVoiceRecording';
-import { parseSafeDate } from '@/utils/dateUtils';
+import { parseSafeDate, parseEatByDate, parseDateCookedStored } from '@/utils/dateUtils';
 
 const Index = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -586,8 +586,8 @@ const Index = () => {
       const freshItems: FoodItem[] = data.map(item => ({
         id: item.id,
         name: item.name,
-        dateCookedStored: parseSafeDate(item.date_cooked_stored),
-        eatByDate: parseSafeDate(item.eat_by_date),
+        dateCookedStored: parseDateCookedStored(item.date_cooked_stored),
+        eatByDate: parseEatByDate(item.eat_by_date),
         amount: item.amount || 1,
         unit: item.unit || 'item',
         storageLocation: item.storage_location,

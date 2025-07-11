@@ -127,6 +127,21 @@ export const FoodItemCard = ({ item, onRemove, onEdit }: FoodItemCardProps) => {
         </div>
       )}
 
+      {item.tags && item.tags.length > 0 && (
+        <div className="mb-4">
+          <div className="flex flex-wrap gap-1">
+            {item.tags.map((tag, index) => (
+              <span
+                key={index}
+                className="inline-block px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-xs rounded-full"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center">
         <span className="text-xs text-muted-foreground">
           Cooked: {item.dateCookedStored.toLocaleDateString()}

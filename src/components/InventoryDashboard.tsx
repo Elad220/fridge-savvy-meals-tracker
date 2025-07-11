@@ -35,6 +35,7 @@ export const InventoryDashboard = ({
   const [sortBy, setSortBy] = useState<'eatByDate' | 'name' | 'storageLocation'>('eatByDate');
   const [filterBy, setFilterBy] = useState<FreshnessStatus | 'all'>('all');
   const [foodTypeFilter, setFoodTypeFilter] = useState<'all' | 'cooked meal' | 'raw material'>('all');
+  const [tagFilter, setTagFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isSelecting, setIsSelecting] = useState(false);
@@ -64,7 +65,10 @@ export const InventoryDashboard = ({
       
       const matchesFoodType = foodTypeFilter === 'all' || item.label === foodTypeFilter;
       
-      return matchesSearch && matchesFreshness && matchesFoodType;
+      const matchesTag = tagFilter === 'all' || 
+        (item.tags && item.tags.length > 0 && item.tags.includes(tagFilter));
+      
+      return matchesSearch && matchesFreshness && matchesFoodType && matchesTag;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -244,6 +248,19 @@ export const InventoryDashboard = ({
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="cooked meal">Cooked Meals</SelectItem>
               <SelectItem value="raw material">Raw Materials</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={tagFilter} onValueChange={setTagFilter}>
+            <SelectTrigger className="w-28 py-1 text-sm">
+              <SelectValue placeholder="Tags" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tags</SelectItem>
+              {Array.from(new Set(foodItems.flatMap(item => item.tags || []))).map(tag => (
+                <SelectItem key={tag} value={tag}>
+                  {tag}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

@@ -35,6 +35,7 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
         storageLocation: item.storage_location,
         label: (item.label || 'raw material') as FoodItemLabel, // Type assertion to FoodItemLabel
         notes: item.notes || undefined,
+        tags: item.tags || [],
         userId: item.user_id,
         freshnessDays: item.freshness_days || 4, // Default to 4 if not set
       }));
@@ -67,6 +68,7 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
           storage_location: item.storageLocation,
           label: item.label,
           notes: item.notes || null,
+          tags: item.tags || [],
           freshness_days: item.freshnessDays || 4,
         })
         .select()
@@ -84,6 +86,7 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
         storageLocation: data.storage_location,
         label: data.label as FoodItemLabel, // Type assertion to FoodItemLabel
         notes: data.notes || undefined,
+        tags: data.tags || [],
         userId: data.user_id,
         freshnessDays: data.freshness_days || 4,
       };
@@ -129,6 +132,7 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
           storage_location: updatedItem.storageLocation,
           label: updatedItem.label,
           notes: updatedItem.notes || null,
+          tags: updatedItem.tags || [],
           freshness_days: updatedItem.freshnessDays || 4,
           updated_at: new Date().toISOString(),
         })

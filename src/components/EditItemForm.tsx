@@ -5,10 +5,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AmountInput } from '@/components/ui/amount-input';
 import { StorageLocationSelect } from '@/components/StorageLocationSelect';
 import { FoodItem, FOOD_UNITS } from '@/types';
 import { toast } from '@/components/ui/use-toast';
+import { X, Plus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface EditItemFormProps {
   item: FoodItem;
@@ -29,11 +32,34 @@ export const EditItemForm = ({ item, onSubmit, onClose }: EditItemFormProps) => 
     freshnessDays: (item.freshnessDays || 4).toString(),
   });
 
+  // Tag management
+  const [tags, setTags] = useState<string[]>(item.tags || []);
+  const [tagInput, setTagInput] = useState('');
+
   const calculateEatByDate = (cookedDate: string, freshnessDays: number) => {
     const cooked = new Date(cookedDate);
     const eatBy = new Date(cooked);
     eatBy.setDate(eatBy.getDate() + freshnessDays);
     return eatBy.toISOString().split('T')[0];
+  };
+
+  // Tag management
+  const handleAddTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setTags(tags.filter(t => t !== tag));
+  };
+
+  const handleTagKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddTag();
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -60,6 +86,7 @@ export const EditItemForm = ({ item, onSubmit, onClose }: EditItemFormProps) => 
       storageLocation: formData.storageLocation,
       label: formData.label,
       notes: formData.notes || undefined,
+      tags: tags.length > 0 ? tags : undefined,
       freshnessDays: parseInt(formData.freshnessDays) || 4,
     };
     
@@ -198,6 +225,47 @@ export const EditItemForm = ({ item, onSubmit, onClose }: EditItemFormProps) => 
               placeholder="Additional details about the food..."
               rows={3}
             />
+          </div>
+
+          {/* Tags */}
+          <div>
+            <Label htmlFor="tags">Tags (Optional)</Label>
+            <div className="flex gap-2 mt-2">
+              <Input
+                id="tags"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyPress={handleTagKeyPress}
+                placeholder="Add tag"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAddTag}
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {tags.map((tag, index) => (
+                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                    {tag}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveTag(tag)}
+                      className="h-4 w-4 p-0 hover:bg-transparent"
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-4">

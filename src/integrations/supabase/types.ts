@@ -119,6 +119,7 @@ export type Database = {
           name: string
           notes: string | null
           storage_location: string
+          tags: string[] | null
           unit: string
           updated_at: string | null
           user_id: string
@@ -134,6 +135,7 @@ export type Database = {
           name: string
           notes?: string | null
           storage_location: string
+          tags?: string[] | null
           unit?: string
           updated_at?: string | null
           user_id: string
@@ -149,6 +151,7 @@ export type Database = {
           name?: string
           notes?: string | null
           storage_location?: string
+          tags?: string[] | null
           unit?: string
           updated_at?: string | null
           user_id?: string

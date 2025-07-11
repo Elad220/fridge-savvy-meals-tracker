@@ -16,6 +16,7 @@ export interface FoodItem {
   storageLocation: string;
   label: FoodItemLabel;
   notes?: string;
+  tags?: string[];
   userId: string;
   freshnessDays?: number; // Custom freshness period in days
 }

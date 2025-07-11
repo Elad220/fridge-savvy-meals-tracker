@@ -33,6 +33,10 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [ingredientInput, setIngredientInput] = useState('');
   
+  // Tag management
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  
   // Meal plan specific state
   const [mealPlanIngredients, setMealPlanIngredients] = useState<EditableMealPlanIngredient[]>([]);
   const [preparationSteps, setPreparationSteps] = useState<string[]>([]);
@@ -79,6 +83,25 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
     if (e.key === 'Enter') {
       e.preventDefault();
       handleAddIngredient();
+    }
+  };
+
+  // Tag management
+  const handleAddTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setTags(tags.filter(t => t !== tag));
+  };
+
+  const handleTagKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddTag();
     }
   };
 
@@ -146,6 +169,7 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
           storageLocation: formData.storageLocation,
           label: formData.label,
           notes: formData.notes || undefined,
+          tags: tags.length > 0 ? tags : undefined,
           freshnessDays: freshnessDays,
         };
 
@@ -373,6 +397,47 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
                 onValueChange={(value) => handleInputChange('storageLocation', value)}
                 required
               />
+
+              {/* Tags */}
+              <div>
+                <Label htmlFor="tags">Tags (Optional)</Label>
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    id="tags"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyPress={handleTagKeyPress}
+                    placeholder="Add tag"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddTag}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                        {tag}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveTag(tag)}
+                          className="h-4 w-4 p-0 hover:bg-transparent"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <>

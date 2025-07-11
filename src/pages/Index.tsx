@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Bookmark } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFoodItems } from '@/hooks/useFoodItems';
 import { useMealPlans } from '@/hooks/useMealPlans';
@@ -29,6 +29,7 @@ import { ActionHistoryItem } from '@/hooks/useActionHistory';
 import { RecipeGenerator } from '@/components/RecipeGenerator';
 import { MealPlanVoiceRecordingButton } from '@/components/MealPlanVoiceRecordingButton';
 import { MealPlanVoiceRecording } from '@/components/MealPlanVoiceRecording';
+import { SavedRecipes } from '@/components/SavedRecipes';
 
 const Index = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -38,6 +39,7 @@ const Index = () => {
   const [showPhotoAnalysis, setShowPhotoAnalysis] = useState(false);
   const [showVoiceRecording, setShowVoiceRecording] = useState(false);
   const [showMealPlanVoiceRecording, setShowMealPlanVoiceRecording] = useState(false);
+  const [showSavedRecipes, setShowSavedRecipes] = useState(false);
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlan | null>(null);
   const [activeTab, setActiveTab] = useState<'inventory' | 'meals' | 'settings'>('inventory');
@@ -933,6 +935,14 @@ const Index = () => {
                       onAddMealPlan={addMealPlan} 
                       onNavigateToSettings={() => setActiveTab('settings')} 
                     />
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowSavedRecipes(true)}
+                      className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-950/30"
+                    >
+                      <Bookmark className="w-4 h-4 mr-2" />
+                      Saved Recipes
+                    </Button>
                     <MealPlanVoiceRecordingButton
                       onOpen={handleOpenMealPlanVoiceRecording}
                       onNavigateToSettings={() => setActiveTab('settings')}
@@ -1012,6 +1022,13 @@ const Index = () => {
             statusCounts={dashboardData.statusCounts}
           />
         )}
+
+        {/* Saved Recipes */}
+        <SavedRecipes
+          isOpen={showSavedRecipes}
+          onClose={() => setShowSavedRecipes(false)}
+          onAddMealPlan={addMealPlan}
+        />
       </main>
 
       <Footer />

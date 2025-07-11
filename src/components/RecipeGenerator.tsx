@@ -3,10 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChefHat, Clock, Star, Utensils, Plus } from 'lucide-react';
-import { FoodItem, MealPlan, MealPlanIngredient } from '@/types';
+import { ChefHat, Clock, Star, Utensils, Plus, Bookmark } from 'lucide-react';
+import { FoodItem, MealPlan, MealPlanIngredient, CreateRecipeData } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useApiTokens } from '@/hooks/useApiTokens';
+import { useRecipes } from '@/hooks/useRecipes';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -37,6 +38,7 @@ interface RecipeGeneratorProps {
 export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings }: RecipeGeneratorProps) => {
   const { user } = useAuth();
   const { hasAnyToken, loading: tokenLoading } = useApiTokens();
+  const { addRecipe } = useRecipes(user?.id);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -145,6 +147,92 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
     setIsOpen(false);
     setSelectedRecipe(null);
     setRecipeDetails(null);
+  };
+
+  const saveRecipe = async () => {
+    if (!selectedRecipe || !recipeDetails) return;
+
+    // Ensure ingredients is an array of objects with name, quantity, unit
+    const ingredients = (recipeDetails.ingredients && Array.isArray(recipeDetails.ingredients))
+      ? recipeDetails.ingredients.map((ingredient) => {
+          // If ingredient is a string, treat as name only
+          if (typeof ingredient === 'string') {
+            return { name: ingredient, quantity: 1, unit: 'item' };
+          }
+          // If already an object, ensure it has required fields
+          return {
+            name: ingredient.name || '',
+            quantity: ingredient.quantity || 1,
+            unit: ingredient.unit || 'item',
+            notes: ingredient.notes || undefined,
+          };
+        })
+      : selectedRecipe.ingredients.map((ingredient) => ({
+          name: ingredient,
+          quantity: 1,
+          unit: 'item',
+        }));
+
+    // Ensure instructions is an array of strings
+    const instructions = recipeDetails.instructions && Array.isArray(recipeDetails.instructions)
+      ? recipeDetails.instructions.filter((step) => typeof step === 'string')
+      : [];
+
+    // Map difficulty to English for DB enum
+    const difficultyMap: Record<string, 'Easy' | 'Medium' | 'Hard'> = {
+      'קל': 'Easy',
+      'בינוני': 'Medium',
+      'קשה': 'Hard',
+      'easy': 'Easy',
+      'medium': 'Medium',
+      'hard': 'Hard',
+      'Easy': 'Easy',
+      'Medium': 'Medium',
+      'Hard': 'Hard',
+    };
+    const difficulty = difficultyMap[selectedRecipe.difficulty?.toLowerCase?.() || selectedRecipe.difficulty] || 'Easy';
+
+    // Build the payload, using snake_case for DB fields
+    const recipeData = {
+      name: selectedRecipe.name,
+      description: selectedRecipe.description,
+      ingredients,
+      instructions,
+      prep_time: recipeDetails.prepTime || undefined,
+      cook_time: recipeDetails.cookTime || undefined,
+      servings: recipeDetails.servings || undefined,
+      difficulty,
+      tags: ['generated'],
+      source: 'generated',
+      source_metadata: {
+        originalIngredients: selectedIngredients,
+        cookingTime: selectedRecipe.cookingTime,
+        generatedAt: new Date().toISOString(),
+      },
+    };
+
+    // Remove undefined fields
+    Object.keys(recipeData).forEach((key) =>
+      recipeData[key] === undefined && delete recipeData[key]
+    );
+
+    // Debug log
+    console.log('Saving recipe payload:', recipeData);
+
+    try {
+      await addRecipe(recipeData);
+      toast({
+        title: 'Recipe saved!',
+        description: `${selectedRecipe.name} has been saved to your recipe collection.`,
+      });
+    } catch (error) {
+      console.error('Error saving recipe:', error);
+      toast({
+        title: 'Error saving recipe',
+        description: 'Failed to save recipe. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -267,23 +355,36 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Recipe Name */}
+              <div className="mb-2">
+                <h2 className="text-xl font-bold text-foreground text-center break-words">{selectedRecipe.name}</h2>
+              </div>
+              {/* Action Buttons */}
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setSelectedRecipe(null)}>
-                    ← Back to Recipes
-                  </Button>
-                  <h4 className="font-medium">{selectedRecipe.name}</h4>
-                </div>
-                {onAddMealPlan && (
+                <Button variant="outline" size="sm" onClick={() => setSelectedRecipe(null)}>
+                  ← Back to Recipes
+                </Button>
+                <div className="flex gap-2">
                   <Button 
-                    onClick={addRecipeToMealPlan}
-                    className="bg-green-600 hover:bg-green-700"
+                    onClick={saveRecipe}
+                    variant="outline"
                     size="sm"
+                    className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-950/30"
                   >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add to Meal Plan
+                    <Bookmark className="w-4 h-4 mr-2" />
+                    Save Recipe
                   </Button>
-                )}
+                  {onAddMealPlan && (
+                    <Button 
+                      onClick={addRecipeToMealPlan}
+                      className="bg-green-600 hover:bg-green-700"
+                      size="sm"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add to Meal Plan
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {isLoadingDetails ? (

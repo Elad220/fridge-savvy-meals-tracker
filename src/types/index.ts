@@ -38,6 +38,46 @@ export interface MealPlan {
   userId: string;
 }
 
+export interface RecipeIngredient {
+  name: string;
+  quantity: number;
+  unit: string;
+  notes?: string;
+}
+
+export interface Recipe {
+  id: string;
+  name: string;
+  description?: string;
+  ingredients: RecipeIngredient[];
+  instructions: string[];
+  prepTime?: string;
+  cookTime?: string;
+  servings?: string;
+  difficulty?: 'Easy' | 'Medium' | 'Hard';
+  tags?: string[];
+  source?: 'manual' | 'generated' | 'imported';
+  sourceMetadata?: Record<string, unknown>;
+  isFavorite: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+}
+
+export interface CreateRecipeData {
+  name: string;
+  description?: string;
+  ingredients: RecipeIngredient[];
+  instructions: string[];
+  prepTime?: string;
+  cookTime?: string;
+  servings?: string;
+  difficulty?: 'Easy' | 'Medium' | 'Hard';
+  tags?: string[];
+  source?: 'manual' | 'generated' | 'imported';
+  sourceMetadata?: Record<string, unknown>;
+}
+
 export type FreshnessStatus = 'fresh' | 'use-soon' | 'use-or-throw' | 'expired';
 
 // Common units for food items

@@ -193,27 +193,33 @@ export type Database = {
           created_at: string | null
           destination_time: string | null
           id: string
+          ingredients: Json | null
           name: string
           notes: string | null
           planned_date: string | null
+          preparation_steps: Json | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
           destination_time?: string | null
           id?: string
+          ingredients?: Json | null
           name: string
           notes?: string | null
           planned_date?: string | null
+          preparation_steps?: Json | null
           user_id: string
         }
         Update: {
           created_at?: string | null
           destination_time?: string | null
           id?: string
+          ingredients?: Json | null
           name?: string
           notes?: string | null
           planned_date?: string | null
+          preparation_steps?: Json | null
           user_id?: string
         }
         Relationships: []
@@ -236,6 +242,63 @@ export type Database = {
           email?: string | null
           id?: string
           name?: string | null
+        }
+        Relationships: []
+      }
+      recipes: {
+        Row: {
+          cook_time: string | null
+          created_at: string | null
+          description: string | null
+          difficulty: string | null
+          id: string
+          ingredients: Json
+          instructions: Json
+          is_favorite: boolean | null
+          name: string
+          prep_time: string | null
+          servings: string | null
+          source: string | null
+          source_metadata: Json | null
+          tags: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cook_time?: string | null
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          ingredients?: Json
+          instructions?: Json
+          is_favorite?: boolean | null
+          name: string
+          prep_time?: string | null
+          servings?: string | null
+          source?: string | null
+          source_metadata?: Json | null
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cook_time?: string | null
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          ingredients?: Json
+          instructions?: Json
+          is_favorite?: boolean | null
+          name?: string
+          prep_time?: string | null
+          servings?: string | null
+          source?: string | null
+          source_metadata?: Json | null
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }

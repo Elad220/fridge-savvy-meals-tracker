@@ -494,7 +494,90 @@ const Index = () => {
     setEditingMealPlan(null);
   };
 
-  const handleMoveToInventory = (meal: MealPlan, foodItem: Omit<FoodItem, 'id' | 'userId'>) => {
+  // Helper function to consume ingredients from inventory
+  const consumeIngredients = async (meal: MealPlan) => {
+    if (!meal.ingredients || meal.ingredients.length === 0) {
+      return;
+    }
+
+    const consumedItems: string[] = [];
+    const insufficientItems: string[] = [];
+
+    for (const ingredient of meal.ingredients) {
+      // Find matching items in inventory (case-insensitive name matching)
+      const matchingItems = foodItems.filter(item => 
+        item.name.toLowerCase().includes(ingredient.name.toLowerCase()) ||
+        ingredient.name.toLowerCase().includes(item.name.toLowerCase())
+      );
+
+      if (matchingItems.length === 0) {
+        insufficientItems.push(ingredient.name);
+        continue;
+      }
+
+      // Sort by expiration date (use oldest first)
+      matchingItems.sort((a, b) => a.eatByDate.getTime() - b.eatByDate.getTime());
+
+      let remainingQuantity = ingredient.quantity;
+      let consumed = false;
+
+      for (const item of matchingItems) {
+        if (remainingQuantity <= 0) break;
+
+        // Check if units are compatible (simple matching for now)
+        const unitsCompatible = item.unit.toLowerCase() === ingredient.unit.toLowerCase() ||
+                               (item.unit.toLowerCase().includes(ingredient.unit.toLowerCase()) ||
+                                ingredient.unit.toLowerCase().includes(item.unit.toLowerCase()));
+
+        if (!unitsCompatible) continue;
+
+        const availableQuantity = item.amount;
+        const consumeQuantity = Math.min(remainingQuantity, availableQuantity);
+
+        if (consumeQuantity > 0) {
+          const newAmount = availableQuantity - consumeQuantity;
+          
+          if (newAmount <= 0) {
+            // Remove the item completely
+            await removeFoodItem(item.id);
+          } else {
+            // Update the item with reduced amount
+            const updatedItem = { ...item, amount: newAmount };
+            await updateFoodItem(updatedItem);
+          }
+
+          remainingQuantity -= consumeQuantity;
+          consumed = true;
+          consumedItems.push(`${ingredient.name} (${consumeQuantity} ${ingredient.unit})`);
+        }
+      }
+
+      if (!consumed || remainingQuantity > 0) {
+        insufficientItems.push(ingredient.name);
+      }
+    }
+
+    // Show results to user
+    if (consumedItems.length > 0) {
+      toast({
+        title: 'Ingredients Consumed',
+        description: `Successfully consumed: ${consumedItems.join(', ')}`,
+      });
+    }
+
+    if (insufficientItems.length > 0) {
+      toast({
+        title: 'Insufficient Ingredients',
+        description: `Could not find sufficient quantities for: ${insufficientItems.join(', ')}`,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleMoveToInventory = async (meal: MealPlan, foodItem: Omit<FoodItem, 'id' | 'userId'>) => {
+    // Consume ingredients from inventory
+    await consumeIngredients(meal);
+    
     // Add the food item to inventory
     addFoodItem(foodItem);
     

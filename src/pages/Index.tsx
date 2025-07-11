@@ -494,7 +494,70 @@ const Index = () => {
     setEditingMealPlan(null);
   };
 
-  // Helper function to consume ingredients from inventory
+  // Unit conversion utility
+  const convertUnit = (quantity: number, fromUnit: string, toUnit: string): number | null => {
+    const normalizedFromUnit = fromUnit.toLowerCase().trim();
+    const normalizedToUnit = toUnit.toLowerCase().trim();
+
+    // If units are the same, no conversion needed
+    if (normalizedFromUnit === normalizedToUnit) {
+      return quantity;
+    }
+
+    // Weight conversions
+    const weightConversions: Record<string, Record<string, number>> = {
+      'g': { 'kg': 0.001, 'lb': 0.00220462, 'oz': 0.035274 },
+      'kg': { 'g': 1000, 'lb': 2.20462, 'oz': 35.274 },
+      'lb': { 'g': 453.592, 'kg': 0.453592, 'oz': 16 },
+      'oz': { 'g': 28.3495, 'kg': 0.0283495, 'lb': 0.0625 }
+    };
+
+    // Volume conversions
+    const volumeConversions: Record<string, Record<string, number>> = {
+      'ml': { 'l': 0.001, 'cup': 0.00422675, 'tbsp': 0.067628, 'tsp': 0.202884 },
+      'l': { 'ml': 1000, 'cup': 4.22675, 'tbsp': 67.628, 'tsp': 202.884 },
+      'cup': { 'ml': 236.588, 'l': 0.236588, 'tbsp': 16, 'tsp': 48 },
+      'tbsp': { 'ml': 14.7868, 'l': 0.0147868, 'cup': 0.0625, 'tsp': 3 },
+      'tsp': { 'ml': 4.92892, 'l': 0.00492892, 'cup': 0.0208333, 'tbsp': 0.333333 }
+    };
+
+    // Check weight conversions
+    if (weightConversions[normalizedFromUnit] && weightConversions[normalizedFromUnit][normalizedToUnit]) {
+      return quantity * weightConversions[normalizedFromUnit][normalizedToUnit];
+    }
+
+    // Check volume conversions
+    if (volumeConversions[normalizedFromUnit] && volumeConversions[normalizedFromUnit][normalizedToUnit]) {
+      return quantity * volumeConversions[normalizedFromUnit][normalizedToUnit];
+    }
+
+    // Check reverse conversions
+    if (weightConversions[normalizedToUnit] && weightConversions[normalizedToUnit][normalizedFromUnit]) {
+      return quantity / weightConversions[normalizedToUnit][normalizedFromUnit];
+    }
+
+    if (volumeConversions[normalizedToUnit] && volumeConversions[normalizedToUnit][normalizedFromUnit]) {
+      return quantity / volumeConversions[normalizedToUnit][normalizedFromUnit];
+    }
+
+    // If no conversion is possible, return null
+    return null;
+  };
+
+  // Check if units are compatible (can be converted)
+  const areUnitsCompatible = (unit1: string, unit2: string): boolean => {
+    const normalizedUnit1 = unit1.toLowerCase().trim();
+    const normalizedUnit2 = unit2.toLowerCase().trim();
+
+    // Same units are always compatible
+    if (normalizedUnit1 === normalizedUnit2) {
+      return true;
+    }
+
+    // Check if conversion is possible
+    return convertUnit(1, normalizedUnit1, normalizedUnit2) !== null;
+  };
+
   const consumeIngredients = async (meal: MealPlan) => {
     if (!meal.ingredients || meal.ingredients.length === 0) {
       return;
@@ -524,18 +587,27 @@ const Index = () => {
       for (const item of matchingItems) {
         if (remainingQuantity <= 0) break;
 
-        // Check if units are compatible (simple matching for now)
-        const unitsCompatible = item.unit.toLowerCase() === ingredient.unit.toLowerCase() ||
-                               (item.unit.toLowerCase().includes(ingredient.unit.toLowerCase()) ||
-                                ingredient.unit.toLowerCase().includes(item.unit.toLowerCase()));
+        // Check if units are compatible using proper unit conversion
+        if (!areUnitsCompatible(item.unit, ingredient.unit)) {
+          continue;
+        }
 
-        if (!unitsCompatible) continue;
+        // Convert item quantity to ingredient unit for comparison
+        const convertedItemQuantity = convertUnit(item.amount, item.unit, ingredient.unit);
+        if (convertedItemQuantity === null) {
+          continue;
+        }
 
-        const availableQuantity = item.amount;
-        const consumeQuantity = Math.min(remainingQuantity, availableQuantity);
+        const consumeQuantity = Math.min(remainingQuantity, convertedItemQuantity);
 
         if (consumeQuantity > 0) {
-          const newAmount = availableQuantity - consumeQuantity;
+          // Convert consumed quantity back to item's unit for inventory update
+          const consumedInItemUnit = convertUnit(consumeQuantity, ingredient.unit, item.unit);
+          if (consumedInItemUnit === null) {
+            continue;
+          }
+
+          const newAmount = item.amount - consumedInItemUnit;
           
           if (newAmount <= 0) {
             // Remove the item completely

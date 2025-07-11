@@ -336,10 +336,6 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">AI Recipe Generator</h2>
-          <p className="text-sm text-muted-foreground">Generate recipes from your ingredients</p>
-        </div>
         {renderContent()}
       </div>
     </div>

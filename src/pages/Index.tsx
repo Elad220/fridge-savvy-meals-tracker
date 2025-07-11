@@ -24,6 +24,10 @@ import { useAIRecommendations } from '@/hooks/useAIRecommendations';
 import { toast } from '@/hooks/use-toast';
 import { useApiTokens } from '@/hooks/useApiTokens';
 import { DashboardWindow } from '@/components/DashboardWindow';
+import { ActionHistoryItem } from '@/hooks/useActionHistory';
+import { RecipeGenerator } from '@/components/RecipeGenerator';
+import { MealPlanVoiceRecordingButton } from '@/components/MealPlanVoiceRecordingButton';
+import { MealPlanVoiceRecording } from '@/components/MealPlanVoiceRecording';
 
 const Index = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -32,11 +36,17 @@ const Index = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showPhotoAnalysis, setShowPhotoAnalysis] = useState(false);
   const [showVoiceRecording, setShowVoiceRecording] = useState(false);
+  const [showMealPlanVoiceRecording, setShowMealPlanVoiceRecording] = useState(false);
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlan | null>(null);
   const [activeTab, setActiveTab] = useState<'inventory' | 'meals' | 'settings'>('inventory');
   const [isDashboardWindowOpen, setIsDashboardWindowOpen] = useState(false);
-  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [dashboardData, setDashboardData] = useState<{
+    recentActions?: ActionHistoryItem[];
+    historyLoading?: boolean;
+    userId?: string;
+    statusCounts?: Record<string, number>;
+  } | null>(null);
 
   const { recentActions, loading: historyLoading, refetch: refetchHistory } = useActionHistory(user?.id);
   const { updateConsumptionPattern, updateMealCombination, clearCacheOnInventoryChange } = useAIRecommendations(user?.id);
@@ -503,6 +513,15 @@ const Index = () => {
     setShowVoiceRecording(true);
   };
 
+  const handleOpenMealPlanVoiceRecording = () => {
+    setShowMealPlanVoiceRecording(true);
+  };
+
+  const handleMealPlanVoiceRecordingComplete = (mealPlan: Omit<MealPlan, 'id' | 'userId'>) => {
+    addMealPlan(mealPlan);
+    setShowMealPlanVoiceRecording(false);
+  };
+
   const handlePhotoAnalysisComplete = (item: Omit<FoodItem, 'id' | 'userId'>) => {
     addFoodItem(item);
     
@@ -591,6 +610,7 @@ const Index = () => {
             onEditMealPlan={setEditingMealPlan}
             onNavigateToSettings={() => setActiveTab('settings')}
             onMoveToInventory={handleMoveToInventory}
+            userId={user.id}
           />
         );
       case 'settings':
@@ -634,6 +654,21 @@ const Index = () => {
                     />
                     <VoiceRecordingButton
                       onOpen={handleOpenVoiceRecording}
+                      onNavigateToSettings={() => setActiveTab('settings')}
+                      disabled={false}
+                      className="sm:w-auto"
+                    />
+                  </div>
+                )}
+                {activeTab === 'meals' && user.id && (
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <RecipeGenerator 
+                      foodItems={foodItems} 
+                      onAddMealPlan={addMealPlan} 
+                      onNavigateToSettings={() => setActiveTab('settings')} 
+                    />
+                    <MealPlanVoiceRecordingButton
+                      onOpen={handleOpenMealPlanVoiceRecording}
                       onNavigateToSettings={() => setActiveTab('settings')}
                       disabled={false}
                       className="sm:w-auto"
@@ -687,6 +722,15 @@ const Index = () => {
             isOpen={showVoiceRecording}
             onClose={() => setShowVoiceRecording(false)}
             onAnalysisComplete={handleVoiceRecordingComplete}
+            userId={user.id}
+          />
+        )}
+
+        {showMealPlanVoiceRecording && (
+          <MealPlanVoiceRecording
+            isOpen={showMealPlanVoiceRecording}
+            onClose={() => setShowMealPlanVoiceRecording(false)}
+            onAnalysisComplete={handleMealPlanVoiceRecordingComplete}
             userId={user.id}
           />
         )}

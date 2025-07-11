@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Trash2, Calendar, Edit, Clock, PackagePlus, BellPlus, Search as SearchIcon, ExternalLink } from 'lucide-react';
 import { MoveToInventoryModal } from './MoveToInventoryModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { RecipeGenerator } from './RecipeGenerator';
 import { toast } from '@/hooks/use-toast';
 import { generateMealPlanICS } from '@/lib/calendar';
 import { Input } from '@/components/ui/input';
@@ -19,6 +18,7 @@ interface MealPlanningProps {
   onEditMealPlan: (meal: MealPlan) => void;
   onNavigateToSettings: () => void;
   onMoveToInventory: (meal: MealPlan, foodItem: Omit<FoodItem, 'id' | 'userId'>) => void;
+  userId: string;
 }
 
 export const MealPlanning = ({ 
@@ -28,7 +28,8 @@ export const MealPlanning = ({
   onAddMealPlan, 
   onEditMealPlan, 
   onNavigateToSettings,
-  onMoveToInventory 
+  onMoveToInventory,
+  userId
 }: MealPlanningProps) => {
   const [moveToInventoryModalOpen, setMoveToInventoryModalOpen] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<MealPlan | null>(null);
@@ -173,11 +174,10 @@ export const MealPlanning = ({
     }
   };
 
+
+
   return (
     <div className="space-y-4">
-      {/* Recipe Generator */}
-      <RecipeGenerator foodItems={foodItems} onAddMealPlan={onAddMealPlan} onNavigateToSettings={onNavigateToSettings} />
-
       {/* Quick stats overview - more compact */}
       <div className="glass-card p-4 space-y-3">
         <div className="flex items-center justify-between">
@@ -432,6 +432,8 @@ export const MealPlanning = ({
           }}
         />
       )}
+
+
     </div>
   );
 };

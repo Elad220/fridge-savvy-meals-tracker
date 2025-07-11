@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { FoodItem, FoodItemLabel } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { useActionHistory } from '@/hooks/useActionHistory';
+import { parseSafeDate } from '@/utils/dateUtils';
 
 export const useFoodItems = (userId: string | undefined, onActionComplete?: () => void, refetchActions?: () => void) => {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
@@ -28,8 +29,8 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
       const transformedItems: FoodItem[] = data.map(item => ({
         id: item.id,
         name: item.name,
-        dateCookedStored: new Date(item.date_cooked_stored),
-        eatByDate: new Date(item.eat_by_date),
+        dateCookedStored: parseSafeDate(item.date_cooked_stored),
+        eatByDate: parseSafeDate(item.eat_by_date),
         amount: item.amount || 1, // Default to 1 if not set
         unit: item.unit || 'item', // Default to 'item' if not set
         storageLocation: item.storage_location,
@@ -77,8 +78,8 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
       const newItem: FoodItem = {
         id: data.id,
         name: data.name,
-        dateCookedStored: new Date(data.date_cooked_stored),
-        eatByDate: new Date(data.eat_by_date),
+        dateCookedStored: parseSafeDate(data.date_cooked_stored),
+        eatByDate: parseSafeDate(data.eat_by_date),
         amount: data.amount,
         unit: data.unit,
         storageLocation: data.storage_location,

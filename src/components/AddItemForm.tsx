@@ -427,12 +427,21 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
                       </div>
                       <div className="col-span-2">
                         <Label htmlFor={`ingredient-unit-${ingredient.id}`}>Unit</Label>
-                        <Input
-                          id={`ingredient-unit-${ingredient.id}`}
-                          value={ingredient.unit}
-                          onChange={(e) => updateMealPlanIngredient(ingredient.id, 'unit', e.target.value)}
-                          placeholder="unit"
-                        />
+                        <Select 
+                          value={ingredient.unit} 
+                          onValueChange={(value) => updateMealPlanIngredient(ingredient.id, 'unit', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select unit" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {FOOD_UNITS.map((unit) => (
+                              <SelectItem key={unit} value={unit}>
+                                {unit}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="col-span-3">
                         <Label htmlFor={`ingredient-notes-${ingredient.id}`}>Notes</Label>

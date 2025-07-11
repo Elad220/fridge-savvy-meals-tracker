@@ -356,15 +356,41 @@ export const MealPlanning = ({
                   </div>
                 )}
 
+                {meal.ingredients && meal.ingredients.length > 0 && (
+                  <div className="mb-4 p-2 bg-blue-50 dark:bg-blue-950/20 rounded text-sm">
+                    <strong className="text-blue-700 dark:text-blue-300">Ingredients:</strong>
+                    <div className="mt-1 text-blue-600 dark:text-blue-400">
+                      {meal.ingredients.slice(0, 3).map((ingredient, index) => (
+                        <span key={index} className="inline-block mr-2 mb-1">
+                          {ingredient.name} ({ingredient.quantity} {ingredient.unit})
+                        </span>
+                      ))}
+                      {meal.ingredients.length > 3 && (
+                        <span className="text-blue-500 dark:text-blue-400">
+                          +{meal.ingredients.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-wrap justify-end gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleMoveToInventoryInit(meal)}
                     className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-950/20"
+                    title={meal.ingredients && meal.ingredients.length > 0 
+                      ? `Move to inventory and consume ${meal.ingredients.length} ingredients` 
+                      : "Move to inventory"}
                   >
                     <PackagePlus className="w-4 h-4 mr-1" />
                     To Inventory
+                    {meal.ingredients && meal.ingredients.length > 0 && (
+                      <span className="ml-1 text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-1 rounded">
+                        {meal.ingredients.length}
+                      </span>
+                    )}
                   </Button>
                   <Button
                     variant="outline"
@@ -428,7 +454,8 @@ export const MealPlanning = ({
           initialData={{
             name: selectedMeal.name,
             notes: selectedMeal.notes,
-            plannedDate: selectedMeal.plannedDate
+            plannedDate: selectedMeal.plannedDate,
+            ingredients: selectedMeal.ingredients
           }}
         />
       )}

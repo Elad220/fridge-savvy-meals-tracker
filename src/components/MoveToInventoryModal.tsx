@@ -7,8 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AmountInput } from '@/components/ui/amount-input';
 import { StorageLocationSelect } from '@/components/StorageLocationSelect';
-import { FoodItem, FOOD_UNITS } from '@/types';
+import { FoodItem, FOOD_UNITS, MealPlanIngredient } from '@/types';
 import { toast } from '@/components/ui/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 
 interface MoveToInventoryModalProps {
   isOpen: boolean;
@@ -18,6 +20,7 @@ interface MoveToInventoryModalProps {
     name: string;
     notes?: string;
     plannedDate?: Date;
+    ingredients?: MealPlanIngredient[];
   };
 }
 
@@ -50,6 +53,23 @@ export const MoveToInventoryModal = ({
     notes: initialData.notes ? `From meal plan: ${initialData.notes}` : '',
     freshnessDays: defaultFreshnessDays.toString()
   });
+
+  // Reset form when modal opens with new data
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        name: initialData.name,
+        dateCookedStored: today,
+        eatByDate: defaultEatByDate,
+        amount: '1',
+        unit: 'serving',
+        storageLocation: '',
+        label: 'cooked meal' as const,
+        notes: initialData.notes ? `From meal plan: ${initialData.notes}` : '',
+        freshnessDays: defaultFreshnessDays.toString()
+      });
+    }
+  }, [isOpen, initialData.name, initialData.notes]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
@@ -100,6 +120,23 @@ export const MoveToInventoryModal = ({
         <DialogHeader>
           <DialogTitle>Add to Inventory</DialogTitle>
         </DialogHeader>
+
+        {/* Show ingredients that will be consumed */}
+        {initialData.ingredients && initialData.ingredients.length > 0 && (
+          <Alert className="mb-4">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Ingredients to be consumed from inventory:</strong>
+              <ul className="mt-2 space-y-1">
+                {initialData.ingredients.map((ingredient, index) => (
+                  <li key={index} className="text-sm">
+                    • {ingredient.name} ({ingredient.quantity} {ingredient.unit})
+                  </li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

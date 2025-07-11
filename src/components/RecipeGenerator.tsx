@@ -244,7 +244,9 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
     }
   };
 
-  const uniqueIngredients = [...new Set(foodItems.map(item => item.name))];
+  // Filter for raw materials only
+  const rawMaterialItems = foodItems.filter(item => item.label === 'raw material');
+  const uniqueIngredients = [...new Set(rawMaterialItems.map(item => item.name))];
 
   const renderContent = () => {
     if (tokenLoading) {

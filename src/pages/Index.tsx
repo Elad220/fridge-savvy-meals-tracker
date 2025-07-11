@@ -18,7 +18,8 @@ import { PhotoAnalysisButton } from '@/components/PhotoAnalysisButton';
 import Settings from '@/components/Settings'; // Import the new Settings component
 import { VoiceRecording } from '@/components/VoiceRecording';
 import { VoiceRecordingButton } from '@/components/VoiceRecordingButton';
-import { FoodItem, MealPlan } from '@/types';
+import { FoodItem, MealPlan, FoodItemLabel } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 import { AIRecommendations } from '@/components/AIRecommendations';
 import { useAIRecommendations } from '@/hooks/useAIRecommendations';
 import { toast } from '@/hooks/use-toast';
@@ -50,7 +51,7 @@ const Index = () => {
 
   const { recentActions, loading: historyLoading, refetch: refetchHistory } = useActionHistory(user?.id);
   const { updateConsumptionPattern, updateMealCombination, clearCacheOnInventoryChange } = useAIRecommendations(user?.id);
-  const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem } = useFoodItems(user?.id, clearCacheOnInventoryChange, refetchHistory);
+  const { foodItems, loading: foodLoading, addFoodItem, updateFoodItem, removeFoodItem, refetch } = useFoodItems(user?.id, clearCacheOnInventoryChange, refetchHistory);
   const { mealPlans, loading: mealLoading, addMealPlan, updateMealPlan, removeMealPlan } = useMealPlans(user?.id);
   const { aiRecommendationsEnabled } = useApiTokens();
 
@@ -494,7 +495,272 @@ const Index = () => {
     setEditingMealPlan(null);
   };
 
-  const handleMoveToInventory = (meal: MealPlan, foodItem: Omit<FoodItem, 'id' | 'userId'>) => {
+  // Unit conversion utility
+  const convertUnit = (quantity: number, fromUnit: string, toUnit: string): number | null => {
+    const normalizedFromUnit = fromUnit.toLowerCase().trim();
+    const normalizedToUnit = toUnit.toLowerCase().trim();
+
+    // If units are the same, no conversion needed
+    if (normalizedFromUnit === normalizedToUnit) {
+      return quantity;
+    }
+
+    // Weight conversions
+    const weightConversions: Record<string, Record<string, number>> = {
+      'g': { 'kg': 0.001, 'lb': 0.00220462, 'oz': 0.035274 },
+      'kg': { 'g': 1000, 'lb': 2.20462, 'oz': 35.274 },
+      'lb': { 'g': 453.592, 'kg': 0.453592, 'oz': 16 },
+      'oz': { 'g': 28.3495, 'kg': 0.0283495, 'lb': 0.0625 }
+    };
+
+    // Volume conversions
+    const volumeConversions: Record<string, Record<string, number>> = {
+      'ml': { 'l': 0.001, 'cup': 0.00422675, 'tbsp': 0.067628, 'tsp': 0.202884 },
+      'l': { 'ml': 1000, 'cup': 4.22675, 'tbsp': 67.628, 'tsp': 202.884 },
+      'cup': { 'ml': 236.588, 'l': 0.236588, 'tbsp': 16, 'tsp': 48 },
+      'tbsp': { 'ml': 14.7868, 'l': 0.0147868, 'cup': 0.0625, 'tsp': 3 },
+      'tsp': { 'ml': 4.92892, 'l': 0.00492892, 'cup': 0.0208333, 'tbsp': 0.333333 }
+    };
+
+    // Check weight conversions
+    if (weightConversions[normalizedFromUnit] && weightConversions[normalizedFromUnit][normalizedToUnit]) {
+      return quantity * weightConversions[normalizedFromUnit][normalizedToUnit];
+    }
+
+    // Check volume conversions
+    if (volumeConversions[normalizedFromUnit] && volumeConversions[normalizedFromUnit][normalizedToUnit]) {
+      return quantity * volumeConversions[normalizedFromUnit][normalizedToUnit];
+    }
+
+    // Check reverse conversions
+    if (weightConversions[normalizedToUnit] && weightConversions[normalizedToUnit][normalizedFromUnit]) {
+      return quantity / weightConversions[normalizedToUnit][normalizedFromUnit];
+    }
+
+    if (volumeConversions[normalizedToUnit] && volumeConversions[normalizedToUnit][normalizedFromUnit]) {
+      return quantity / volumeConversions[normalizedToUnit][normalizedFromUnit];
+    }
+
+    // If no conversion is possible, return null
+    return null;
+  };
+
+  // Check if units are compatible (can be converted)
+  const areUnitsCompatible = (unit1: string, unit2: string): boolean => {
+    const normalizedUnit1 = unit1.toLowerCase().trim();
+    const normalizedUnit2 = unit2.toLowerCase().trim();
+
+    // Same units are always compatible
+    if (normalizedUnit1 === normalizedUnit2) {
+      return true;
+    }
+
+    // Check if conversion is possible
+    return convertUnit(1, normalizedUnit1, normalizedUnit2) !== null;
+  };
+
+  const consumeIngredients = async (meal: MealPlan) => {
+    if (!meal.ingredients || meal.ingredients.length === 0) {
+      return;
+    }
+
+    const consumedItems: string[] = [];
+    const insufficientItems: string[] = [];
+
+    // Helper function to get fresh inventory data
+    const getFreshInventory = async () => {
+      // Get fresh data directly from the database
+      const { data, error } = await supabase
+        .from('food_items')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('eat_by_date', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching fresh inventory:', error);
+        return foodItems; // Fallback to current state
+      }
+
+      // Transform the data to match FoodItem format
+      const freshItems: FoodItem[] = data.map(item => ({
+        id: item.id,
+        name: item.name,
+        dateCookedStored: new Date(item.date_cooked_stored),
+        eatByDate: new Date(item.eat_by_date),
+        amount: item.amount || 1,
+        unit: item.unit || 'item',
+        storageLocation: item.storage_location,
+        label: (item.label || 'raw material') as FoodItemLabel,
+        notes: item.notes || undefined,
+        userId: item.user_id,
+        freshnessDays: item.freshness_days || 4,
+      }));
+
+      return freshItems;
+    };
+
+    // Helper function for precise ingredient matching
+    const isExactMatch = (itemName: string, ingredientName: string): boolean => {
+      const normalizedItemName = itemName.toLowerCase().trim();
+      const normalizedIngredientName = ingredientName.toLowerCase().trim();
+      
+      // Exact match
+      if (normalizedItemName === normalizedIngredientName) {
+        return true;
+      }
+      
+      // Check if ingredient name is a complete word in item name
+      const itemWords = normalizedItemName.split(/\s+/);
+      const ingredientWords = normalizedIngredientName.split(/\s+/);
+      
+      // If ingredient has multiple words, all must be present in item
+      if (ingredientWords.length > 1) {
+        return ingredientWords.every(word => 
+          itemWords.some(itemWord => itemWord === word || itemWord.startsWith(word))
+        );
+      }
+      
+      // For single word ingredients, check for exact word match or common variations
+      const ingredientWord = ingredientWords[0];
+      
+      // Direct word match
+      if (itemWords.includes(ingredientWord)) {
+        return true;
+      }
+      
+      // Check for common variations (e.g., "tomato" vs "tomatoes")
+      const commonVariations: Record<string, string[]> = {
+        'tomato': ['tomatoes'],
+        'potato': ['potatoes'],
+        'onion': ['onions'],
+        'carrot': ['carrots'],
+        'pepper': ['peppers'],
+        'garlic': ['garlic'],
+        'salt': ['salt'],
+        'sugar': ['sugar'],
+        'flour': ['flour'],
+        'oil': ['oil'],
+        'butter': ['butter'],
+        'milk': ['milk'],
+        'egg': ['eggs'],
+        'chicken': ['chicken'],
+        'beef': ['beef'],
+        'pork': ['pork'],
+        'fish': ['fish'],
+        'rice': ['rice'],
+        'pasta': ['pasta'],
+        'bread': ['bread'],
+      };
+      
+      // Check if ingredient is a base form and item contains a variation
+      for (const [base, variations] of Object.entries(commonVariations)) {
+        if (base === ingredientWord && variations.some(variation => itemWords.includes(variation))) {
+          return true;
+        }
+        if (variations.includes(ingredientWord) && itemWords.includes(base)) {
+          return true;
+        }
+      }
+      
+      // Check for item name starting with ingredient (but not the reverse to avoid "salt" matching "salted butter")
+      if (normalizedItemName.startsWith(ingredientWord + ' ') || 
+          normalizedItemName.endsWith(' ' + ingredientWord) ||
+          normalizedItemName.includes(' ' + ingredientWord + ' ')) {
+        return true;
+      }
+      
+      return false;
+    };
+
+    for (const ingredient of meal.ingredients) {
+      // Get fresh inventory data for each ingredient
+      const currentInventory = await getFreshInventory();
+      
+      // Find matching items using precise matching
+      const matchingItems = currentInventory.filter(item => 
+        isExactMatch(item.name, ingredient.name)
+      );
+
+      if (matchingItems.length === 0) {
+        insufficientItems.push(ingredient.name);
+        continue;
+      }
+
+      // Sort by expiration date (use oldest first)
+      matchingItems.sort((a, b) => a.eatByDate.getTime() - b.eatByDate.getTime());
+
+      let remainingQuantity = ingredient.quantity;
+      let consumed = false;
+
+      for (const item of matchingItems) {
+        if (remainingQuantity <= 0) break;
+
+        // Check if units are compatible using proper unit conversion
+        if (!areUnitsCompatible(item.unit, ingredient.unit)) {
+          continue;
+        }
+
+        // Convert item quantity to ingredient unit for comparison
+        const convertedItemQuantity = convertUnit(item.amount, item.unit, ingredient.unit);
+        if (convertedItemQuantity === null) {
+          continue;
+        }
+
+        const consumeQuantity = Math.min(remainingQuantity, convertedItemQuantity);
+
+        if (consumeQuantity > 0) {
+          // Convert consumed quantity back to item's unit for inventory update
+          const consumedInItemUnit = convertUnit(consumeQuantity, ingredient.unit, item.unit);
+          if (consumedInItemUnit === null) {
+            continue;
+          }
+
+          const newAmount = item.amount - consumedInItemUnit;
+          
+          if (newAmount <= 0) {
+            // Remove the item completely
+            await removeFoodItem(item.id);
+          } else {
+            // Update the item with reduced amount
+            const updatedItem = { ...item, amount: newAmount };
+            await updateFoodItem(updatedItem);
+          }
+
+          remainingQuantity -= consumeQuantity;
+          consumed = true;
+          consumedItems.push(`${ingredient.name} (${consumeQuantity} ${ingredient.unit})`);
+          
+          // Get fresh inventory after each modification to avoid stale data
+          await getFreshInventory();
+        }
+      }
+
+      if (!consumed || remainingQuantity > 0) {
+        insufficientItems.push(ingredient.name);
+      }
+    }
+
+    // Show results to user
+    if (consumedItems.length > 0) {
+      toast({
+        title: 'Ingredients Consumed',
+        description: `Successfully consumed: ${consumedItems.join(', ')}`,
+      });
+    }
+
+    if (insufficientItems.length > 0) {
+      toast({
+        title: 'Insufficient Ingredients',
+        description: `Could not find sufficient quantities for: ${insufficientItems.join(', ')}`,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleMoveToInventory = async (meal: MealPlan, foodItem: Omit<FoodItem, 'id' | 'userId'>) => {
+    // Consume ingredients from inventory
+    await consumeIngredients(meal);
+    
     // Add the food item to inventory
     addFoodItem(foodItem);
     

@@ -25,6 +25,7 @@ import { toast } from '@/hooks/use-toast';
 import { EditMealPlanForm } from '@/components/EditMealPlanForm';
 import { MealPlan, MealPlanIngredient } from '@/types';
 import { AddRecipeForm } from '@/components/AddRecipeForm';
+import { EditRecipeForm } from '@/components/EditRecipeForm';
 
 interface SavedRecipesProps {
   isOpen: boolean;
@@ -43,6 +44,7 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
   const [showCookModal, setShowCookModal] = useState(false);
   const [mealPlanDraft, setMealPlanDraft] = useState<Omit<MealPlan, 'id' | 'userId'> | null>(null);
   const [showAddRecipeForm, setShowAddRecipeForm] = useState(false);
+  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -129,6 +131,24 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
       toast({
         title: 'Error adding recipe',
         description: 'Failed to add recipe. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleEditRecipe = async (updatedRecipe: Recipe) => {
+    try {
+      await updateRecipe(updatedRecipe);
+      setEditingRecipe(null);
+      toast({
+        title: 'Recipe updated!',
+        description: `${updatedRecipe.name} has been updated.`,
+      });
+    } catch (error) {
+      console.error('Error updating recipe:', error);
+      toast({
+        title: 'Error updating recipe',
+        description: 'Failed to update recipe. Please try again.',
         variant: 'destructive',
       });
     }
@@ -307,6 +327,14 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => setEditingRecipe(recipe)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="w-4 h-4 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleDeleteRecipe(recipe)}
                         className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
                       >
@@ -480,6 +508,16 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
           isOpen={showAddRecipeForm}
           onClose={() => setShowAddRecipeForm(false)}
           onSubmit={handleAddRecipe}
+        />
+      )}
+
+      {/* Edit Recipe Form */}
+      {editingRecipe && (
+        <EditRecipeForm
+          recipe={editingRecipe}
+          isOpen={!!editingRecipe}
+          onClose={() => setEditingRecipe(null)}
+          onSubmit={handleEditRecipe}
         />
       )}
     </Dialog>

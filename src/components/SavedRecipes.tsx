@@ -15,14 +15,16 @@ import {
   Trash2, 
   Heart,
   ChefHat,
-  Calendar
+  Calendar,
+  Plus
 } from 'lucide-react';
-import { Recipe } from '@/types';
+import { Recipe, CreateRecipeData } from '@/types';
 import { useRecipes } from '@/hooks/useRecipes';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { EditMealPlanForm } from '@/components/EditMealPlanForm';
 import { MealPlan, MealPlanIngredient } from '@/types';
+import { AddRecipeForm } from '@/components/AddRecipeForm';
 
 interface SavedRecipesProps {
   isOpen: boolean;
@@ -32,7 +34,7 @@ interface SavedRecipesProps {
 
 export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesProps) => {
   const { user } = useAuth();
-  const { recipes, loading, updateRecipe, removeRecipe, refetch } = useRecipes(user?.id);
+  const { recipes, loading, updateRecipe, removeRecipe, addRecipe, refetch } = useRecipes(user?.id);
   const [searchTerm, setSearchTerm] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
@@ -40,6 +42,7 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
   const [isEditing, setIsEditing] = useState(false);
   const [showCookModal, setShowCookModal] = useState(false);
   const [mealPlanDraft, setMealPlanDraft] = useState<Omit<MealPlan, 'id' | 'userId'> | null>(null);
+  const [showAddRecipeForm, setShowAddRecipeForm] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -111,6 +114,24 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
       title: 'Meal plan created!',
       description: `${mealPlan.name} has been added to your meal plans.`,
     });
+  };
+
+  const handleAddRecipe = async (recipeData: CreateRecipeData) => {
+    try {
+      await addRecipe(recipeData);
+      setShowAddRecipeForm(false);
+      toast({
+        title: 'Recipe added!',
+        description: `${recipeData.name} has been added to your recipe collection.`,
+      });
+    } catch (error) {
+      console.error('Error adding recipe:', error);
+      toast({
+        title: 'Error adding recipe',
+        description: 'Failed to add recipe. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -191,6 +212,13 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
                 <SelectItem value="imported">Imported</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              onClick={() => setShowAddRecipeForm(true)}
+              className="sm:w-auto"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Recipe
+            </Button>
           </div>
 
           {/* Recipe List */}
@@ -427,7 +455,7 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
                     {selectedRecipe.sourceMetadata && (
                       <div className="mt-1 text-xs">
                         {selectedRecipe.sourceMetadata.generatedAt && (
-                          <div>Generated: {new Date(selectedRecipe.sourceMetadata.generatedAt).toLocaleDateString()}</div>
+                          <div>Generated: {new Date(selectedRecipe.sourceMetadata.generatedAt as string).toLocaleDateString()}</div>
                         )}
                       </div>
                     )}
@@ -443,6 +471,15 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
           item={{ ...mealPlanDraft, id: '', userId: '' }}
           onSubmit={handleCookSubmit}
           onClose={() => { setShowCookModal(false); setMealPlanDraft(null); }}
+        />
+      )}
+
+      {/* Add Recipe Form */}
+      {showAddRecipeForm && (
+        <AddRecipeForm
+          isOpen={showAddRecipeForm}
+          onClose={() => setShowAddRecipeForm(false)}
+          onSubmit={handleAddRecipe}
         />
       )}
     </Dialog>

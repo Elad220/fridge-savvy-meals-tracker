@@ -52,7 +52,7 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
     }
   };
 
-  const addFoodItem = async (item: Omit<FoodItem, 'id' | 'userId'>) => {
+  const addFoodItem = async (item: Omit<FoodItem, 'id' | 'userId'>, suppressToast = false) => {
     if (!userId) return;
 
     try {
@@ -106,10 +106,12 @@ export const useFoodItems = (userId: string | undefined, onActionComplete?: () =
       // Notify parent component of action completion
       onActionComplete?.();
       
-      toast({
-        title: 'Food item added',
-        description: `${item.name} has been added to your inventory.`,
-      });
+      if (!suppressToast) {
+        toast({
+          title: 'Food item added',
+          description: `${item.name} has been added to your inventory.`,
+        });
+      }
     } catch (error: any) {
       toast({
         title: 'Error adding food item',

@@ -48,7 +48,13 @@ const Index = () => {
     recentActions?: ActionHistoryItem[];
     historyLoading?: boolean;
     userId?: string;
-    statusCounts?: Record<string, number>;
+    statusCounts?: {
+      total: number;
+      fresh: number;
+      'use-soon': number;
+      'use-or-throw': number;
+      expired: number;
+    };
   } | null>(null);
 
   const { recentActions, loading: historyLoading, refetch: refetchHistory } = useActionHistory(user?.id);
@@ -563,7 +569,7 @@ const Index = () => {
 
   const consumeIngredients = async (meal: MealPlan) => {
     if (!meal.ingredients || meal.ingredients.length === 0) {
-      return;
+      return { consumedItems: [], insufficientItems: [] };
     }
 
     const consumedItems: string[] = [];
@@ -799,35 +805,47 @@ const Index = () => {
       }
     }
 
-    // Show results to user
-    if (consumedItems.length > 0) {
-      toast({
-        title: 'Ingredients Consumed',
-        description: `Successfully consumed: ${consumedItems.join(', ')}`,
-      });
-    }
-
-    if (insufficientItems.length > 0) {
-      toast({
-        title: 'Insufficient Ingredients',
-        description: `Could not find sufficient quantities for: ${insufficientItems.join(', ')}`,
-        variant: 'destructive',
-      });
-    }
+    // Return results instead of showing toasts immediately
+    return { consumedItems, insufficientItems };
   };
 
   const handleMoveToInventory = async (meal: MealPlan, foodItem: Omit<FoodItem, 'id' | 'userId'>) => {
     // Consume ingredients from inventory
-    await consumeIngredients(meal);
+    const { consumedItems, insufficientItems } = await consumeIngredients(meal);
     
-    // Add the food item to inventory
-    addFoodItem(foodItem);
+    // Add the food item to inventory (suppress toast since we'll show a comprehensive one)
+    addFoodItem(foodItem, true);
     
     // Remove from meal plans
     removeMealPlan(meal.id);
     
     // Clear AI recommendations cache to force refresh
     clearCacheOnInventoryChange();
+    
+    // Show comprehensive results to user
+    if (consumedItems.length > 0 && insufficientItems.length === 0) {
+      toast({
+        title: 'Meal moved to inventory',
+        description: `Successfully consumed ingredients: ${consumedItems.join(', ')}`,
+      });
+    } else if (consumedItems.length > 0 && insufficientItems.length > 0) {
+      toast({
+        title: 'Meal moved to inventory',
+        description: `Consumed: ${consumedItems.join(', ')}. Missing: ${insufficientItems.join(', ')}`,
+        variant: 'destructive',
+      });
+    } else if (consumedItems.length === 0 && insufficientItems.length > 0) {
+      toast({
+        title: 'Meal moved to inventory',
+        description: `No ingredients consumed. Missing: ${insufficientItems.join(', ')}`,
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Meal moved to inventory',
+        description: 'Meal plan successfully moved to inventory.',
+      });
+    }
   };
 
   const handleOpenPhotoAnalysis = () => {
@@ -1076,7 +1094,13 @@ const Index = () => {
             recentActions={dashboardData.recentActions || recentActions}
             historyLoading={dashboardData.historyLoading || historyLoading}
             userId={dashboardData.userId || user.id}
-            statusCounts={dashboardData.statusCounts}
+            statusCounts={dashboardData.statusCounts || {
+              total: 0,
+              fresh: 0,
+              'use-soon': 0,
+              'use-or-throw': 0,
+              expired: 0
+            }}
           />
         )}
 

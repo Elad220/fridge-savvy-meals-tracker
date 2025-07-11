@@ -18,7 +18,8 @@ import { PhotoAnalysisButton } from '@/components/PhotoAnalysisButton';
 import Settings from '@/components/Settings'; // Import the new Settings component
 import { VoiceRecording } from '@/components/VoiceRecording';
 import { VoiceRecordingButton } from '@/components/VoiceRecordingButton';
-import { FoodItem, MealPlan } from '@/types';
+import { FoodItem, MealPlan, FoodItemLabel } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 import { AIRecommendations } from '@/components/AIRecommendations';
 import { useAIRecommendations } from '@/hooks/useAIRecommendations';
 import { toast } from '@/hooks/use-toast';
@@ -568,9 +569,34 @@ const Index = () => {
 
     // Helper function to get fresh inventory data
     const getFreshInventory = async () => {
-      // Trigger a refetch to get the latest inventory state
-      await refetch();
-      return foodItems;
+      // Get fresh data directly from the database
+      const { data, error } = await supabase
+        .from('food_items')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('eat_by_date', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching fresh inventory:', error);
+        return foodItems; // Fallback to current state
+      }
+
+      // Transform the data to match FoodItem format
+      const freshItems: FoodItem[] = data.map(item => ({
+        id: item.id,
+        name: item.name,
+        dateCookedStored: new Date(item.date_cooked_stored),
+        eatByDate: new Date(item.eat_by_date),
+        amount: item.amount || 1,
+        unit: item.unit || 'item',
+        storageLocation: item.storage_location,
+        label: (item.label || 'raw material') as FoodItemLabel,
+        notes: item.notes || undefined,
+        userId: item.user_id,
+        freshnessDays: item.freshness_days || 4,
+      }));
+
+      return freshItems;
     };
 
     // Helper function for precise ingredient matching

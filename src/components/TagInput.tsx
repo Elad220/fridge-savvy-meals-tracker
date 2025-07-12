@@ -89,7 +89,14 @@ export const TagInput = ({
 
   const availableTags = useMemo(() => {
     const allTags = [...popularTags, ...favoriteTags];
-    return allTags.filter(tag => !value.includes(tag.tag_name));
+    // Deduplicate based on tag ID to prevent duplicates from popular and favorite tags
+    const uniqueTags = allTags.reduce((acc, tag) => {
+      if (!acc.some(existingTag => existingTag.id === tag.id)) {
+        acc.push(tag);
+      }
+      return acc;
+    }, [] as typeof allTags);
+    return uniqueTags.filter(tag => !value.includes(tag.tag_name));
   }, [popularTags, favoriteTags, value]);
 
   return (

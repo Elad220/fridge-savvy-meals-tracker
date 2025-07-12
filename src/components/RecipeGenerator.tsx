@@ -161,10 +161,10 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
           }
           // If already an object, ensure it has required fields
           return {
-            name: ingredient.name || '',
-            quantity: ingredient.quantity || 1,
-            unit: ingredient.unit || 'item',
-            notes: ingredient.notes || undefined,
+            name: (ingredient as { name?: string }).name || '',
+            quantity: (ingredient as { quantity?: number }).quantity || 1,
+            unit: (ingredient as { unit?: string }).unit || 'item',
+            notes: (ingredient as { notes?: string }).notes || undefined,
           };
         })
       : selectedRecipe.ingredients.map((ingredient) => ({
@@ -203,7 +203,7 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
       servings: recipeDetails.servings || undefined,
       difficulty,
       tags: ['generated'],
-      source: 'generated',
+      source: 'generated' as const,
       source_metadata: {
         originalIngredients: selectedIngredients,
         cookingTime: selectedRecipe.cookingTime,
@@ -286,13 +286,13 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
             Generate Recipes
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-md sm:max-w-lg md:max-w-2xl max-h-[90vh] sm:max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Generate Recipes</DialogTitle>
           </DialogHeader>
 
           {!selectedRecipe ? (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {uniqueIngredients.length === 0 ? (
                 <p className="text-muted-foreground">No ingredients available. Add some food items first.</p>
               ) : (
@@ -327,11 +327,11 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
                     <div className="space-y-3">
                       <h4 className="font-medium">Generated Recipes:</h4>
                       {recipes.map((recipe, index) => (
-                        <div key={index} className="border rounded-lg p-4 hover:bg-muted/50 cursor-pointer" onClick={() => getRecipeDetails(recipe)}>
-                          <div className="flex items-start justify-between mb-2">
-                            <h5 className="font-medium">{recipe.name}</h5>
-                            <div className="flex gap-2">
-                              <Badge className={getDifficultyColor(recipe.difficulty)}>
+                        <div key={index} className="border rounded-lg p-3 sm:p-4 hover:bg-muted/50 cursor-pointer" onClick={() => getRecipeDetails(recipe)}>
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                            <h5 className="font-medium text-sm sm:text-base">{recipe.name}</h5>
+                            <div className="flex flex-wrap gap-1 sm:gap-2">
+                              <Badge className={`text-xs ${getDifficultyColor(recipe.difficulty)}`}>
                                 {recipe.difficulty}
                               </Badge>
                               <Badge variant="outline" className="text-xs">
@@ -340,7 +340,7 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
                               </Badge>
                             </div>
                           </div>
-                          <p className="text-sm text-muted-foreground mb-2">{recipe.description}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground mb-2">{recipe.description}</p>
                           <div className="flex flex-wrap gap-1">
                             {recipe.ingredients.map((ing, i) => (
                               <Badge key={i} variant="secondary" className="text-xs">
@@ -359,19 +359,19 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
             <div className="space-y-4">
               {/* Recipe Name */}
               <div className="mb-2">
-                <h2 className="text-xl font-bold text-foreground text-center break-words">{selectedRecipe.name}</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-foreground text-center break-words">{selectedRecipe.name}</h2>
               </div>
               {/* Action Buttons */}
-              <div className="flex items-center justify-between mb-4">
-                <Button variant="outline" size="sm" onClick={() => setSelectedRecipe(null)}>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4">
+                <Button variant="outline" size="sm" onClick={() => setSelectedRecipe(null)} className="w-full sm:w-auto">
                   ← Back to Recipes
                 </Button>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button 
                     onClick={saveRecipe}
                     variant="outline"
                     size="sm"
-                    className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-950/30"
+                    className="w-full sm:w-auto border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-950/30"
                   >
                     <Bookmark className="w-4 h-4 mr-2" />
                     Save Recipe
@@ -379,7 +379,7 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
                   {onAddMealPlan && (
                     <Button 
                       onClick={addRecipeToMealPlan}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
                       size="sm"
                     >
                       <Plus className="w-4 h-4 mr-2" />
@@ -397,29 +397,29 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
               ) : recipeDetails ? (
                 <div className="space-y-4">
                   {recipeDetails.prepTime && recipeDetails.cookTime && recipeDetails.servings && (
-                    <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-center">
                       <div>
-                        <div className="text-sm text-muted-foreground">Prep Time</div>
-                        <div className="font-medium">{recipeDetails.prepTime}</div>
+                        <div className="text-xs sm:text-sm text-muted-foreground">Prep Time</div>
+                        <div className="font-medium text-sm sm:text-base">{recipeDetails.prepTime}</div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">Cook Time</div>
-                        <div className="font-medium">{recipeDetails.cookTime}</div>
+                        <div className="text-xs sm:text-sm text-muted-foreground">Cook Time</div>
+                        <div className="font-medium text-sm sm:text-base">{recipeDetails.cookTime}</div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">Servings</div>
-                        <div className="font-medium">{recipeDetails.servings}</div>
+                        <div className="text-xs sm:text-sm text-muted-foreground">Servings</div>
+                        <div className="font-medium text-sm sm:text-base">{recipeDetails.servings}</div>
                       </div>
                     </div>
                   )}
 
                   {recipeDetails.ingredients && recipeDetails.ingredients.length > 0 && (
                     <div>
-                      <h5 className="font-medium mb-2 flex items-center gap-2">
+                      <h5 className="font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
                         <Utensils className="w-4 h-4" />
                         Ingredients
                       </h5>
-                      <ul className="list-disc list-inside space-y-1 text-sm">
+                      <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
                         {recipeDetails.ingredients.map((ingredient: string, index: number) => (
                           <li key={index}>{ingredient}</li>
                         ))}
@@ -429,8 +429,8 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
 
                   {recipeDetails.instructions && recipeDetails.instructions.length > 0 && (
                     <div>
-                      <h5 className="font-medium mb-2">Instructions</h5>
-                      <ol className="list-decimal list-inside space-y-2 text-sm">
+                      <h5 className="font-medium mb-2 text-sm sm:text-base">Instructions</h5>
+                      <ol className="list-decimal list-inside space-y-2 text-xs sm:text-sm">
                         {recipeDetails.instructions.map((step: string, index: number) => (
                           <li key={index} className="leading-relaxed">{step}</li>
                         ))}
@@ -440,11 +440,11 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
 
                   {recipeDetails.tips && recipeDetails.tips.length > 0 && (
                     <div>
-                      <h5 className="font-medium mb-2 flex items-center gap-2">
+                      <h5 className="font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
                         <Star className="w-4 h-4" />
                         Tips
                       </h5>
-                      <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                      <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm text-muted-foreground">
                         {recipeDetails.tips.map((tip: string, index: number) => (
                           <li key={index}>{tip}</li>
                         ))}

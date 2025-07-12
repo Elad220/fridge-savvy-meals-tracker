@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -45,6 +46,7 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
   const [mealPlanDraft, setMealPlanDraft] = useState<Omit<MealPlan, 'id' | 'userId'> | null>(null);
   const [showAddRecipeForm, setShowAddRecipeForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+  const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -74,17 +76,23 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
     }
   };
 
-  const handleDeleteRecipe = async (recipe: Recipe) => {
-    if (confirm(`Are you sure you want to delete "${recipe.name}"?`)) {
-      try {
-        await removeRecipe(recipe.id);
-        toast({
-          title: 'Recipe deleted',
-          description: `${recipe.name} has been removed from your collection.`,
-        });
-      } catch (error) {
-        console.error('Error deleting recipe:', error);
-      }
+  const handleDeleteRecipe = (recipe: Recipe) => {
+    setRecipeToDelete(recipe);
+  };
+
+  const confirmDeleteRecipe = async () => {
+    if (!recipeToDelete) return;
+    
+    try {
+      await removeRecipe(recipeToDelete.id);
+      toast({
+        title: 'Recipe deleted',
+        description: `${recipeToDelete.name} has been removed from your collection.`,
+      });
+    } catch (error) {
+      console.error('Error deleting recipe:', error);
+    } finally {
+      setRecipeToDelete(null);
     }
   };
 
@@ -332,14 +340,34 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
                       >
                         <Edit className="w-4 h-4 text-muted-foreground" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteRecipe(recipe)}
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{recipe.name}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeleteRecipe(recipe)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                       <Button variant="outline" size="sm" onClick={() => handleCook(recipe)}>
                         <ChefHat className="w-4 h-4 mr-1" /> Cook
                       </Button>
@@ -520,6 +548,27 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
           onSubmit={handleEditRecipe}
         />
       )}
+
+      {/* Delete Recipe Confirmation Dialog */}
+      <AlertDialog open={!!recipeToDelete} onOpenChange={() => setRecipeToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{recipeToDelete?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteRecipe}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }; 

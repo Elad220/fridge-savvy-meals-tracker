@@ -45,8 +45,9 @@ export const EditItemForm = ({ item, onSubmit, onClose }: EditItemFormProps) => 
 
   // Tag management
   const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()]);
+    const trimmedTag = tagInput.trim();
+    if (trimmedTag && !tags.includes(trimmedTag)) {
+      setTags([...tags, trimmedTag]);
       setTagInput('');
     }
   };

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search as SearchIcon, Trash2, ExternalLink } from 'lucide-react';
+import { Search as SearchIcon, Trash2, ExternalLink, X } from 'lucide-react';
 
 interface InventoryDashboardProps {
   foodItems: FoodItem[];
@@ -213,10 +213,19 @@ export const InventoryDashboard = ({
             <Input
               type="search"
               placeholder="Search items..."
-              className="w-full bg-background pl-7 py-1 text-sm"
+              className="w-full bg-background pl-7 pr-8 py-1 text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2 top-2 h-3 w-3 text-muted-foreground hover:text-foreground transition-colors"
+                type="button"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
           </div>
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-28 py-1 text-sm">

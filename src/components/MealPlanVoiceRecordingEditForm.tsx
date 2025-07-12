@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AmountInput } from '@/components/ui/amount-input';
 import { Trash2, Plus, Calendar, Clock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { MealPlan, FOOD_UNITS } from '@/types';
@@ -279,9 +280,30 @@ export const MealPlanVoiceRecordingEditForm = ({
             </CardHeader>
             <CardContent className="space-y-4">
               {mealPlan.ingredients.map((ingredient) => (
-                <div key={ingredient.id} className="grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-4">
-                    <Label htmlFor={`ingredient-name-${ingredient.id}`}>Name</Label>
+                <div key={ingredient.id} className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-start">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <AmountInput
+                      value={ingredient.quantity.toString()}
+                      onChange={(value) => updateIngredient(ingredient.id, 'quantity', parseFloat(value) || 0)}
+                      placeholder="Amount"
+                      min="0"
+                      step="0.1"
+                    />
+                    <Select 
+                      value={ingredient.unit} 
+                      onValueChange={(value) => updateIngredient(ingredient.id, 'unit', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FOOD_UNITS.map((unit) => (
+                          <SelectItem key={unit} value={unit}>
+                            {unit}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Input
                       id={`ingredient-name-${ingredient.id}`}
                       value={ingredient.name}
@@ -289,54 +311,21 @@ export const MealPlanVoiceRecordingEditForm = ({
                       placeholder="Ingredient name"
                     />
                   </div>
-                  <div className="col-span-2">
-                    <Label htmlFor={`ingredient-quantity-${ingredient.id}`}>Qty</Label>
-                    <Input
-                      id={`ingredient-quantity-${ingredient.id}`}
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      value={ingredient.quantity}
-                      onChange={(e) => updateIngredient(ingredient.id, 'quantity', parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-                                      <div className="col-span-2">
-                      <Label htmlFor={`ingredient-unit-${ingredient.id}`}>Unit</Label>
-                      <Select 
-                        value={ingredient.unit} 
-                        onValueChange={(value) => updateIngredient(ingredient.id, 'unit', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select unit" />
-                        </SelectTrigger>
-                        <SelectContent side="bottom">
-                          {FOOD_UNITS.map((unit) => (
-                            <SelectItem key={unit} value={unit}>
-                              {unit}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  <div className="col-span-3">
-                    <Label htmlFor={`ingredient-notes-${ingredient.id}`}>Notes</Label>
-                    <Input
-                      id={`ingredient-notes-${ingredient.id}`}
-                      value={ingredient.notes}
-                      onChange={(e) => updateIngredient(ingredient.id, 'notes', e.target.value)}
-                      placeholder="Optional notes"
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeIngredient(ingredient.id)}
-                      className="w-full h-10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <Input
+                    id={`ingredient-notes-${ingredient.id}`}
+                    value={ingredient.notes}
+                    onChange={(e) => updateIngredient(ingredient.id, 'notes', e.target.value)}
+                    placeholder="Notes (optional)"
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeIngredient(ingredient.id)}
+                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               ))}
               

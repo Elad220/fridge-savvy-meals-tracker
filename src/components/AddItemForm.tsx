@@ -420,29 +420,15 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {mealPlanIngredients.map((ingredient) => (
-                    <div key={ingredient.id} className="grid grid-cols-12 gap-2 items-end">
-                      <div className="col-span-4">
-                        <Label htmlFor={`ingredient-name-${ingredient.id}`}>Name</Label>
-                        <Input
-                          id={`ingredient-name-${ingredient.id}`}
-                          value={ingredient.name}
-                          onChange={(e) => updateMealPlanIngredient(ingredient.id, 'name', e.target.value)}
-                          placeholder="Ingredient name"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <Label htmlFor={`ingredient-quantity-${ingredient.id}`}>Qty</Label>
-                        <Input
-                          id={`ingredient-quantity-${ingredient.id}`}
-                          type="number"
+                    <div key={ingredient.id} className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-start">
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <AmountInput
+                          value={ingredient.quantity.toString()}
+                          onChange={(value) => updateMealPlanIngredient(ingredient.id, 'quantity', parseFloat(value) || 0)}
+                          placeholder="Amount"
                           min="0"
                           step="0.1"
-                          value={ingredient.quantity}
-                          onChange={(e) => updateMealPlanIngredient(ingredient.id, 'quantity', parseFloat(e.target.value) || 0)}
                         />
-                      </div>
-                      <div className="col-span-2">
-                        <Label htmlFor={`ingredient-unit-${ingredient.id}`}>Unit</Label>
                         <Select 
                           value={ingredient.unit} 
                           onValueChange={(value) => updateMealPlanIngredient(ingredient.id, 'unit', value)}
@@ -450,7 +436,7 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
                           <SelectTrigger>
                             <SelectValue placeholder="Select unit" />
                           </SelectTrigger>
-                          <SelectContent side="bottom">
+                          <SelectContent>
                             {FOOD_UNITS.map((unit) => (
                               <SelectItem key={unit} value={unit}>
                                 {unit}
@@ -458,26 +444,28 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
                             ))}
                           </SelectContent>
                         </Select>
-                      </div>
-                      <div className="col-span-3">
-                        <Label htmlFor={`ingredient-notes-${ingredient.id}`}>Notes</Label>
                         <Input
-                          id={`ingredient-notes-${ingredient.id}`}
-                          value={ingredient.notes}
-                          onChange={(e) => updateMealPlanIngredient(ingredient.id, 'notes', e.target.value)}
-                          placeholder="Optional notes"
+                          id={`ingredient-name-${ingredient.id}`}
+                          value={ingredient.name}
+                          onChange={(e) => updateMealPlanIngredient(ingredient.id, 'name', e.target.value)}
+                          placeholder="Ingredient name"
                         />
                       </div>
-                      <div className="col-span-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeMealPlanIngredient(ingredient.id)}
-                          className="w-full h-10"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <Input
+                        id={`ingredient-notes-${ingredient.id}`}
+                        value={ingredient.notes}
+                        onChange={(e) => updateMealPlanIngredient(ingredient.id, 'notes', e.target.value)}
+                        placeholder="Notes (optional)"
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeMealPlanIngredient(ingredient.id)}
+                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   ))}
                   

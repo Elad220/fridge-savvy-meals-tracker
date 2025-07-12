@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, Bookmark } from 'lucide-react';
+import { Plus, Bookmark, Tag } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFoodItems } from '@/hooks/useFoodItems';
 import { useMealPlans } from '@/hooks/useMealPlans';
@@ -30,6 +30,7 @@ import { RecipeGenerator } from '@/components/RecipeGenerator';
 import { MealPlanVoiceRecordingButton } from '@/components/MealPlanVoiceRecordingButton';
 import { MealPlanVoiceRecording } from '@/components/MealPlanVoiceRecording';
 import { SavedRecipes } from '@/components/SavedRecipes';
+import { TagManager } from '@/components/TagManager';
 
 const Index = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -40,6 +41,7 @@ const Index = () => {
   const [showVoiceRecording, setShowVoiceRecording] = useState(false);
   const [showMealPlanVoiceRecording, setShowMealPlanVoiceRecording] = useState(false);
   const [showSavedRecipes, setShowSavedRecipes] = useState(false);
+  const [showTagManager, setShowTagManager] = useState(false);
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlan | null>(null);
   const [activeTab, setActiveTab] = useState<'inventory' | 'meals' | 'settings'>('inventory');
@@ -1026,6 +1028,16 @@ const Index = () => {
                     />
                   </div>
                 )}
+                
+                {/* Tag Manager Button */}
+                <Button
+                  variant="outline"
+                  onClick={() => setShowTagManager(true)}
+                  className="border-purple-500 text-purple-600 hover:bg-purple-50 dark:border-purple-400 dark:text-purple-400 dark:hover:bg-purple-950/30"
+                >
+                  <Tag className="w-4 h-4 mr-2" />
+                  Manage Tags
+                </Button>
               </div>
             </div>
           </div>
@@ -1109,6 +1121,12 @@ const Index = () => {
           isOpen={showSavedRecipes}
           onClose={() => setShowSavedRecipes(false)}
           onAddMealPlan={addMealPlan}
+        />
+
+        {/* Tag Manager */}
+        <TagManager
+          isOpen={showTagManager}
+          onClose={() => setShowTagManager(false)}
         />
       </main>
 

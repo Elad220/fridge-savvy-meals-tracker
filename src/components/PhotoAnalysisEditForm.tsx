@@ -9,6 +9,8 @@ import { AmountInput } from '@/components/ui/amount-input';
 import { StorageLocationSelect } from '@/components/StorageLocationSelect';
 import { FoodItem, FOOD_UNITS } from '@/types';
 import { toast } from '@/components/ui/use-toast';
+import { X, Plus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface PhotoAnalysisEditFormProps {
   isOpen: boolean;
@@ -50,6 +52,14 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
     freshnessDays: '3',
   });
 
+  // Tag management
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+
+  // Ingredients for cooked meals
+  const [ingredients, setIngredients] = useState<string[]>([]);
+  const [ingredientInput, setIngredientInput] = useState('');
+
   const calculateEatByDate = (cookedDate: string, freshnessDays: number) => {
     const cooked = new Date(cookedDate);
     const eatBy = new Date(cooked);
@@ -57,7 +67,43 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
     return eatBy.toISOString().split('T')[0];
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleAddTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setTags(tags.filter(t => t !== tag));
+  };
+
+  const handleTagKeyPress = (e: any) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddTag();
+    }
+  };
+
+  const handleAddIngredient = () => {
+    if (ingredientInput.trim() && !ingredients.includes(ingredientInput.trim())) {
+      setIngredients([...ingredients, ingredientInput.trim()]);
+      setIngredientInput('');
+    }
+  };
+
+  const handleRemoveIngredient = (ingredient: string) => {
+    setIngredients(ingredients.filter(i => i !== ingredient));
+  };
+
+  const handleIngredientKeyPress = (e: any) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddIngredient();
+    }
+  };
+
+  const handleSubmit = (e: any) => {
     e.preventDefault();
     
     const amount = parseFloat(formData.amount);
@@ -80,6 +126,7 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
       storageLocation: formData.storageLocation,
       label: formData.label as 'cooked meal' | 'raw material',
       notes: formData.notes || undefined,
+      tags: tags.length > 0 ? tags : undefined,
       freshnessDays: parseInt(formData.freshnessDays) || 3,
     };
     
@@ -105,12 +152,12 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto glass-card">
         <DialogHeader>
-          <DialogTitle>Review AI Analysis & Add Item</DialogTitle>
+          <DialogTitle>Review AI Analysis & Add Food Item</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <Label htmlFor="name">Food Name *</Label>
             <Input
@@ -210,30 +257,115 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
             </Select>
           </div>
 
+          {formData.label === 'cooked meal' && (
+            <div>
+              <Label htmlFor="ingredients">Ingredients (Optional)</Label>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    id="ingredients"
+                    value={ingredientInput}
+                    onChange={(e) => setIngredientInput(e.target.value)}
+                    onKeyPress={handleIngredientKeyPress}
+                    placeholder="Add an ingredient..."
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddIngredient}
+                    disabled={!ingredientInput.trim()}
+                  >
+                    Add
+                  </Button>
+                </div>
+                {ingredients.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {ingredients.map((ingredient, index) => (
+                      <div key={index} className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary text-secondary-foreground pr-1">
+                        {ingredient}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-4 w-4 p-0 ml-1"
+                          onClick={() => handleRemoveIngredient(ingredient)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <StorageLocationSelect
             value={formData.storageLocation}
             onValueChange={(value) => handleInputChange('storageLocation', value)}
             required
           />
 
+          {/* Tags */}
           <div>
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => handleInputChange('notes', e.target.value)}
-              placeholder="Additional details about the food..."
-              rows={3}
-            />
+            <Label htmlFor="tags">Tags (Optional)</Label>
+            <div className="flex gap-2 mt-2">
+              <Input
+                id="tags"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyPress={handleTagKeyPress}
+                placeholder="Add tag"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAddTag}
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {tags.map((tag, index) => (
+                  <div key={index} className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary text-secondary-foreground flex items-center gap-1">
+                    {tag}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveTag(tag)}
+                      className="h-4 w-4 p-0 hover:bg-transparent"
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
-              Add to Inventory
-            </Button>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => handleInputChange('notes', e.target.value)}
+                placeholder="Additional details about the food..."
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+                Cancel
+              </Button>
+              <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
+                Add Food Item
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>

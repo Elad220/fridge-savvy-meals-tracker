@@ -237,8 +237,8 @@ export const AddRecipeForm = ({ isOpen, onClose, onSubmit }: AddRecipeFormProps)
             </CardHeader>
             <CardContent className="space-y-4">
               {ingredients.map((ingredient, index) => (
-                <div key={index} className="flex gap-2 items-start">
-                  <div className="flex-1 grid grid-cols-3 gap-2">
+                <div key={index} className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-start">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <AmountInput
                       value={ingredient.quantity}
                       onChange={(value) => handleUpdateIngredient(index, 'quantity', value)}

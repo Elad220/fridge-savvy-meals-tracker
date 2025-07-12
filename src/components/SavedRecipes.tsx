@@ -340,34 +340,14 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
                       >
                         <Edit className="w-4 h-4 text-muted-foreground" />
                       </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete "{recipe.name}"? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={() => handleDeleteRecipe(recipe)}
-                              className="bg-red-600 hover:bg-red-700"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setRecipeToDelete(recipe)}
+                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                       <Button variant="outline" size="sm" onClick={() => handleCook(recipe)}>
                         <ChefHat className="w-4 h-4 mr-1" /> Cook
                       </Button>

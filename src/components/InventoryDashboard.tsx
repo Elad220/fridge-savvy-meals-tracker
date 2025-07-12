@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search as SearchIcon, Trash2, ExternalLink } from 'lucide-react';
+import { Search as SearchIcon, Trash2, ExternalLink, X } from 'lucide-react';
 
 interface InventoryDashboardProps {
   foodItems: FoodItem[];
@@ -268,11 +268,25 @@ export const InventoryDashboard = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Tags</SelectItem>
-              {Array.from(new Set(foodItems.flatMap(item => item.tags || []))).map(tag => (
-                <SelectItem key={tag} value={tag}>
-                  {tag}
-                </SelectItem>
-              ))}
+              {(() => {
+                // Calculate tag counts
+                const tagCounts = new Map<string, number>();
+                foodItems.forEach(item => {
+                  if (item.tags) {
+                    item.tags.forEach(tag => {
+                      tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+                    });
+                  }
+                });
+                
+                return Array.from(tagCounts.entries())
+                  .sort(([a], [b]) => a.localeCompare(b))
+                  .map(([tag, count]) => (
+                    <SelectItem key={tag} value={tag}>
+                      {tag} ({count})
+                    </SelectItem>
+                  ));
+              })()}
             </SelectContent>
           </Select>
         </div>

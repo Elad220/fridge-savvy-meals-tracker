@@ -290,25 +290,15 @@ export const EditRecipeForm = ({ recipe, isOpen, onClose, onSubmit }: EditRecipe
             </CardHeader>
             <CardContent className="space-y-4">
               {ingredients.map((ingredient, index) => (
-                <div key={index} className="flex gap-2 items-start">
-                  <div className="flex-1">
-                    <Label>Ingredient Name</Label>
-                    <Input
-                      value={ingredient.name}
-                      onChange={(e) => handleUpdateIngredient(index, 'name', e.target.value)}
-                      placeholder="e.g., flour"
-                    />
-                  </div>
-                  <div className="w-24">
-                    <Label>Amount</Label>
+                <div key={index} className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-start">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <AmountInput
                       value={ingredient.quantity}
                       onChange={(value) => handleUpdateIngredient(index, 'quantity', value)}
-                      placeholder="1"
+                      placeholder="Amount"
+                      min="0"
+                      step="0.1"
                     />
-                  </div>
-                  <div className="w-32">
-                    <Label>Unit</Label>
                     <Select value={ingredient.unit} onValueChange={(value) => handleUpdateIngredient(index, 'unit', value)}>
                       <SelectTrigger>
                         <SelectValue />
@@ -321,23 +311,26 @@ export const EditRecipeForm = ({ recipe, isOpen, onClose, onSubmit }: EditRecipe
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="flex-1">
-                    <Label>Notes (optional)</Label>
                     <Input
-                      value={ingredient.notes}
-                      onChange={(e) => handleUpdateIngredient(index, 'notes', e.target.value)}
-                      placeholder="e.g., finely chopped"
+                      value={ingredient.name}
+                      onChange={(e) => handleUpdateIngredient(index, 'name', e.target.value)}
+                      placeholder="Ingredient name"
                     />
                   </div>
+                  <Input
+                    value={ingredient.notes || ''}
+                    onChange={(e) => handleUpdateIngredient(index, 'notes', e.target.value)}
+                    placeholder="Notes (optional)"
+                    className="flex-1"
+                  />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveIngredient(index)}
-                    className="mt-6"
+                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
                   >
-                    <Trash2 className="w-4 h-4 text-red-500" />
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               ))}

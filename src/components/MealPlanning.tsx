@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { MealPlan, FoodItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Trash2, Calendar, Edit, Clock, PackagePlus, BellPlus, Search as SearchIcon, ExternalLink } from 'lucide-react';
+import { Trash2, Calendar, Edit, Clock, PackagePlus, BellPlus, Search as SearchIcon, ExternalLink, X } from 'lucide-react';
 import { MoveToInventoryModal } from './MoveToInventoryModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
@@ -266,10 +266,19 @@ export const MealPlanning = ({
             <Input
               type="search"
               placeholder="Search meal plans..."
-              className="w-full bg-background pl-8"
+              className="w-full bg-background pl-8 pr-8"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors"
+                type="button"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-2">
             <Select value={sortBy} onValueChange={(value: 'plannedDate' | 'name' | 'destinationTime') => setSortBy(value)}>

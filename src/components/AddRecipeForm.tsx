@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AmountInput } from '@/components/ui/amount-input';
-import { Badge } from '@/components/ui/badge';
+import { TagInput } from '@/components/TagInput';
 import { X, Plus, Trash2, ChefHat } from 'lucide-react';
 import { CreateRecipeData, RecipeIngredient, FOOD_UNITS } from '@/types';
 import { toast } from '@/hooks/use-toast';
@@ -27,7 +27,6 @@ export const AddRecipeForm = ({ isOpen, onClose, onSubmit }: AddRecipeFormProps)
   const [ingredients, setIngredients] = useState<EditableRecipeIngredient[]>([]);
   const [instructions, setInstructions] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
   const [instructionInput, setInstructionInput] = useState('');
   
   const [formData, setFormData] = useState({
@@ -82,28 +81,10 @@ export const AddRecipeForm = ({ isOpen, onClose, onSubmit }: AddRecipeFormProps)
     setInstructions(instructions.filter((_, i) => i !== index));
   };
 
-  const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()]);
-      setTagInput('');
-    }
-  };
-
-  const handleRemoveTag = (tag: string) => {
-    setTags(tags.filter(t => t !== tag));
-  };
-
   const handleInstructionKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleAddInstruction();
-    }
-  };
-
-  const handleTagKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddTag();
     }
   };
 
@@ -256,8 +237,8 @@ export const AddRecipeForm = ({ isOpen, onClose, onSubmit }: AddRecipeFormProps)
             </CardHeader>
             <CardContent className="space-y-4">
               {ingredients.map((ingredient, index) => (
-                <div key={index} className="flex gap-2 items-start">
-                  <div className="flex-1 grid grid-cols-3 gap-2">
+                <div key={index} className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-start">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <AmountInput
                       value={ingredient.quantity}
                       onChange={(value) => handleUpdateIngredient(index, 'quantity', value)}
@@ -372,42 +353,14 @@ export const AddRecipeForm = ({ isOpen, onClose, onSubmit }: AddRecipeFormProps)
             <CardHeader>
               <CardTitle>Tags</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyPress={handleTagKeyPress}
-                  placeholder="Add tag"
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddTag}
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-              
-              {tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                      {tag}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveTag(tag)}
-                        className="h-4 w-4 p-0 hover:bg-transparent"
-                      >
-                        <X className="w-3 h-3" />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
+            <CardContent>
+              <TagInput
+                value={tags}
+                onChange={setTags}
+                category="recipe"
+                placeholder="Add tag"
+                label=""
+              />
             </CardContent>
           </Card>
 

@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AmountInput } from '@/components/ui/amount-input';
 import { StorageLocationSelect } from '@/components/StorageLocationSelect';
+import { TagInput } from '@/components/TagInput';
 import { FoodItem, MealPlan, MealPlanIngredient, FOOD_UNITS } from '@/types';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -35,7 +36,6 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
   
   // Tag management
   const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
   
   // Meal plan specific state
   const [mealPlanIngredients, setMealPlanIngredients] = useState<EditableMealPlanIngredient[]>([]);
@@ -86,24 +86,7 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
     }
   };
 
-  // Tag management
-  const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()]);
-      setTagInput('');
-    }
-  };
 
-  const handleRemoveTag = (tag: string) => {
-    setTags(tags.filter(t => t !== tag));
-  };
-
-  const handleTagKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddTag();
-    }
-  };
 
   // Meal plan ingredient management
   const addMealPlanIngredient = () => {
@@ -399,45 +382,13 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
               />
 
               {/* Tags */}
-              <div>
-                <Label htmlFor="tags">Tags (Optional)</Label>
-                <div className="flex gap-2 mt-2">
-                  <Input
-                    id="tags"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyPress={handleTagKeyPress}
-                    placeholder="Add tag"
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleAddTag}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-                
-                {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {tags.map((tag, index) => (
-                      <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                        {tag}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveTag(tag)}
-                          className="h-4 w-4 p-0 hover:bg-transparent"
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <TagInput
+                value={tags}
+                onChange={setTags}
+                category={type === 'inventory' ? 'food' : 'meal'}
+                placeholder="Add tag"
+                label="Tags (Optional)"
+              />
             </>
           ) : (
             <>
@@ -469,29 +420,15 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {mealPlanIngredients.map((ingredient) => (
-                    <div key={ingredient.id} className="grid grid-cols-12 gap-2 items-end">
-                      <div className="col-span-4">
-                        <Label htmlFor={`ingredient-name-${ingredient.id}`}>Name</Label>
-                        <Input
-                          id={`ingredient-name-${ingredient.id}`}
-                          value={ingredient.name}
-                          onChange={(e) => updateMealPlanIngredient(ingredient.id, 'name', e.target.value)}
-                          placeholder="Ingredient name"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <Label htmlFor={`ingredient-quantity-${ingredient.id}`}>Qty</Label>
-                        <Input
-                          id={`ingredient-quantity-${ingredient.id}`}
-                          type="number"
+                    <div key={ingredient.id} className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-start">
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <AmountInput
+                          value={ingredient.quantity.toString()}
+                          onChange={(value) => updateMealPlanIngredient(ingredient.id, 'quantity', parseFloat(value) || 0)}
+                          placeholder="Amount"
                           min="0"
                           step="0.1"
-                          value={ingredient.quantity}
-                          onChange={(e) => updateMealPlanIngredient(ingredient.id, 'quantity', parseFloat(e.target.value) || 0)}
                         />
-                      </div>
-                      <div className="col-span-2">
-                        <Label htmlFor={`ingredient-unit-${ingredient.id}`}>Unit</Label>
                         <Select 
                           value={ingredient.unit} 
                           onValueChange={(value) => updateMealPlanIngredient(ingredient.id, 'unit', value)}
@@ -499,7 +436,7 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
                           <SelectTrigger>
                             <SelectValue placeholder="Select unit" />
                           </SelectTrigger>
-                          <SelectContent side="bottom">
+                          <SelectContent>
                             {FOOD_UNITS.map((unit) => (
                               <SelectItem key={unit} value={unit}>
                                 {unit}
@@ -507,26 +444,28 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
                             ))}
                           </SelectContent>
                         </Select>
-                      </div>
-                      <div className="col-span-3">
-                        <Label htmlFor={`ingredient-notes-${ingredient.id}`}>Notes</Label>
                         <Input
-                          id={`ingredient-notes-${ingredient.id}`}
-                          value={ingredient.notes}
-                          onChange={(e) => updateMealPlanIngredient(ingredient.id, 'notes', e.target.value)}
-                          placeholder="Optional notes"
+                          id={`ingredient-name-${ingredient.id}`}
+                          value={ingredient.name}
+                          onChange={(e) => updateMealPlanIngredient(ingredient.id, 'name', e.target.value)}
+                          placeholder="Ingredient name"
                         />
                       </div>
-                      <div className="col-span-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeMealPlanIngredient(ingredient.id)}
-                          className="w-full h-10"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <Input
+                        id={`ingredient-notes-${ingredient.id}`}
+                        value={ingredient.notes}
+                        onChange={(e) => updateMealPlanIngredient(ingredient.id, 'notes', e.target.value)}
+                        placeholder="Notes (optional)"
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeMealPlanIngredient(ingredient.id)}
+                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   ))}
                   

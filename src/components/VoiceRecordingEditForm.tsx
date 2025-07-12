@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { FoodItem } from '@/types';
 import { StorageLocationSelect } from './StorageLocationSelect';
@@ -36,6 +36,7 @@ interface EditableItem {
   freshnesssDays: number;
   storageLocation: string;
   notes: string;
+  tags: string[];
 }
 
 export const VoiceRecordingEditForm = ({
@@ -57,6 +58,7 @@ export const VoiceRecordingEditForm = ({
         freshnesssDays: item.estimated_freshness_days,
         storageLocation: 'Refrigerator',
         notes: `Voice detected with ${analysisData.confidence} confidence`,
+        tags: [],
       }));
       setItems(editableItems);
     }
@@ -82,8 +84,23 @@ export const VoiceRecordingEditForm = ({
       freshnesssDays: 4,
       storageLocation: 'Refrigerator',
       notes: 'Manually added',
+      tags: [],
     };
     setItems(prev => [...prev, newItem]);
+  };
+
+  // Tag management functions
+  const addTagToItem = (itemId: string, tag: string) => {
+    if (tag.trim() && !items.find(item => item.id === itemId)?.tags.includes(tag.trim())) {
+      updateItem(itemId, 'tags', [...(items.find(item => item.id === itemId)?.tags || []), tag.trim()]);
+    }
+  };
+
+  const removeTagFromItem = (itemId: string, tagToRemove: string) => {
+    const item = items.find(item => item.id === itemId);
+    if (item) {
+      updateItem(itemId, 'tags', item.tags.filter(tag => tag !== tagToRemove));
+    }
   };
 
   const handleSubmit = () => {
@@ -109,6 +126,7 @@ export const VoiceRecordingEditForm = ({
       label: item.itemType === 'cooked_meal' ? 'cooked meal' : 'raw material',
       notes: item.notes,
       freshnessDays: item.freshnesssDays,
+      tags: item.tags.length > 0 ? item.tags : undefined,
     }));
 
     onSubmit(foodItems);
@@ -245,6 +263,62 @@ export const VoiceRecordingEditForm = ({
                         className="mt-1"
                         rows={2}
                       />
+                    </div>
+
+                    {/* Tags */}
+                    <div>
+                      <Label htmlFor={`tags-${item.id}`}>Tags (Optional)</Label>
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          id={`tags-${item.id}`}
+                          placeholder="Add tag"
+                          className="flex-1"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const input = e.target as HTMLInputElement;
+                              if (input.value.trim()) {
+                                addTagToItem(item.id, input.value.trim());
+                                input.value = '';
+                              }
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            const input = document.getElementById(`tags-${item.id}`) as HTMLInputElement;
+                            if (input && input.value.trim()) {
+                              addTagToItem(item.id, input.value.trim());
+                              input.value = '';
+                            }
+                          }}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      
+                      {item.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {item.tags.map((tag, index) => (
+                            <div key={index} className="flex items-center gap-1">
+                              <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary text-secondary-foreground">
+                                {tag}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeTagFromItem(item.id, tag)}
+                                className="h-4 w-4 p-0 hover:bg-transparent"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

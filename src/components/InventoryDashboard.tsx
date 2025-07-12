@@ -209,14 +209,26 @@ export const InventoryDashboard = ({
       <div className="glass-card p-2">
         <div className="flex flex-row gap-1 items-center flex-wrap">
           <div className="relative flex-1 min-w-[150px]">
-            <SearchIcon className="absolute left-2 top-2 h-3 w-3 text-muted-foreground" />
+            <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground flex-shrink-0" />
             <Input
               type="search"
               placeholder="Search items..."
-              className="w-full bg-background pl-7 py-1 text-sm"
+              className="w-full bg-background pl-9 pr-9 py-1 text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-muted-foreground flex-shrink-0 focus:outline-none"
+                onClick={() => setSearchTerm("")}
+                aria-label="Clear search"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm2.12-10.12a1 1 0 10-1.41-1.41L10 8.59 9.29 7.88a1 1 0 10-1.41 1.41L8.59 10l-.71.71a1 1 0 101.41 1.41L10 11.41l.71.71a1 1 0 001.41-1.41L11.41 10l.71-.71z" clipRule="evenodd" />
+                </svg>
+              </button>
+            )}
           </div>
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-28 py-1 text-sm">

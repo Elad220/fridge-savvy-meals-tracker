@@ -17,7 +17,8 @@ import {
   Heart,
   ChefHat,
   Calendar,
-  Plus
+  Plus,
+  X
 } from 'lucide-react';
 import { Recipe, CreateRecipeData } from '@/types';
 import { useRecipes } from '@/hooks/useRecipes';
@@ -215,8 +216,17 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
                 placeholder="Search recipes..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 pr-8"
               />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  type="button"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
             <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
               <SelectTrigger className="w-full sm:w-40">

@@ -1,15 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+
+// Global flag to prevent duplicate toasts
+let hasShownSignOutToast = false;
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const isInitialized = useRef(false);
 
   useEffect(() => {
+    // Prevent multiple listeners from being set up
+    if (isInitialized.current) {
+      return;
+    }
+    isInitialized.current = true;
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -32,10 +42,18 @@ export const useAuth = () => {
             });
           }
         } else if (event === 'SIGNED_OUT') {
-          toast({
-            title: 'Signed out',
-            description: 'You have been signed out successfully.',
-          });
+          // Only show toast once per sign out event
+          if (!hasShownSignOutToast) {
+            hasShownSignOutToast = true;
+            toast({
+              title: 'Signed out',
+              description: 'You have been signed out successfully.',
+            });
+            // Reset the flag after a short delay
+            setTimeout(() => {
+              hasShownSignOutToast = false;
+            }, 1000);
+          }
         }
         
         // Mark that initial load is complete

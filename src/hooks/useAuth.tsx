@@ -14,6 +14,12 @@ export const useAuth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
+        console.log('Session details:', session ? {
+          access_token: session.access_token ? 'present' : 'missing',
+          refresh_token: session.refresh_token ? 'present' : 'missing',
+          expires_at: session.expires_at,
+          user_id: session.user?.id
+        } : 'no session');
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -32,10 +38,15 @@ export const useAuth = () => {
             });
           }
         } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out successfully');
           toast({
             title: 'Signed out',
             description: 'You have been signed out successfully.',
           });
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('Token refreshed successfully');
+        } else if (event === 'USER_UPDATED') {
+          console.log('User updated');
         }
         
         // Mark that initial load is complete
@@ -45,6 +56,7 @@ export const useAuth = () => {
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session ? 'session found' : 'no session');
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -57,14 +69,63 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
+      console.log('Starting sign out process...');
+      
+      // First, clear the local state immediately to prevent race conditions
+      setUser(null);
+      setSession(null);
+      
+      // Then perform the actual sign out
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase sign out error:', error);
+        throw error;
+      }
+      
+      console.log('Sign out successful');
+      
+      // Clear any stored session data
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('supabase.auth.token');
+      
+      // Additional cleanup for any other potential session storage
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('supabase.auth.')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('supabase.auth.')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+      
+      // Verify that the session is actually cleared
+      const { data: { session: verifySession } } = await supabase.auth.getSession();
+      if (verifySession) {
+        console.warn('Session still exists after sign out, attempting to clear again...');
+        // Try to clear again
+        await supabase.auth.signOut();
+      } else {
+        console.log('Session successfully cleared');
+      }
+      
     } catch (error: any) {
+      console.error('Sign out error:', error);
       toast({
         title: 'Sign Out Error',
-        description: error.message,
+        description: error.message || 'Failed to sign out. Please try again.',
         variant: 'destructive',
       });
+      // Revert state if sign out failed
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
+      } catch (revertError) {
+        console.error('Failed to revert session state:', revertError);
+      }
     }
   };
 

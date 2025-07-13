@@ -337,8 +337,19 @@ const Index = () => {
         </section>
 
         {/* Features Section */}
-        <section className="relative py-24 px-4">
-          <div className="container mx-auto">
+        <section className="relative py-24 px-4 overflow-hidden">
+          {/* Parallax background */}
+          <div
+            className="absolute inset-0 pointer-events-none select-none"
+            aria-hidden="true"
+            style={{
+              background: 'linear-gradient(120deg, rgba(16,185,129,0.10) 0%, rgba(59,130,246,0.10) 100%)',
+              zIndex: 0,
+              willChange: 'transform',
+            }}
+            id="features-parallax-bg"
+          ></div>
+          <div className="container mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
                 Smart Features for
@@ -351,13 +362,11 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Clean, responsive grid for features */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Feature 1 */}
-              <div 
-                className="group relative p-8 rounded-2xl bg-white/10 dark:bg-black/10 backdrop-blur-xl border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-black/20 transition-all duration-300 hover:-translate-y-2"
-                data-parallax="0.1"
-              >
-                <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="p-8 rounded-2xl bg-white/30 dark:bg-black/20 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-2xl flex items-center justify-center mb-6 parallax-icon" data-parallax-icon="0.1">
                   <Camera className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-4">Smart Photo Analysis</h3>
@@ -368,11 +377,8 @@ const Index = () => {
               </div>
 
               {/* Feature 2 */}
-              <div 
-                className="group relative p-8 rounded-2xl bg-white/10 dark:bg-black/10 backdrop-blur-xl border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-black/20 transition-all duration-300 hover:-translate-y-2"
-                data-parallax="0.15"
-              >
-                <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="p-8 rounded-2xl bg-white/30 dark:bg-black/20 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 parallax-icon" data-parallax-icon="0.15">
                   <Mic className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-4">Voice Commands</h3>
@@ -383,11 +389,8 @@ const Index = () => {
               </div>
 
               {/* Feature 3 */}
-              <div 
-                className="group relative p-8 rounded-2xl bg-white/10 dark:bg-black/10 backdrop-blur-xl border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-black/20 transition-all duration-300 hover:-translate-y-2"
-                data-parallax="0.2"
-              >
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="p-8 rounded-2xl bg-white/30 dark:bg-black/20 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 parallax-icon" data-parallax-icon="0.2">
                   <Brain className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-4">AI Recommendations</h3>
@@ -398,11 +401,8 @@ const Index = () => {
               </div>
 
               {/* Feature 4 */}
-              <div 
-                className="group relative p-8 rounded-2xl bg-white/10 dark:bg-black/10 backdrop-blur-xl border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-black/20 transition-all duration-300 hover:-translate-y-2"
-                data-parallax="0.25"
-              >
-                <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="p-8 rounded-2xl bg-white/30 dark:bg-black/20 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mb-6 parallax-icon" data-parallax-icon="0.25">
                   <TrendingUp className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-4">Waste Reduction</h3>
@@ -413,11 +413,8 @@ const Index = () => {
               </div>
 
               {/* Feature 5 */}
-              <div 
-                className="group relative p-8 rounded-2xl bg-white/10 dark:bg-black/10 backdrop-blur-xl border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-black/20 transition-all duration-300 hover:-translate-y-2"
-                data-parallax="0.3"
-              >
-                <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="p-8 rounded-2xl bg-white/30 dark:bg-black/20 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 parallax-icon" data-parallax-icon="0.3">
                   <Users className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-4">Family Sharing</h3>
@@ -428,11 +425,8 @@ const Index = () => {
               </div>
 
               {/* Feature 6 */}
-              <div 
-                className="group relative p-8 rounded-2xl bg-white/10 dark:bg-black/10 backdrop-blur-xl border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-black/20 transition-all duration-300 hover:-translate-y-2"
-                data-parallax="0.35"
-              >
-                <div className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="p-8 rounded-2xl bg-white/30 dark:bg-black/20 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6 parallax-icon" data-parallax-icon="0.35">
                   <Bookmark className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-4">Recipe Management</h3>
@@ -444,6 +438,28 @@ const Index = () => {
             </div>
           </div>
         </section>
+
+        {/* Parallax effect JS for background and icons */}
+        <script dangerouslySetInnerHTML={{__html: `
+          (function() {
+            function parallaxScrollHandler() {
+              var scrolled = window.pageYOffset || document.documentElement.scrollTop;
+              var bg = document.getElementById('features-parallax-bg');
+              if (bg) {
+                var yPos = -(scrolled * 0.18);
+                bg.style.transform = 'translate3d(0,' + yPos + 'px,0)';
+              }
+              var icons = document.querySelectorAll('.parallax-icon');
+              icons.forEach(function(icon) {
+                var speed = parseFloat(icon.getAttribute('data-parallax-icon')) || 0.15;
+                var iconY = -(scrolled * speed * 0.5);
+                icon.style.transform = 'translateY(' + iconY + 'px)';
+              });
+            }
+            window.addEventListener('scroll', parallaxScrollHandler, { passive: true });
+            parallaxScrollHandler();
+          })();
+        `}} />
 
         {/* Parallax Meal Planning Section */}
         <section className="relative py-32 overflow-hidden">

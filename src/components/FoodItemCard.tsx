@@ -144,7 +144,7 @@ export const FoodItemCard = ({ item, onRemove, onEdit }: FoodItemCardProps) => {
 
       <div className="flex justify-between items-center">
         <span className="text-xs text-muted-foreground">
-          Cooked: {item.dateCookedStored.toLocaleDateString()}
+          Added: {item.dateCookedStored.toLocaleDateString()}
         </span>
         
         <div className="flex gap-2">

@@ -149,8 +149,16 @@ const Index = () => {
   }, [user, authLoading]); // Include authLoading in dependencies
 
   const handleLogout = async () => {
-    await signOut();
-    navigate('/auth');
+    try {
+      await signOut();
+      // Add a small delay to ensure state changes are processed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      // Only navigate after successful logout
+      navigate('/auth');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Don't navigate if logout failed
+    }
   };
 
   if (authLoading) {

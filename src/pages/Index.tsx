@@ -149,8 +149,14 @@ const Index = () => {
   }, [user, authLoading]); // Include authLoading in dependencies
 
   const handleLogout = async () => {
-    await signOut();
-    navigate('/auth');
+    try {
+      await signOut();
+      navigate('/auth');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Navigate to auth page even if sign out fails
+      navigate('/auth');
+    }
   };
 
   if (authLoading) {

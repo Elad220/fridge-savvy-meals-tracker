@@ -74,7 +74,13 @@ const UserProfile = () => {
       });
 
       setTimeout(async () => {
-        await signOut();
+        try {
+          await signOut();
+        } catch (error) {
+          console.error('Error during password reset sign out:', error);
+          // Force navigation to auth page even if sign out fails
+          window.location.href = '/auth';
+        }
       }, 2000);
     } catch (error: unknown) {
       toast({

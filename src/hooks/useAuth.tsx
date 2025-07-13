@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { debugAuthSession } from '@/lib/debug-auth';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -32,10 +33,18 @@ export const useAuth = () => {
             });
           }
         } else if (event === 'SIGNED_OUT') {
+          // Clear session and user state immediately
+          setSession(null);
+          setUser(null);
+          
           toast({
             title: 'Signed out',
             description: 'You have been signed out successfully.',
           });
+        } else if (event === 'TOKEN_REFRESHED') {
+          // Update session with refreshed token
+          setSession(session);
+          setUser(session?.user ?? null);
         }
         
         // Mark that initial load is complete
@@ -44,28 +53,76 @@ export const useAuth = () => {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-      // Mark that initial load is complete after checking existing session
-      setIsInitialLoad(false);
-    });
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          // Clear session state on error
+          setSession(null);
+          setUser(null);
+        } else {
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+        // Clear session state on error
+        setSession(null);
+        setUser(null);
+      } finally {
+        setLoading(false);
+        // Mark that initial load is complete after checking existing session
+        setIsInitialLoad(false);
+      }
+    };
+
+    checkSession();
 
     return () => subscription.unsubscribe();
   }, []);
 
   const signOut = async () => {
     try {
+      // Check if there's an active session before attempting to sign out
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (!currentSession) {
+        // No active session, just clear local state
+        setSession(null);
+        setUser(null);
+        toast({
+          title: 'Signed out',
+          description: 'You have been signed out successfully.',
+        });
+        return;
+      }
+
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-    } catch (error: any) {
-      toast({
-        title: 'Sign Out Error',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
+      if (error) {
+        // If sign out fails, still clear local state
+        console.error('Sign out error:', error);
+        setSession(null);
+        setUser(null);
+        throw error;
+      }
+          } catch (error: any) {
+        console.error('Sign out error:', error);
+        
+        // Debug session state when sign out fails
+        await debugAuthSession();
+        
+        // Clear local state even if server sign out fails
+        setSession(null);
+        setUser(null);
+        
+        toast({
+          title: 'Sign Out Error',
+          description: error.message || 'An error occurred during sign out',
+          variant: 'destructive',
+        });
+      }
   };
 
   return {

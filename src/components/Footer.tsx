@@ -6,7 +6,7 @@ export const Footer = () => {
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="text-center md:text-left">
             <p className="text-sm text-muted-foreground">
-              © 2025 Food Prep Manager. Built with care to reduce food waste.
+              © 2025 Food Tracker. Built with care to reduce food waste.
             </p>
           </div>
           

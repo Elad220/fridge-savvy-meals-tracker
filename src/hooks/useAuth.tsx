@@ -8,6 +8,7 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener
@@ -39,10 +40,14 @@ export const useAuth = () => {
           }
         } else if (event === 'SIGNED_OUT') {
           console.log('User signed out successfully');
-          toast({
-            title: 'Signed out',
-            description: 'You have been signed out successfully.',
-          });
+          // Only show logout toast if we're not already in the process of logging out
+          // This prevents multiple toasts from appearing
+          if (!isLoggingOut) {
+            toast({
+              title: 'Signed out',
+              description: 'You have been signed out successfully.',
+            });
+          }
         } else if (event === 'TOKEN_REFRESHED') {
           console.log('Token refreshed successfully');
         } else if (event === 'USER_UPDATED') {
@@ -65,11 +70,14 @@ export const useAuth = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isLoggingOut]);
 
   const signOut = async () => {
     try {
       console.log('Starting sign out process...');
+      
+      // Set logging out flag to prevent multiple toasts
+      setIsLoggingOut(true);
       
       // First, clear the local state immediately to prevent race conditions
       setUser(null);
@@ -111,11 +119,11 @@ export const useAuth = () => {
         console.log('Session successfully cleared');
       }
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Sign out error:', error);
       toast({
         title: 'Sign Out Error',
-        description: error.message || 'Failed to sign out. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to sign out. Please try again.',
         variant: 'destructive',
       });
       // Revert state if sign out failed
@@ -126,6 +134,11 @@ export const useAuth = () => {
       } catch (revertError) {
         console.error('Failed to revert session state:', revertError);
       }
+    } finally {
+      // Reset the logging out flag after a short delay to ensure all auth state changes are processed
+      setTimeout(() => {
+        setIsLoggingOut(false);
+      }, 1000);
     }
   };
 

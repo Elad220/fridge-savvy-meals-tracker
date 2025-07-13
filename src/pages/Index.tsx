@@ -196,7 +196,7 @@ const Index = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="relative z-10 container mx-auto px-4 py-6">
+        <nav className="relative z-10 container mx-auto px-4 py-4 md:py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-lg flex items-center justify-center">
@@ -206,22 +206,22 @@ const Index = () => {
                 FoodTracker
               </span>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 md:space-x-4">
               <Button
                 variant="ghost"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors hidden sm:inline-flex"
               >
                 Features
               </Button>
               <Button
                 variant="ghost"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors hidden sm:inline-flex"
               >
                 Pricing
               </Button>
               <Button
                 onClick={() => navigate('/auth')}
-                className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white px-6 py-2 rounded-xl transition-all duration-200 hover:shadow-lg"
+                className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white px-4 md:px-6 py-2 rounded-xl transition-all duration-200 hover:shadow-lg text-sm md:text-base"
               >
                 Sign In
               </Button>
@@ -231,7 +231,7 @@ const Index = () => {
 
         {/* Hero Section */}
         <section className="relative overflow-hidden">
-          <div className="container mx-auto px-4 py-20 lg:py-32">
+          <div className="container mx-auto px-4 py-12 md:py-20 lg:py-32">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               {/* Left Content */}
               <div className="text-center lg:text-left">
@@ -239,44 +239,44 @@ const Index = () => {
                   <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
                   Smart Food Management
                 </div>
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 leading-tight animate-on-scroll">
+                <h1 className="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground mb-4 md:mb-6 leading-tight animate-on-scroll">
                   Never Let Food
                   <span className="block bg-gradient-to-r from-emerald-600 via-blue-600 to-purple-600 bg-clip-text text-transparent">
                     Go to Waste
                   </span>
                 </h1>
-                <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed animate-on-scroll">
+                <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground mb-6 md:mb-8 leading-relaxed animate-on-scroll">
                   Track your meals, manage expiration dates, and plan ahead with our intelligent food inventory system. Save money and reduce waste.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8 animate-on-scroll">
+                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center lg:justify-start mb-6 md:mb-8 animate-on-scroll">
                   <Button
                     onClick={() => navigate('/auth')}
-                    className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white px-10 py-4 text-lg font-semibold rounded-2xl shadow-xl hover:shadow-2xl transform transition-all duration-300 hover:-translate-y-2 hover:scale-105"
+                    className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white px-6 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-2xl shadow-xl hover:shadow-2xl transform transition-all duration-300 hover:-translate-y-2 hover:scale-105"
                   >
                     Start Free Trial
-                    <ArrowRight className="w-5 h-5 ml-2" />
+                    <ArrowRight className="w-4 h-4 md:w-5 md:h-5 ml-2" />
                   </Button>
                   <Button
                     variant="outline"
                     data-glass
-                    className="glass-button px-8 py-4 text-lg font-semibold rounded-xl border-2 hover:bg-muted/50 transition-all duration-200"
+                    className="glass-button px-6 md:px-8 py-3 md:py-4 text-base md:text-lg font-semibold rounded-xl border-2 hover:bg-muted/50 transition-all duration-200"
                   >
-                    <Camera className="w-5 h-5 mr-2" />
+                    <Camera className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                     Watch Demo
                   </Button>
                 </div>
                 
-                <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-8 text-sm text-muted-foreground">
                   <div className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-500 mr-2" />
+                    <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-emerald-500 mr-2" />
                     Free to start
                   </div>
                   <div className="flex items-center">
-                    <Shield className="w-5 h-5 text-emerald-500 mr-2" />
+                    <Shield className="w-4 h-4 md:w-5 md:h-5 text-emerald-500 mr-2" />
                     No credit card
                   </div>
                   <div className="flex items-center">
-                    <Clock className="w-5 h-5 text-emerald-500 mr-2" />
+                    <Clock className="w-4 h-4 md:w-5 md:h-5 text-emerald-500 mr-2" />
                     Setup in 2 minutes
                   </div>
                 </div>

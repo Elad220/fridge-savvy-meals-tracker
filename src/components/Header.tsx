@@ -17,7 +17,7 @@ export const Header = ({ user, onLogout, activeTab, onTabChange }: HeaderProps) 
         <div className="flex items-center justify-between h-12 md:h-16">
           <div className="flex items-center space-x-4 md:space-x-8">
             <h1 className="text-lg md:text-xl font-bold text-green-600 cursor-pointer" onClick={() => onTabChange('inventory')}>
-              Food Prep Manager
+            Meal Tracker
             </h1>
             <nav className="flex space-x-1">
               <button

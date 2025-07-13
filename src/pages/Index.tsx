@@ -87,20 +87,59 @@ const Index = () => {
 
   // Enhanced parallax and glassmorphism effects
   useEffect(() => {
-    if (!user && !authLoading) {
-      const initParallax = () => {
+    if (!user && !authLoading) { // Only run on landing page when auth is loaded
+      // Small delay to ensure DOM is fully rendered
+      const initAnimations = () => {
+        const observerOptions = {
+          threshold: 0.1,
+          rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('in-view');
+            }
+          });
+        }, observerOptions);
+
+        // Observe all animated elements
+        const animatedElements = document.querySelectorAll('.animate-on-scroll');
+        animatedElements.forEach((el) => {
+          observer.observe(el);
+        });
+
+        // Parallax scroll handler with proper data-parallax validation
         let ticking = false;
         
         const handleScroll = () => {
           if (!ticking) {
             requestAnimationFrame(() => {
               const scrolled = window.pageYOffset;
-              const parallaxElements = document.querySelectorAll('[data-parallax]');
+              const parallaxElements = document.querySelectorAll('[data-parallax], .parallax-bg');
               
               parallaxElements.forEach((el) => {
-                const speed = parseFloat((el as HTMLElement).dataset.parallax || '0.5');
-                const yPos = -(scrolled * speed);
-                (el as HTMLElement).style.transform = `translate3d(0, ${yPos}px, 0)`;
+                // Get speed from data-parallax attribute or use default
+                const parallaxSpeed = el.getAttribute('data-parallax');
+                const speed = parallaxSpeed ? parseFloat(parallaxSpeed) : 0.3;
+                
+                // Validate speed to prevent NaN
+                if (!isNaN(speed) && isFinite(speed)) {
+                  const yPos = -(scrolled * speed);
+                  (el as HTMLElement).style.transform = `translate3d(0, ${yPos}px, 0)`;
+                }
+              });
+
+              // Handle glassmorphism blur effects
+              const glassElements = document.querySelectorAll('[data-glass]');
+              const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+              const scrollProgress = Math.min(scrolled / maxScroll, 1);
+              
+              glassElements.forEach((el) => {
+                const maxBlur = 16; // Maximum blur in pixels
+                const minBlur = 0; // Minimum blur in pixels
+                const blurValue = maxBlur - (scrollProgress * (maxBlur - minBlur));
+                (el as HTMLElement).style.setProperty('--glass-blur', `${blurValue}px`);
               });
               
               // Glassmorphism blur effect based on scroll
@@ -186,33 +225,25 @@ const Index = () => {
         </nav>
 
         {/* Hero Section */}
-        <section className="relative min-h-screen flex items-center justify-center px-4">
-          <div className="container mx-auto text-center">
-            {/* Glassmorphism hero card */}
-            <div className="relative max-w-4xl mx-auto">
-              <div 
-                className="absolute inset-0 bg-white/10 dark:bg-black/10 backdrop-blur-xl rounded-3xl border border-white/20 dark:border-white/10 shadow-2xl"
-                data-glass
-              ></div>
-              <div className="relative z-10 p-12 lg:p-16">
-                <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-500/20 to-blue-500/20 backdrop-blur-sm rounded-full text-emerald-700 dark:text-emerald-300 text-sm font-medium mb-8 border border-emerald-500/30">
-                  <Zap className="w-4 h-4 mr-2" />
-                  AI-Powered Food Management
+        <section className="relative overflow-hidden">
+          <div className="container mx-auto px-4 py-20 lg:py-32">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              {/* Left Content */}
+              <div className="text-center lg:text-left">
+                <div className="inline-flex items-center px-4 py-2 bg-green-100 dark:bg-green-900/30 rounded-full text-green-800 dark:text-green-200 text-sm font-medium mb-6 animate-on-scroll">
+                  <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                  Smart Food Management
                 </div>
-                
-                <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-foreground mb-8 leading-tight">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 leading-tight animate-on-scroll">
                   Never Let Food
                   <span className="block bg-gradient-to-r from-emerald-600 via-blue-600 to-purple-600 bg-clip-text text-transparent">
                     Go to Waste
                   </span>
                 </h1>
-                
-                <p className="text-xl md:text-2xl text-muted-foreground mb-12 leading-relaxed max-w-3xl mx-auto">
-                  Track meals, manage inventory, and reduce waste with our intelligent AI-powered food management system. 
-                  Smart photo analysis, voice commands, and personalized recommendations.
+                <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed animate-on-scroll">
+                  Track your meals, manage expiration dates, and plan ahead with our intelligent food inventory system. Save money and reduce waste.
                 </p>
-                
-                <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
+                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8 animate-on-scroll">
                   <Button
                     onClick={() => navigate('/auth')}
                     className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white px-10 py-4 text-lg font-semibold rounded-2xl shadow-xl hover:shadow-2xl transform transition-all duration-300 hover:-translate-y-2 hover:scale-105"
@@ -222,7 +253,8 @@ const Index = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    className="px-10 py-4 text-lg font-semibold rounded-2xl border-2 border-white/20 dark:border-white/10 hover:bg-white/10 dark:hover:bg-white/5 transition-all duration-300 backdrop-blur-sm"
+                    data-glass
+                    className="glass-button px-8 py-4 text-lg font-semibold rounded-xl border-2 hover:bg-muted/50 transition-all duration-200"
                   >
                     <Camera className="w-5 h-5 mr-2" />
                     Watch Demo
@@ -241,6 +273,65 @@ const Index = () => {
                   <div className="flex items-center">
                     <Clock className="w-5 h-5 text-emerald-500 mr-2" />
                     Setup in 2 minutes
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Content - Hero Image */}
+              <div className="relative">
+                {/* Floating elements with parallax */}
+                <div className="absolute -top-4 -left-4 w-12 h-12 bg-green-500/20 rounded-full blur-sm float-animation" data-parallax="0.1"></div>
+                <div className="absolute top-1/3 -right-6 w-8 h-8 bg-blue-500/20 rounded-full blur-sm float-animation-delayed" data-parallax="0.2"></div>
+                <div className="absolute bottom-1/4 -left-8 w-6 h-6 bg-purple-500/20 rounded-full blur-sm float-animation" data-parallax="0.15"></div>
+                <div className="absolute -bottom-6 right-1/3 w-10 h-10 bg-orange-500/20 rounded-full blur-sm float-animation-delayed" data-parallax="0.25"></div>
+                
+                <div className="relative z-10 hover-lift">
+                  <img 
+                    src="/hero-image.svg" 
+                    alt="Food Management App Interface"
+                    className="w-full h-auto rounded-2xl shadow-2xl"
+                  />
+                </div>
+                {/* Background decoration */}
+                <div className="absolute -inset-4 bg-gradient-to-r from-green-200 to-blue-200 dark:from-green-800/20 dark:to-blue-800/20 rounded-3xl opacity-20 blur-xl pulse-slow"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* AI Demo Section */}
+        <section className="py-20 bg-white/50 dark:bg-gray-900/50">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-on-scroll">
+                See AI Food Tracking in Action
+              </h2>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-12 animate-on-scroll">
+                Watch how our intelligent system scans, analyzes, and organizes your food automatically
+              </p>
+              <div className="flex justify-center">
+                <div className="relative max-w-2xl w-full animate-on-scroll">
+                  {/* Floating AI elements */}
+                  <div className="absolute -top-8 left-8 w-6 h-6 bg-purple-500/30 rounded-full blur-sm float-animation opacity-60"></div>
+                  <div className="absolute -top-4 right-12 w-4 h-4 bg-green-500/30 rounded-full blur-sm float-animation-delayed opacity-60"></div>
+                  <div className="absolute bottom-8 -left-6 w-8 h-8 bg-blue-500/30 rounded-full blur-sm float-animation opacity-60"></div>
+                  <div className="absolute bottom-4 -right-8 w-5 h-5 bg-orange-500/30 rounded-full blur-sm float-animation-delayed opacity-60"></div>
+                  
+                  <div className="hover-lift">
+                    <img 
+                      src="/food-tracking-animation.svg" 
+                      alt="AI Food Tracking Animation"
+                      className="w-full h-auto rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700"
+                    />
+                  </div>
+                  <div className="absolute -inset-4 bg-gradient-to-r from-green-200 to-blue-200 dark:from-green-800/20 dark:to-blue-800/20 rounded-3xl opacity-20 blur-xl pulse-slow"></div>
+                  
+                  {/* AI Badge */}
+                  <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">AI Powered</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -357,133 +448,98 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Social Proof Section */}
-        <section className="relative py-24 px-4">
-          <div className="container mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-                Trusted by
-                <span className="block bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-                  Thousands of Users
-                </span>
+        {/* Parallax Meal Planning Section */}
+        <section className="relative py-32 overflow-hidden">
+          <div 
+            className="parallax-bg absolute inset-0 bg-cover bg-center opacity-30 parallax-smooth"
+            data-parallax="0.3"
+            style={{
+              backgroundImage: "url('/meal-planning-parallax.svg')",
+              transform: "translateZ(0)", // Enable GPU acceleration for smooth parallax
+            }}
+          ></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-green-900/80 to-blue-900/80"></div>
+          <div className="relative z-10 container mx-auto px-4 text-center text-white">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 animate-on-scroll">
+              Smart Meal Planning with AI
+            </h2>
+            <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed animate-on-scroll">
+              Our AI analyzes your inventory, suggests recipes, creates shopping lists, and helps you plan nutritious meals that minimize waste and maximize flavor.
+            </p>
+                          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20" data-glass>
+                  <div className="text-3xl mb-4">🧠</div>
+                  <h3 className="text-xl font-bold mb-2">AI Recipe Matching</h3>
+                  <p className="text-white/80">Intelligent suggestions based on your ingredients and preferences</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20" data-glass>
+                  <div className="text-3xl mb-4">📱</div>
+                  <h3 className="text-xl font-bold mb-2">Photo Analysis</h3>
+                  <p className="text-white/80">Snap photos to instantly identify and catalog your food items</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20" data-glass>
+                  <div className="text-3xl mb-4">🎯</div>
+                  <h3 className="text-xl font-bold mb-2">Smart Alerts</h3>
+                  <p className="text-white/80">Never let food expire with intelligent timing notifications</p>
+                </div>
+              </div>
+          </div>
+        </section>
+
+        {/* Stats Section */}
+        <section className="py-20 bg-white dark:bg-gray-900">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-on-scroll">
+                Proven Results from Real Users
               </h2>
+              <p className="text-xl text-muted-foreground animate-on-scroll">
+                Join thousands who have transformed their food management
+              </p>
             </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {/* Testimonial 1 */}
-              <div 
-                className="relative p-8 rounded-2xl bg-white/10 dark:bg-black/10 backdrop-blur-xl border border-white/20 dark:border-white/10"
-                data-parallax="0.1"
-              >
-                <div className="flex items-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  "This app has completely changed how I manage my kitchen. The AI photo recognition is incredible - 
-                  I just take a picture and it knows exactly what I have!"
-                </p>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold mr-4">
-                    S
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">Sarah Johnson</p>
-                    <p className="text-sm text-muted-foreground">Home Chef</p>
-                  </div>
-                </div>
+            <div className="grid md:grid-cols-4 gap-8 text-center">
+              <div className="group hover:scale-105 transition-transform duration-300 animate-on-scroll">
+                <div className="text-5xl font-bold text-green-600 mb-2 group-hover:text-green-500">40%</div>
+                <div className="text-muted-foreground font-medium">Food waste reduction</div>
+                <div className="text-sm text-green-600 mt-2">↗️ Significant impact</div>
               </div>
-
-              {/* Testimonial 2 */}
-              <div 
-                className="relative p-8 rounded-2xl bg-white/10 dark:bg-black/10 backdrop-blur-xl border border-white/20 dark:border-white/10"
-                data-parallax="0.15"
-              >
-                <div className="flex items-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  "The voice commands are a game-changer! I can add items while cooking without touching my phone. 
-                  My food waste has decreased by 60% since using this app."
-                </p>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold mr-4">
-                    M
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">Mike Chen</p>
-                    <p className="text-sm text-muted-foreground">Busy Parent</p>
-                  </div>
-                </div>
+              <div className="group hover:scale-105 transition-transform duration-300 animate-on-scroll">
+                <div className="text-5xl font-bold text-green-600 mb-2 group-hover:text-green-500">$200</div>
+                <div className="text-muted-foreground font-medium">Average monthly savings</div>
+                <div className="text-sm text-green-600 mt-2">💰 Real money saved</div>
               </div>
-
-              {/* Testimonial 3 */}
-              <div 
-                className="relative p-8 rounded-2xl bg-white/10 dark:bg-black/10 backdrop-blur-xl border border-white/20 dark:border-white/10"
-                data-parallax="0.2"
-              >
-                <div className="flex items-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  "The AI recommendations are spot-on! It suggests recipes based on what I have and helps me 
-                  plan meals that actually get eaten. No more forgotten ingredients!"
-                </p>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-4">
-                    E
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">Emma Rodriguez</p>
-                    <p className="text-sm text-muted-foreground">Food Blogger</p>
-                  </div>
-                </div>
+              <div className="group hover:scale-105 transition-transform duration-300 animate-on-scroll">
+                <div className="text-5xl font-bold text-green-600 mb-2 group-hover:text-green-500">50k+</div>
+                <div className="text-muted-foreground font-medium">Meals tracked</div>
+                <div className="text-sm text-green-600 mt-2">📊 Growing community</div>
+              </div>
+              <div className="group hover:scale-105 transition-transform duration-300 animate-on-scroll">
+                <div className="text-5xl font-bold text-green-600 mb-2 group-hover:text-green-500">2 min</div>
+                <div className="text-muted-foreground font-medium">Setup time</div>
+                <div className="text-sm text-green-600 mt-2">⚡ Quick start</div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="relative py-24 px-4">
-          <div className="container mx-auto text-center">
-            <div 
-              className="relative max-w-4xl mx-auto p-12 lg:p-16 rounded-3xl bg-gradient-to-r from-emerald-600/20 to-blue-600/20 backdrop-blur-xl border border-emerald-500/30 dark:border-emerald-400/30"
-              data-parallax="0.1"
+        {/* Final CTA Section */}
+        <section className="py-20 bg-gradient-to-r from-green-600 to-blue-600">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 animate-on-scroll">
+              Ready to transform your food management?
+            </h2>
+            <p className="text-xl text-green-100 mb-8 max-w-2xl mx-auto animate-on-scroll">
+              Join thousands of users who have already reduced food waste and saved money with our smart inventory system.
+            </p>
+            <Button
+              onClick={() => navigate('/auth')}
+              className="bg-white text-green-600 hover:bg-gray-50 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform transition-all duration-200 hover:-translate-y-1"
             >
-              <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-                Ready to Transform
-                <span className="block bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-                  Your Food Management?
-                </span>
-              </h2>
-              <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Join thousands of users who have already reduced food waste and simplified their kitchen management. 
-                Start your free trial today!
-              </p>
-              <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                <Button
-                  onClick={() => navigate('/auth')}
-                  className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white px-12 py-4 text-lg font-semibold rounded-2xl shadow-xl hover:shadow-2xl transform transition-all duration-300 hover:-translate-y-2 hover:scale-105"
-                >
-                  Start Free Trial
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="px-12 py-4 text-lg font-semibold rounded-2xl border-2 border-white/20 dark:border-white/10 hover:bg-white/10 dark:hover:bg-white/5 transition-all duration-300 backdrop-blur-sm"
-                >
-                  Learn More
-                </Button>
-              </div>
-              <p className="text-sm text-muted-foreground mt-6">
-                No credit card required • 14-day free trial • Cancel anytime
-              </p>
-            </div>
+              Start Your Free Account
+              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Button>
           </div>
         </section>
 

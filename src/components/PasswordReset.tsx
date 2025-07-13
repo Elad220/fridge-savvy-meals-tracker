@@ -8,10 +8,39 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
+// Form field configuration
+const formFields = [
+  {
+    name: 'password',
+    label: 'New Password',
+    type: 'password' as const,
+    required: true,
+    placeholder: 'Enter your new password',
+    minLength: 6,
+    validation: (value: string) => {
+      if (value.length < 6) {
+        return 'Password must be at least 6 characters long';
+      }
+      return null;
+    },
+  },
+  {
+    name: 'confirmPassword',
+    label: 'Confirm New Password',
+    type: 'password' as const,
+    required: true,
+    placeholder: 'Confirm your new password',
+    minLength: 6,
+  },
+];
+
 export const PasswordReset = () => {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    password: '',
+    confirmPassword: '',
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -23,32 +52,50 @@ export const PasswordReset = () => {
     }
   }, [searchParams, navigate]);
 
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
     
-    if (password !== confirmPassword) {
+    // Clear error when field changes
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // Validate password
+    const passwordError = formFields[0].validation?.(formData.password);
+    if (passwordError) {
+      newErrors.password = passwordError;
+    }
+
+    // Validate confirm password
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
       toast({
-        title: 'Password Mismatch',
-        description: 'Passwords do not match. Please try again.',
+        title: 'Validation Error',
+        description: 'Please fix the errors in the form.',
         variant: 'destructive',
       });
       return;
     }
 
-    if (password.length < 6) {
-      toast({
-        title: 'Password Too Short',
-        description: 'Password must be at least 6 characters long.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setLoading(true);
+    setIsSubmitting(true);
 
     try {
       const { error } = await supabase.auth.updateUser({
-        password: password
+        password: formData.password
       });
 
       if (error) throw error;
@@ -67,8 +114,30 @@ export const PasswordReset = () => {
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
+  };
+
+  const renderField = (field: typeof formFields[0]) => {
+    const value = formData[field.name];
+    const error = errors[field.name];
+
+    return (
+      <div key={field.name}>
+        <Label htmlFor={field.name}>{field.label}</Label>
+        <Input
+          id={field.name}
+          type={field.type}
+          value={value}
+          onChange={(e) => handleInputChange(field.name, e.target.value)}
+          placeholder={field.placeholder}
+          required={field.required}
+          minLength={field.minLength}
+          className={error ? 'border-red-500' : ''}
+        />
+        {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+      </div>
+    );
   };
 
   return (
@@ -83,39 +152,16 @@ export const PasswordReset = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handlePasswordReset} className="space-y-4">
-            <div>
-              <Label htmlFor="password">New Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your new password"
-                required
-                minLength={6}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm your new password"
-                required
-                minLength={6}
-              />
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Render form fields */}
+            {formFields.map(field => renderField(field))}
 
             <Button 
               type="submit" 
               className="w-full bg-green-600 hover:bg-green-700"
-              disabled={loading}
+              disabled={isSubmitting}
             >
-              {loading ? 'Updating Password...' : 'Update Password'}
+              {isSubmitting ? 'Updating Password...' : 'Update Password'}
             </Button>
 
             <Button

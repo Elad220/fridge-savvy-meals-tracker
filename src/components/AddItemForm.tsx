@@ -29,12 +29,116 @@ interface EditableMealPlanIngredient {
   notes: string;
 }
 
-export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }: AddItemFormProps) => {
+// Form field configurations
+const inventoryFields = [
+  {
+    name: 'name',
+    label: 'Food Name',
+    type: 'text' as const,
+    required: true,
+    placeholder: 'e.g., Chicken Stir-fry',
+  },
+  {
+    name: 'dateCookedStored',
+    label: 'Date Cooked/Stored',
+    type: 'date' as const,
+    required: true,
+  },
+  {
+    name: 'freshnessDays',
+    label: 'Fresh for (days)',
+    type: 'number' as const,
+    required: true,
+    validation: (value: string) => {
+      const num = parseInt(value);
+      if (isNaN(num) || num < 1 || num > 365) {
+        return 'Freshness days must be between 1 and 365';
+      }
+      return null;
+    },
+  },
+  {
+    name: 'eatByDate',
+    label: 'Eat By Date',
+    type: 'date' as const,
+    required: true,
+  },
+  {
+    name: 'amount',
+    label: 'Amount',
+    type: 'amount' as const,
+    required: true,
+    validation: (value: string) => {
+      const num = parseFloat(value);
+      if (isNaN(num) || num <= 0) {
+        return 'Amount must be a positive number';
+      }
+      return null;
+    },
+  },
+  {
+    name: 'unit',
+    label: 'Unit',
+    type: 'select' as const,
+    required: true,
+    options: FOOD_UNITS.map(unit => ({ value: unit, label: unit })),
+  },
+  {
+    name: 'label',
+    label: 'Food Type',
+    type: 'select' as const,
+    required: true,
+    options: [
+      { value: 'raw material', label: 'Raw Material' },
+      { value: 'cooked meal', label: 'Cooked Meal' },
+    ],
+  },
+  {
+    name: 'notes',
+    label: 'Notes',
+    type: 'textarea' as const,
+    placeholder: 'Additional notes about the food item',
+  },
+];
+
+const mealPlanFields = [
+  {
+    name: 'name',
+    label: 'Meal Name',
+    type: 'text' as const,
+    required: true,
+    placeholder: 'e.g., Dinner',
+  },
+  {
+    name: 'plannedDate',
+    label: 'Planned Date',
+    type: 'date' as const,
+    required: true,
+  },
+  {
+    name: 'destinationTime',
+    label: 'Time',
+    type: 'text' as const,
+    required: true,
+    placeholder: '12:30',
+  },
+  {
+    name: 'notes',
+    label: 'Notes',
+    type: 'textarea' as const,
+    placeholder: 'Additional notes about the meal',
+  },
+];
+
+export const AddItemForm = ({ 
+  type, 
+  onSubmit, 
+  onClose, 
+  onMealCombinationUpdate 
+}: AddItemFormProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(true);
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [ingredientInput, setIngredientInput] = useState('');
-  
-  // Tag management
   const [tags, setTags] = useState<string[]>([]);
   
   // Meal plan specific state
@@ -48,26 +152,74 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
     return eatBy.toISOString().split('T')[0];
   };
 
-  const [formData, setFormData] = useState(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const defaultFreshnessDays = 3;
-    const eatByDate = calculateEatByDate(today, defaultFreshnessDays);
-    
-    return {
-      name: '',
-      dateCookedStored: today,
-      eatByDate: eatByDate,
-      amount: '1',
-      unit: 'serving',
-      storageLocation: '',
-      label: 'raw material' as const,
-      notes: '',
-      plannedDate: today,
-      destinationTime: '12:30',
-      freshnessDays: defaultFreshnessDays.toString()
-    };
+  const today = new Date().toISOString().split('T')[0];
+  const defaultFreshnessDays = 3;
+  const eatByDate = calculateEatByDate(today, defaultFreshnessDays);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    dateCookedStored: today,
+    eatByDate: eatByDate,
+    amount: '1',
+    unit: 'serving',
+    storageLocation: '',
+    label: 'raw material' as const,
+    notes: '',
+    plannedDate: today,
+    destinationTime: '12:30',
+    freshnessDays: defaultFreshnessDays.toString()
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      
+      // Auto-calculate eat by date when cooked date or freshness days change
+      if (type === 'inventory' && (field === 'dateCookedStored' || field === 'freshnessDays')) {
+        const freshnessDays = parseInt(field === 'freshnessDays' ? value : prev.freshnessDays) || 4;
+        const cookedDate = field === 'dateCookedStored' ? value : prev.dateCookedStored;
+        updated.eatByDate = calculateEatByDate(cookedDate, freshnessDays);
+      }
+      
+      return updated;
+    });
+
+    // Clear error when field changes
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    const fields = type === 'inventory' ? inventoryFields : mealPlanFields;
+
+    fields.forEach(field => {
+      const value = formData[field.name];
+      
+      // Required field validation
+      if (field.required && (!value || (typeof value === 'string' && !value.trim()))) {
+        newErrors[field.name] = `${field.label} is required`;
+        return;
+      }
+
+      // Custom validation
+      if (field.validation) {
+        const error = field.validation(value);
+        if (error) {
+          newErrors[field.name] = error;
+        }
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Ingredient management
   const handleAddIngredient = () => {
     if (ingredientInput.trim() && !ingredients.includes(ingredientInput.trim())) {
       setIngredients([...ingredients, ingredientInput.trim()]);
@@ -85,8 +237,6 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
       handleAddIngredient();
     }
   };
-
-
 
   // Meal plan ingredient management
   const addMealPlanIngredient = () => {
@@ -127,6 +277,17 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fix the errors in the form.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       if (type === 'inventory') {
@@ -195,13 +356,8 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
         description: 'Failed to save item. Please try again.',
         variant: 'destructive',
       });
-    }
-  };
-
-  const handleDialogChange = (open: boolean) => {
-    setIsDialogOpen(open);
-    if (!open) {
-      onClose();
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -210,341 +366,278 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
     onClose();
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => {
-      const updated = { ...prev, [field]: value };
+  const renderField = (field: typeof inventoryFields[0]) => {
+    const value = formData[field.name];
+    const error = errors[field.name];
 
-      if (type === 'inventory' && (field === 'dateCookedStored' || field === 'freshnessDays')) {
-        const freshnessDays = parseInt(field === 'freshnessDays' ? value : prev.freshnessDays) || 4;
-        const cookedDate = field === 'dateCookedStored' ? value : prev.dateCookedStored;
-        updated.eatByDate = calculateEatByDate(cookedDate, freshnessDays);
-      }
+    const commonProps = {
+      id: field.name,
+      value: value || '',
+      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => 
+        handleInputChange(field.name, e.target.value),
+      placeholder: field.placeholder,
+      required: field.required,
+      className: error ? 'border-red-500' : '',
+    };
 
-      return updated;
-    });
+    switch (field.type) {
+      case 'textarea':
+        return (
+          <div key={field.name}>
+            <Label htmlFor={field.name}>{field.label}</Label>
+            <Textarea {...commonProps} />
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+          </div>
+        );
+
+      case 'select':
+        return (
+          <div key={field.name}>
+            <Label htmlFor={field.name}>{field.label}</Label>
+            <Select 
+              value={value} 
+              onValueChange={(val) => handleInputChange(field.name, val)}
+            >
+              <SelectTrigger className={error ? 'border-red-500' : ''}>
+                <SelectValue placeholder={field.placeholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {field.options?.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+          </div>
+        );
+
+      case 'amount':
+        return (
+          <div key={field.name}>
+            <Label htmlFor={field.name}>{field.label}</Label>
+            <AmountInput
+              id={field.name}
+              value={value}
+              onChange={(val) => handleInputChange(field.name, val)}
+              placeholder={field.placeholder}
+              required={field.required}
+            />
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+          </div>
+        );
+
+      default:
+        return (
+          <div key={field.name}>
+            <Label htmlFor={field.name}>{field.label}</Label>
+            <Input {...commonProps} type={field.type} />
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+          </div>
+        );
+    }
   };
 
+  const fields = type === 'inventory' ? inventoryFields : mealPlanFields;
+
   return (
-    <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+    <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto glass-card">
         <DialogHeader>
           <DialogTitle>
-            {type === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
+            Add {type === 'inventory' ? 'Food Item' : 'Meal Plan'}
           </DialogTitle>
         </DialogHeader>
-
+        
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <Label htmlFor="name">
-              {type === 'inventory' ? 'Food Name' : 'Meal Name'} *
-            </Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder={type === 'inventory' ? 'e.g., Chicken Stir-fry' : 'e.g., Beef Tacos'}
-              required
-            />
-          </div>
-
-          {type === 'inventory' ? (
-            <>
-              <div className="grid grid-cols-2 gap-4">
+          {/* Basic Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {fields.map(field => renderField(field))}
+              
+              {/* Custom field for storage location (inventory only) */}
+              {type === 'inventory' && (
                 <div>
-                  <Label htmlFor="dateCookedStored">Date Cooked/Stored *</Label>
-                  <Input
-                    id="dateCookedStored"
-                    type="date"
-                    value={formData.dateCookedStored}
-                    onChange={(e) => handleInputChange('dateCookedStored', e.target.value)}
+                  <StorageLocationSelect
+                    value={formData.storageLocation}
+                    onValueChange={(value) => handleInputChange('storageLocation', value)}
                     required
                   />
-                </div>
-                <div>
-                  <Label htmlFor="freshnessDays">Fresh for (days) *</Label>
-                  <Input
-                    id="freshnessDays"
-                    type="number"
-                    min="1"
-                    max="365"
-                    value={formData.freshnessDays}
-                    onChange={(e) => handleInputChange('freshnessDays', e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="eatByDate">Eat By Date *</Label>
-                <Input
-                  id="eatByDate"
-                  type="date"
-                  value={formData.eatByDate}
-                  onChange={(e) => handleInputChange('eatByDate', e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="amount">Amount *</Label>
-                  <AmountInput
-                    id="amount"
-                    value={formData.amount}
-                    onChange={(value) => handleInputChange('amount', value)}
-                    placeholder="e.g., 2"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="unit">Unit *</Label>
-                  <Select 
-                    value={formData.unit} 
-                    onValueChange={(value) => handleInputChange('unit', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select unit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {FOOD_UNITS.map((unit) => (
-                        <SelectItem key={unit} value={unit}>
-                          {unit}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="label">Food Type *</Label>
-                <Select 
-                  value={formData.label} 
-                  onValueChange={(value: 'cooked meal' | 'raw material') => handleInputChange('label', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select food type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="raw material">Raw Material</SelectItem>
-                    <SelectItem value="cooked meal">Cooked Meal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {formData.label === 'cooked meal' && (
-                <div>
-                  <Label htmlFor="ingredients">Ingredients (Optional)</Label>
-                  <div className="space-y-2">
-                    <div className="flex gap-2">
-                      <Input
-                        id="ingredients"
-                        value={ingredientInput}
-                        onChange={(e) => setIngredientInput(e.target.value)}
-                        onKeyPress={handleIngredientKeyPress}
-                        placeholder="Add an ingredient..."
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleAddIngredient}
-                        disabled={!ingredientInput.trim()}
-                      >
-                        Add
-                      </Button>
-                    </div>
-                    {ingredients.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {ingredients.map((ingredient, index) => (
-                          <Badge key={index} variant="secondary" className="pr-1">
-                            {ingredient}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-4 w-4 p-0 ml-1"
-                              onClick={() => handleRemoveIngredient(ingredient)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                 </div>
               )}
 
-              <StorageLocationSelect
-                value={formData.storageLocation}
-                onValueChange={(value) => handleInputChange('storageLocation', value)}
-                required
-              />
-
-              {/* Tags */}
-              <TagInput
-                value={tags}
-                onChange={setTags}
-                category={type === 'inventory' ? 'food' : 'meal'}
-                placeholder="Add tag"
-                label="Tags (Optional)"
-              />
-            </>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 gap-4">
+              {/* Custom field for tags (inventory only) */}
+              {type === 'inventory' && (
                 <div>
-                  <Label htmlFor="plannedDate">Planned Date</Label>
-                  <Input
-                    id="plannedDate"
-                    type="date"
-                    value={formData.plannedDate}
-                    onChange={(e) => handleInputChange('plannedDate', e.target.value)}
+                  <TagInput
+                    value={tags}
+                    onChange={setTags}
+                    placeholder="Add tags..."
                   />
                 </div>
-                <div>
-                  <Label htmlFor="destinationTime">Time</Label>
-                  <Input
-                    id="destinationTime"
-                    type="time"
-                    value={formData.destinationTime}
-                    onChange={(e) => handleInputChange('destinationTime', e.target.value)}
-                  />
-                </div>
-              </div>
+              )}
+            </CardContent>
+          </Card>
 
-              {/* Ingredients */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Ingredients</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {mealPlanIngredients.map((ingredient) => (
-                    <div key={ingredient.id} className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-start">
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <AmountInput
-                          value={ingredient.quantity.toString()}
-                          onChange={(value) => updateMealPlanIngredient(ingredient.id, 'quantity', parseFloat(value) || 0)}
-                          placeholder="Amount"
-                          min="0"
-                          step="0.1"
-                        />
-                        <Select 
-                          value={ingredient.unit} 
-                          onValueChange={(value) => updateMealPlanIngredient(ingredient.id, 'unit', value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select unit" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {FOOD_UNITS.map((unit) => (
-                              <SelectItem key={unit} value={unit}>
-                                {unit}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          id={`ingredient-name-${ingredient.id}`}
-                          value={ingredient.name}
-                          onChange={(e) => updateMealPlanIngredient(ingredient.id, 'name', e.target.value)}
-                          placeholder="Ingredient name"
-                        />
-                      </div>
-                      <Input
-                        id={`ingredient-notes-${ingredient.id}`}
-                        value={ingredient.notes}
-                        onChange={(e) => updateMealPlanIngredient(ingredient.id, 'notes', e.target.value)}
-                        placeholder="Notes (optional)"
-                        className="flex-1"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeMealPlanIngredient(ingredient.id)}
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  
-                  <Button
-                    variant="outline"
-                    onClick={addMealPlanIngredient}
-                    className="w-full"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Ingredient
+          {/* Ingredients section (inventory only) */}
+          {type === 'inventory' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Ingredients (for cooked meals)</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    value={ingredientInput}
+                    onChange={(e) => setIngredientInput(e.target.value)}
+                    onKeyPress={handleIngredientKeyPress}
+                    placeholder="Add ingredient..."
+                    className="flex-1"
+                  />
+                  <Button type="button" onClick={handleAddIngredient} disabled={!ingredientInput.trim()}>
+                    <Plus className="w-4 h-4" />
                   </Button>
-                </CardContent>
-              </Card>
-
-              {/* Preparation Steps */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Preparation Steps</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {preparationSteps.map((step, index) => (
-                    <div key={index} className="flex gap-2">
-                      <div className="flex-1">
-                        <Label htmlFor={`step-${index}`}>Step {index + 1}</Label>
-                        <Textarea
-                          id={`step-${index}`}
-                          value={step}
-                          onChange={(e) => updatePreparationStep(index, e.target.value)}
-                          placeholder={`Step ${index + 1} description`}
-                          rows={2}
-                        />
-                      </div>
-                      <div className="flex items-end">
+                </div>
+                
+                {ingredients.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {ingredients.map((ingredient, index) => (
+                      <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                        {ingredient}
                         <Button
-                          variant="outline"
+                          type="button"
+                          variant="ghost"
                           size="sm"
-                          onClick={() => removePreparationStep(index)}
-                          className="h-10"
+                          onClick={() => handleRemoveIngredient(ingredient)}
+                          className="h-4 w-4 p-0"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <X className="w-3 h-3" />
                         </Button>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  <Button
-                    variant="outline"
-                    onClick={addPreparationStep}
-                    className="w-full"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Preparation Step
-                  </Button>
-                </CardContent>
-              </Card>
-            </>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
 
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="notes">
-                {type === 'inventory' ? 'Notes (Optional)' : 'Description (Optional)'}
-              </Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => handleInputChange('notes', e.target.value)}
-                placeholder={type === 'inventory' ? 'Additional details about the food...' : 'Additional details about the meal...'}
-                rows={3}
-              />
-            </div>
-            <div className="flex gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={handleCloseDialog} className="flex-1">
-                Cancel
-              </Button>
-              <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
-                {type === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
-              </Button>
-            </div>
+          {/* Meal plan ingredients section */}
+          {type === 'meals' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Ingredients</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {mealPlanIngredients.map((ingredient, index) => (
+                  <div key={ingredient.id} className="flex gap-2 items-center">
+                    <Input
+                      value={ingredient.name}
+                      onChange={(e) => updateMealPlanIngredient(ingredient.id, 'name', e.target.value)}
+                      placeholder="Ingredient name"
+                      className="flex-1"
+                    />
+                    <Input
+                      type="number"
+                      value={ingredient.quantity}
+                      onChange={(e) => updateMealPlanIngredient(ingredient.id, 'quantity', parseInt(e.target.value) || 0)}
+                      placeholder="Qty"
+                      className="w-20"
+                    />
+                    <Select 
+                      value={ingredient.unit} 
+                      onValueChange={(value) => updateMealPlanIngredient(ingredient.id, 'unit', value)}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FOOD_UNITS.map((unit) => (
+                          <SelectItem key={unit} value={unit}>
+                            {unit}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      value={ingredient.notes}
+                      onChange={(e) => updateMealPlanIngredient(ingredient.id, 'notes', e.target.value)}
+                      placeholder="Notes"
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeMealPlanIngredient(ingredient.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+                
+                <Button type="button" onClick={addMealPlanIngredient} variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Ingredient
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Preparation steps section (meals only) */}
+          {type === 'meals' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Preparation Steps</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {preparationSteps.map((step, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <span className="text-sm font-medium w-8">{index + 1}.</span>
+                    <Input
+                      value={step}
+                      onChange={(e) => updatePreparationStep(index, e.target.value)}
+                      placeholder={`Step ${index + 1}`}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removePreparationStep(index)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+                
+                <Button type="button" onClick={addPreparationStep} variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Step
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Form actions */}
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCloseDialog}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Saving...' : `Save ${type === 'inventory' ? 'Item' : 'Meal'}`}
+            </Button>
           </div>
         </form>
       </DialogContent>

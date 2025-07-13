@@ -116,7 +116,7 @@ export const MoveToInventoryModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md glass-card">
         <DialogHeader>
           <DialogTitle>Add to Inventory</DialogTitle>
         </DialogHeader>

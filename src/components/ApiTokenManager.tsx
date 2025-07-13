@@ -106,7 +106,7 @@ export const ApiTokenManager = ({ onTokenSaved }: ApiTokenManagerProps) => {
               {hasGeminiToken ? 'Update Settings' : 'Add Token'}
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md glass-card">
             <DialogHeader>
               <DialogTitle>AI Settings</DialogTitle>
             </DialogHeader>

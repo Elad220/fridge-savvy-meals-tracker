@@ -192,7 +192,7 @@ export const EditRecipeForm = ({ recipe, isOpen, onClose, onSubmit }: EditRecipe
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto glass-card">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ChefHat className="w-5 h-5" />

@@ -184,7 +184,7 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
   if (loading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto glass-card">
           <DialogHeader>
             <DialogTitle>Saved Recipes</DialogTitle>
           </DialogHeader>
@@ -199,7 +199,7 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto glass-card">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Bookmark className="w-5 h-5" />
@@ -407,7 +407,7 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
         {/* Recipe Details Dialog */}
         {selectedRecipe && (
           <Dialog open={!!selectedRecipe} onOpenChange={() => setSelectedRecipe(null)}>
-            <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto glass-card">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   {selectedRecipe.name}

@@ -125,7 +125,7 @@ export const EditMealPlanForm = ({ item, onSubmit, onClose }: EditMealPlanFormPr
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto glass-card">
         <DialogHeader>
           <DialogTitle>Edit Meal Plan</DialogTitle>
         </DialogHeader>

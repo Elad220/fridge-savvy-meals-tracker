@@ -286,7 +286,7 @@ export const RecipeGenerator = ({ foodItems, onAddMealPlan, onNavigateToSettings
             Generate Recipes
           </Button>
         </DialogTrigger>
-        <DialogContent className="w-[95vw] max-w-md sm:max-w-lg md:max-w-2xl max-h-[90vh] sm:max-h-[80vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-md sm:max-w-lg md:max-w-2xl max-h-[90vh] sm:max-h-[80vh] overflow-y-auto glass-card">
           <DialogHeader>
             <DialogTitle>Generate Recipes</DialogTitle>
           </DialogHeader>

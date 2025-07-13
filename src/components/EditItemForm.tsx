@@ -92,7 +92,7 @@ export const EditItemForm = ({ item, onSubmit, onClose }: EditItemFormProps) => 
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md glass-card">
         <DialogHeader>
           <DialogTitle>Edit Food Item</DialogTitle>
         </DialogHeader>
@@ -198,6 +198,15 @@ export const EditItemForm = ({ item, onSubmit, onClose }: EditItemFormProps) => 
             required
           />
 
+          {/* Tags */}
+          <TagInput
+            value={tags}
+            onChange={setTags}
+            category="food"
+            placeholder="Add tag"
+            label="Tags (Optional)"
+          />
+
           <div>
             <Label htmlFor="notes">Notes (Optional)</Label>
             <Textarea
@@ -208,15 +217,6 @@ export const EditItemForm = ({ item, onSubmit, onClose }: EditItemFormProps) => 
               rows={3}
             />
           </div>
-
-          {/* Tags */}
-          <TagInput
-            value={tags}
-            onChange={setTags}
-            category="food"
-            placeholder="Add tag"
-            label="Tags (Optional)"
-          />
 
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">

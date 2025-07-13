@@ -280,7 +280,6 @@ export const VoiceRecordingEditForm = ({
                     
                     {/* Tags */}
                     <div>
-                      <Label htmlFor={`tags-${item.id}`}>Tags (Optional)</Label>
                       <TagInput
                         value={item.tags}
                         onChange={(tags) => addTagToItem(item.id, tags)}

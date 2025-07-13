@@ -136,17 +136,14 @@ const Index = () => {
               const scrollProgress = Math.min(scrolled / maxScroll, 1);
               
               glassElements.forEach((el) => {
+                // Calculate blur based on scroll progress (more blur as you scroll down)
                 const maxBlur = 16; // Maximum blur in pixels
                 const minBlur = 0; // Minimum blur in pixels
-                const blurValue = maxBlur - (scrollProgress * (maxBlur - minBlur));
+                const blurValue = minBlur + (scrollProgress * (maxBlur - minBlur));
+                
+                // Apply both CSS custom property and backdrop filter for consistent glassmorphism
                 (el as HTMLElement).style.setProperty('--glass-blur', `${blurValue}px`);
-              });
-              
-              // Glassmorphism blur effect based on scroll
-              const glassElements = document.querySelectorAll('[data-glass]');
-              glassElements.forEach((el) => {
-                const blur = Math.min(scrolled * 0.01, 10);
-                (el as HTMLElement).style.backdropFilter = `blur(${blur}px)`;
+                (el as HTMLElement).style.backdropFilter = `blur(${blurValue}px)`;
               });
               
               ticking = false;
@@ -159,7 +156,7 @@ const Index = () => {
         return () => window.removeEventListener('scroll', handleScroll);
       };
 
-      const timeoutId = setTimeout(initParallax, 100);
+      const timeoutId = setTimeout(initAnimations, 100);
       return () => clearTimeout(timeoutId);
     }
   }, [user, authLoading]);

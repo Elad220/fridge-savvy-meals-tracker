@@ -140,7 +140,7 @@ const MultiProviderSettings = () => {
       // No token stored yet
       variant = 'outline';
       label = 'Not Set';
-      extraClass = 'text-orange-600 border-orange-600';
+      extraClass = 'text-red-600 border-red-600';
     }
 
     const badgeProps: ComponentProps<typeof Badge> = {

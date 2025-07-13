@@ -11,6 +11,7 @@ import { toast } from '@/hooks/use-toast';
 import { FoodItem, FOOD_UNITS } from '@/types';
 import { StorageLocationSelect } from './StorageLocationSelect';
 import { AmountInput } from '@/components/ui/amount-input';
+import { TagInput } from '@/components/TagInput';
 
 interface VoiceRecordingEditFormProps {
   isOpen: boolean;
@@ -75,7 +76,7 @@ export const VoiceRecordingEditForm = ({
     }
   }, [analysisData]);
 
-  const updateItem = (id: string, field: keyof EditableItem, value: any) => {
+  const updateItem = (id: string, field: keyof EditableItem, value: string | number) => {
     setItems(prev => prev.map(item => 
       item.id === id ? { ...item, [field]: value } : item
     ));
@@ -107,22 +108,10 @@ export const VoiceRecordingEditForm = ({
   };
 
   // Tag management functions
-  const addTagToItem = (itemId: string, tag: string) => {
-    setItems(prev => prev.map(item => {
-      if (item.id === itemId && tag.trim() && !item.tags.includes(tag.trim())) {
-        return { ...item, tags: [...item.tags, tag.trim()] };
-      }
-      return item;
-    }));
-  };
-
-  const removeTagFromItem = (itemId: string, tag: string) => {
-    setItems(prev => prev.map(item => {
-      if (item.id === itemId) {
-        return { ...item, tags: item.tags.filter(t => t !== tag) };
-      }
-      return item;
-    }));
+  const addTagToItem = (itemId: string, tags: string[]) => {
+    setItems(prev => prev.map(item =>
+      item.id === itemId ? { ...item, tags } : item
+    ));
   };
 
   const handleSubmit = () => {
@@ -292,55 +281,13 @@ export const VoiceRecordingEditForm = ({
                     {/* Tags */}
                     <div>
                       <Label htmlFor={`tags-${item.id}`}>Tags (Optional)</Label>
-                      <div className="flex gap-2 mt-2">
-                        <Input
-                          id={`tags-${item.id}`}
-                          placeholder="Add tag"
-                          className="flex-1"
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              const input = e.target as HTMLInputElement;
-                              if (input.value.trim()) {
-                                addTagToItem(item.id, input.value.trim());
-                                input.value = '';
-                              }
-                            }
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            const input = document.getElementById(`tags-${item.id}`) as HTMLInputElement;
-                            if (input && input.value.trim()) {
-                              addTagToItem(item.id, input.value.trim());
-                              input.value = '';
-                            }
-                          }}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      
-                      {item.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {item.tags.map((tag, index) => (
-                            <div key={index} className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary text-secondary-foreground flex items-center gap-1">
-                              {tag}
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeTagFromItem(item.id, tag)}
-                                className="h-4 w-4 p-0 hover:bg-transparent"
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <TagInput
+                        value={item.tags}
+                        onChange={(tags) => addTagToItem(item.id, tags)}
+                        category="food"
+                        placeholder="Add tag"
+                        label="Tags (Optional)"
+                      />
                     </div>
                     
                     <div>

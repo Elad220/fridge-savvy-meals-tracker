@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AmountInput } from '@/components/ui/amount-input';
 import { StorageLocationSelect } from '@/components/StorageLocationSelect';
+import { TagInput } from '@/components/TagInput';
 import { FoodItem, FOOD_UNITS } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 import { X, Plus } from 'lucide-react';
@@ -52,9 +53,8 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
     freshnessDays: '3',
   });
 
-  // Tag management
+  // Tag management using TagInput component
   const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
 
   // Ingredients for cooked meals
   const [ingredients, setIngredients] = useState<string[]>([]);
@@ -65,24 +65,6 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
     const eatBy = new Date(cooked);
     eatBy.setDate(eatBy.getDate() + freshnessDays);
     return eatBy.toISOString().split('T')[0];
-  };
-
-  const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()]);
-      setTagInput('');
-    }
-  };
-
-  const handleRemoveTag = (tag: string) => {
-    setTags(tags.filter(t => t !== tag));
-  };
-
-  const handleTagKeyPress = (e: any) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddTag();
-    }
   };
 
   const handleAddIngredient = () => {
@@ -134,20 +116,15 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => {
-      const updated = { ...prev, [field]: value };
-      
-      // Auto-calculate eat by date when cooked date or freshness days change
-      // But only for cooked meals, not raw materials with specific expiration dates
-      if ((field === 'dateCookedStored' || field === 'freshnessDays') && 
-          (analysisData.item_type === 'cooked_meal' || !analysisData.expiration_date)) {
-        const freshnessDays = parseInt(field === 'freshnessDays' ? value : prev.freshnessDays) || 4;
-        const cookedDate = field === 'dateCookedStored' ? value : prev.dateCookedStored;
-        updated.eatByDate = calculateEatByDate(cookedDate, freshnessDays);
-      }
-      
-      return updated;
-    });
+    setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Auto-update eat by date when date cooked/stored or freshness days change
+    if (field === 'dateCookedStored' || field === 'freshnessDays') {
+      const cookedDate = field === 'dateCookedStored' ? value : formData.dateCookedStored;
+      const freshnessDays = field === 'freshnessDays' ? parseInt(value) || 3 : parseInt(formData.freshnessDays) || 3;
+      const eatByDate = calculateEatByDate(cookedDate, freshnessDays);
+      setFormData(prev => ({ ...prev, eatByDate }));
+    }
   };
 
   return (
@@ -194,22 +171,6 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="eatByDate">Eat By Date *</Label>
-            <Input
-              id="eatByDate"
-              type="date"
-              value={formData.eatByDate}
-              onChange={(e) => handleInputChange('eatByDate', e.target.value)}
-              required
-            />
-            {analysisData.expiration_date && (
-              <p className="text-xs text-muted-foreground mt-1">
-                AI detected expiration: {analysisData.expiration_date}
-              </p>
-            )}
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="amount">Amount *</Label>
@@ -217,16 +178,15 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
                 id="amount"
                 value={formData.amount}
                 onChange={(value) => handleInputChange('amount', value)}
-                placeholder="e.g., 2"
+                placeholder="1"
+                min="0.1"
+                step="0.1"
                 required
               />
             </div>
             <div>
               <Label htmlFor="unit">Unit *</Label>
-              <Select 
-                value={formData.unit} 
-                onValueChange={(value) => handleInputChange('unit', value)}
-              >
+              <Select value={formData.unit} onValueChange={(value) => handleInputChange('unit', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select unit" />
                 </SelectTrigger>
@@ -242,13 +202,19 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
           </div>
 
           <div>
-            <Label htmlFor="label">Food Type *</Label>
-            <Select 
-              value={formData.label} 
-              onValueChange={(value: 'cooked meal' | 'raw material') => handleInputChange('label', value)}
-            >
+            <Label htmlFor="storageLocation">Storage Location *</Label>
+            <StorageLocationSelect
+              value={formData.storageLocation}
+              onValueChange={(value) => handleInputChange('storageLocation', value)}
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="label">Type *</Label>
+            <Select value={formData.label} onValueChange={(value) => handleInputChange('label', value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Select food type" />
+                <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="raw material">Raw Material</SelectItem>
@@ -257,115 +223,75 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
             </Select>
           </div>
 
+          {/* Tags using TagInput component */}
+          <TagInput
+            value={tags}
+            onChange={setTags}
+            category="food"
+            placeholder="Add tag"
+            label="Tags (Optional)"
+          />
+
+          {/* Ingredients for cooked meals */}
           {formData.label === 'cooked meal' && (
             <div>
               <Label htmlFor="ingredients">Ingredients (Optional)</Label>
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Input
-                    id="ingredients"
-                    value={ingredientInput}
-                    onChange={(e) => setIngredientInput(e.target.value)}
-                    onKeyPress={handleIngredientKeyPress}
-                    placeholder="Add an ingredient..."
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleAddIngredient}
-                    disabled={!ingredientInput.trim()}
-                  >
-                    Add
-                  </Button>
-                </div>
-                {ingredients.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {ingredients.map((ingredient, index) => (
-                      <div key={index} className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary text-secondary-foreground pr-1">
-                        {ingredient}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-4 w-4 p-0 ml-1"
-                          onClick={() => handleRemoveIngredient(ingredient)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <div className="flex gap-2 mt-2">
+                <Input
+                  id="ingredients"
+                  value={ingredientInput}
+                  onChange={(e) => setIngredientInput(e.target.value)}
+                  onKeyPress={handleIngredientKeyPress}
+                  placeholder="Add ingredient"
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddIngredient}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
               </div>
+              
+              {ingredients.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {ingredients.map((ingredient, index) => (
+                    <div key={index} className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary text-secondary-foreground flex items-center gap-1">
+                      {ingredient}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveIngredient(ingredient)}
+                        className="h-4 w-4 p-0 hover:bg-transparent"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
-          <StorageLocationSelect
-            value={formData.storageLocation}
-            onValueChange={(value) => handleInputChange('storageLocation', value)}
-            required
-          />
-
-          {/* Tags */}
           <div>
-            <Label htmlFor="tags">Tags (Optional)</Label>
-            <div className="flex gap-2 mt-2">
-              <Input
-                id="tags"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={handleTagKeyPress}
-                placeholder="Add tag"
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleAddTag}
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-            
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {tags.map((tag, index) => (
-                  <div key={index} className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary text-secondary-foreground flex items-center gap-1">
-                    {tag}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveTag(tag)}
-                      className="h-4 w-4 p-0 hover:bg-transparent"
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
+            <Label htmlFor="notes">Notes (Optional)</Label>
+            <Textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => handleInputChange('notes', e.target.value)}
+              placeholder="Additional details about the food..."
+              rows={3}
+            />
           </div>
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="notes">Notes (Optional)</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => handleInputChange('notes', e.target.value)}
-                placeholder="Additional details about the food..."
-                rows={3}
-              />
-            </div>
-            <div className="flex gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-                Cancel
-              </Button>
-              <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
-                Add Food Item
-              </Button>
-            </div>
+          <div className="flex gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+              Cancel
+            </Button>
+            <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
+              Add Food Item
+            </Button>
           </div>
         </form>
       </DialogContent>

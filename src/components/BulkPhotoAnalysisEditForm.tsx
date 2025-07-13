@@ -11,6 +11,7 @@ import { toast } from '@/hooks/use-toast';
 import { FoodItem, FOOD_UNITS } from '@/types';
 import { StorageLocationSelect } from './StorageLocationSelect';
 import { AmountInput } from '@/components/ui/amount-input';
+import { TagInput } from '@/components/TagInput';
 
 interface BulkPhotoAnalysisEditFormProps {
   isOpen: boolean;
@@ -43,47 +44,41 @@ interface EditableItem {
   tags: string[];
 }
 
-export const BulkPhotoAnalysisEditForm = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  analysisData,
-}: BulkPhotoAnalysisEditFormProps) => {
+export const BulkPhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData }: BulkPhotoAnalysisEditFormProps) => {
   const [items, setItems] = useState<EditableItem[]>([]);
 
   useEffect(() => {
-    if (analysisData) {
+    if (analysisData && analysisData.items) {
       const today = new Date().toISOString().split('T')[0];
-      const editableItems: EditableItem[] = analysisData.items.map((item, index) => {
-        const eatByDate = new Date();
-        eatByDate.setDate(eatByDate.getDate() + 4);
-        
-        return {
-          id: `photo-item-${index}`,
-          name: item.suggested_name || 'Food Item',
-          itemType: item.item_type,
-          quantity: item.estimated_amount || 1,
-          unit: item.estimated_unit || 'item',
-          freshnessDays: 4, // Default value since backend doesn't provide this
-          storageLocation: 'Fridge - Middle Shelf',
-          notes: `Photo analysis with ${analysisData.confidence} confidence`,
-          dateCookedStored: today,
-          eatByDate: eatByDate.toISOString().split('T')[0],
-          tags: [],
-        };
-      });
+      const eatByDate = new Date();
+      eatByDate.setDate(eatByDate.getDate() + 4);
+      
+      const editableItems: EditableItem[] = analysisData.items.map((item, index) => ({
+        id: `bulk-item-${index}`,
+        name: item.suggested_name,
+        itemType: item.item_type,
+        quantity: item.estimated_amount || 1,
+        unit: item.estimated_unit || 'item',
+        freshnessDays: 4,
+        storageLocation: 'Fridge - Middle Shelf',
+        notes: `AI Analysis Confidence: ${item.confidence || analysisData.confidence}`,
+        dateCookedStored: today,
+        eatByDate: eatByDate.toISOString().split('T')[0],
+        tags: [],
+      }));
+      
       setItems(editableItems);
     }
   }, [analysisData]);
 
-  const updateItem = (id: string, field: keyof EditableItem, value: string | number) => {
+  const updateItem = (itemId: string, field: keyof EditableItem, value: string | number) => {
     setItems(prev => prev.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
+      item.id === itemId ? { ...item, [field]: value } : item
     ));
   };
 
-  const removeItem = (id: string) => {
-    setItems(prev => prev.filter(item => item.id !== id));
+  const removeItem = (itemId: string) => {
+    setItems(prev => prev.filter(item => item.id !== itemId));
   };
 
   const addNewItem = () => {
@@ -107,23 +102,11 @@ export const BulkPhotoAnalysisEditForm = ({
     setItems(prev => [...prev, newItem]);
   };
 
-  // Tag management functions
-  const addTagToItem = (itemId: string, tag: string) => {
-    setItems(prev => prev.map(item => {
-      if (item.id === itemId && tag.trim() && !item.tags.includes(tag.trim())) {
-        return { ...item, tags: [...item.tags, tag.trim()] };
-      }
-      return item;
-    }));
-  };
-
-  const removeTagFromItem = (itemId: string, tag: string) => {
-    setItems(prev => prev.map(item => {
-      if (item.id === itemId) {
-        return { ...item, tags: item.tags.filter(t => t !== tag) };
-      }
-      return item;
-    }));
+  // Tag management functions using TagInput component
+  const updateItemTags = (itemId: string, tags: string[]) => {
+    setItems(prev => prev.map(item => 
+      item.id === itemId ? { ...item, tags } : item
+    ));
   };
 
   const handleSubmit = () => {
@@ -178,9 +161,14 @@ export const BulkPhotoAnalysisEditForm = ({
             <div className="space-y-4">
               {items.map((item) => (
                 <Card key={item.id}>
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-lg">Item {items.indexOf(item) + 1}</CardTitle>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <Input
+                        value={item.name}
+                        onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                        placeholder="Item name"
+                        className="text-lg font-semibold border-none p-0 shadow-none"
+                      />
                       <Button
                         variant="ghost"
                         size="sm"
@@ -189,29 +177,18 @@ export const BulkPhotoAnalysisEditForm = ({
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
-                    </div>
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor={`name-${item.id}`}>Item Name *</Label>
-                        <Input
-                          id={`name-${item.id}`}
-                          value={item.name}
-                          onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                          placeholder="Enter item name"
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor={`type-${item.id}`}>Item Type</Label>
-                        <Select
-                          value={item.itemType}
+                        <Label htmlFor={`type-${item.id}`}>Type</Label>
+                        <Select 
+                          value={item.itemType} 
                           onValueChange={(value) => updateItem(item.id, 'itemType', value)}
                         >
-                          <SelectTrigger className="mt-1">
-                            <SelectValue />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="raw_material">Raw Material</SelectItem>
@@ -221,159 +198,119 @@ export const BulkPhotoAnalysisEditForm = ({
                       </div>
                       
                       <div>
-                        <Label htmlFor={`quantity-${item.id}`}>Quantity</Label>
-                        <AmountInput
-                          id={`quantity-${item.id}`}
-                          value={item.quantity.toString()}
-                          onChange={(value) => updateItem(item.id, 'quantity', parseFloat(value) || 0)}
-                          placeholder="e.g., 2"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor={`unit-${item.id}`}>Unit</Label>
-                        <Select
-                          value={item.unit}
-                          onValueChange={(value) => updateItem(item.id, 'unit', value)}
-                        >
-                          <SelectTrigger className="mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {FOOD_UNITS.map(unit => (
-                              <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor={`dateCookedStored-${item.id}`}>Date Cooked/Stored</Label>
-                        <Input
-                          id={`dateCookedStored-${item.id}`}
-                          type="date"
-                          value={item.dateCookedStored}
-                          onChange={(e) => updateItem(item.id, 'dateCookedStored', e.target.value)}
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor={`eatByDate-${item.id}`}>Eat By Date</Label>
-                        <Input
-                          id={`eatByDate-${item.id}`}
-                          type="date"
-                          value={item.eatByDate}
-                          onChange={(e) => updateItem(item.id, 'eatByDate', e.target.value)}
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor={`freshness-${item.id}`}>Freshness Days</Label>
-                        <Input
-                          id={`freshness-${item.id}`}
-                          type="number"
-                          min="1"
-                          max="365"
-                          value={item.freshnessDays}
-                          onChange={(e) => updateItem(item.id, 'freshnessDays', parseInt(e.target.value) || 4)}
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
+                        <Label htmlFor={`storage-${item.id}`}>Storage Location</Label>
                         <StorageLocationSelect
                           value={item.storageLocation}
                           onValueChange={(value) => updateItem(item.id, 'storageLocation', value)}
                         />
                       </div>
                     </div>
-                    
-                    {/* Tags */}
-                    <div>
-                      <Label htmlFor={`tags-${item.id}`}>Tags (Optional)</Label>
-                      <div className="flex gap-2 mt-2">
-                        <Input
-                          id={`tags-${item.id}`}
-                          placeholder="Add tag"
-                          className="flex-1"
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              const input = e.target as HTMLInputElement;
-                              if (input.value.trim()) {
-                                addTagToItem(item.id, input.value.trim());
-                                input.value = '';
-                              }
-                            }
-                          }}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor={`quantity-${item.id}`}>Amount</Label>
+                        <AmountInput
+                          value={item.quantity.toString()}
+                          onChange={(value) => updateItem(item.id, 'quantity', parseFloat(value) || 0)}
+                          placeholder="1"
+                          min="0.1"
+                          step="0.1"
                         />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            const input = document.getElementById(`tags-${item.id}`) as HTMLInputElement;
-                            if (input && input.value.trim()) {
-                              addTagToItem(item.id, input.value.trim());
-                              input.value = '';
-                            }
-                          }}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
                       </div>
                       
-                      {item.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {item.tags.map((tag, index) => (
-                            <div key={index} className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary text-secondary-foreground flex items-center gap-1">
-                              {tag}
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeTagFromItem(item.id, tag)}
-                                className="h-4 w-4 p-0 hover:bg-transparent"
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <div>
+                        <Label htmlFor={`unit-${item.id}`}>Unit</Label>
+                        <Select 
+                          value={item.unit} 
+                          onValueChange={(value) => updateItem(item.id, 'unit', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select unit" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {FOOD_UNITS.map((unit) => (
+                              <SelectItem key={unit} value={unit}>
+                                {unit}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor={`freshness-${item.id}`}>Fresh for (days)</Label>
+                        <Input
+                          id={`freshness-${item.id}`}
+                          type="number"
+                          min="1"
+                          max="365"
+                          value={item.freshnessDays.toString()}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value);
+                            updateItem(item.id, 'freshnessDays', isNaN(value) ? 3 : value);
+                          }}
+                        />
+                      </div>
                     </div>
-                    
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor={`date-cooked-${item.id}`}>Date Cooked/Stored</Label>
+                        <Input
+                          id={`date-cooked-${item.id}`}
+                          type="date"
+                          value={item.dateCookedStored}
+                          onChange={(e) => updateItem(item.id, 'dateCookedStored', e.target.value)}
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor={`eat-by-${item.id}`}>Eat By Date</Label>
+                        <Input
+                          id={`eat-by-${item.id}`}
+                          type="date"
+                          value={item.eatByDate}
+                          onChange={(e) => updateItem(item.id, 'eatByDate', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
                     <div>
                       <Label htmlFor={`notes-${item.id}`}>Notes</Label>
                       <Textarea
                         id={`notes-${item.id}`}
                         value={item.notes}
                         onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
-                        placeholder="Add any additional notes..."
-                        className="mt-1"
+                        placeholder="Additional details..."
                         rows={2}
                       />
                     </div>
+
+                    {/* Tags using TagInput component */}
+                    <TagInput
+                      value={item.tags}
+                      onChange={(tags) => updateItemTags(item.id, tags)}
+                      category="food"
+                      placeholder="Add tag"
+                      label="Tags (Optional)"
+                    />
                   </CardContent>
                 </Card>
               ))}
               
-              <div className="flex justify-center">
-                <Button onClick={addNewItem} variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Another Item
-                </Button>
-              </div>
+              <Button onClick={addNewItem} variant="outline" className="w-full">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Another Item
+              </Button>
             </div>
           )}
-          
-          <div className="flex gap-3 pt-4">
-            <Button onClick={onClose} variant="outline" className="flex-1">
+
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} className="flex-1 bg-green-600 hover:bg-green-700">
-              Add {items.filter(item => item.name.trim()).length} Item{items.filter(item => item.name.trim()).length === 1 ? '' : 's'} to Inventory
+            <Button onClick={handleSubmit} disabled={items.length === 0}>
+              Add All Items
             </Button>
           </div>
         </div>

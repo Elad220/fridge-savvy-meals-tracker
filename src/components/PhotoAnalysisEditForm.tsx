@@ -171,6 +171,17 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
             </div>
           </div>
 
+          <div>
+            <Label htmlFor="eatByDate">Eat By Date *</Label>
+            <Input
+              id="eatByDate"
+              type="date"
+              value={formData.eatByDate}
+              onChange={(e) => handleInputChange('eatByDate', e.target.value)}
+              required
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="amount">Amount *</Label>

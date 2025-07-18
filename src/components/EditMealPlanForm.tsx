@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, Plus } from 'lucide-react';
 import { MealPlan, MealPlanIngredient, FOOD_UNITS } from '@/types';
+import { AmountInput } from '@/components/ui/amount-input';
 
 interface EditMealPlanFormProps {
   item: MealPlan;

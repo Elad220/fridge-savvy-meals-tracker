@@ -12,6 +12,7 @@ import { TagInput } from '@/components/TagInput';
 import { FoodItem, FOOD_UNITS } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 import { X, Plus } from 'lucide-react';
+import { useStorageLocations } from '@/hooks/useStorageLocations';
 
 interface EditItemFormProps {
   item: FoodItem;
@@ -42,6 +43,7 @@ export const EditItemForm = ({ item, onSubmit, onClose }: EditItemFormProps) => 
     return eatBy.toISOString().split('T')[0];
   };
 
+  const { loading: locationsLoading } = useStorageLocations();
 
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -222,7 +224,7 @@ export const EditItemForm = ({ item, onSubmit, onClose }: EditItemFormProps) => 
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
+            <Button type="submit" disabled={locationsLoading} className="flex-1 bg-green-600 hover:bg-green-700">
               Update Item
             </Button>
           </div>

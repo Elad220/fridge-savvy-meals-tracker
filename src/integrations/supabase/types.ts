@@ -305,6 +305,63 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_tags: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_favorite: boolean | null
+          tag_category: string
+          tag_name: string
+          updated_at: string | null
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          tag_category?: string
+          tag_name: string
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          tag_category?: string
+          tag_name?: string
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      storage_locations: {
+        Row: {
+          created_at: string | null
+          id: string
+          location_name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          location_name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          location_name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_api_tokens: {
         Row: {
           created_at: string
@@ -364,39 +421,6 @@ export type Database = {
           shopping_frequency?: string | null
           typical_household_size?: number | null
           updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      saved_tags: {
-        Row: {
-          created_at: string
-          id: string
-          is_favorite: boolean
-          tag_category: string
-          tag_name: string
-          updated_at: string
-          usage_count: number
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_favorite?: boolean
-          tag_category?: string
-          tag_name: string
-          updated_at?: string
-          usage_count?: number
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_favorite?: boolean
-          tag_category?: string
-          tag_name?: string
-          updated_at?: string
-          usage_count?: number
           user_id?: string
         }
         Relationships: []

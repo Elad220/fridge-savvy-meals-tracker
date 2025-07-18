@@ -12,6 +12,7 @@ import { FoodItem, FOOD_UNITS } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 import { X, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useStorageLocations } from '@/hooks/useStorageLocations';
 
 interface PhotoAnalysisEditFormProps {
   isOpen: boolean;
@@ -127,6 +128,8 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
     }
   };
 
+  const { loading: locationsLoading } = useStorageLocations();
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto glass-card">
@@ -213,7 +216,6 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
           </div>
 
           <div>
-            <Label htmlFor="storageLocation">Storage Location *</Label>
             <StorageLocationSelect
               value={formData.storageLocation}
               onValueChange={(value) => handleInputChange('storageLocation', value)}
@@ -300,8 +302,8 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
-              Add Food Item
+            <Button type="submit" disabled={locationsLoading} className="flex-1 bg-green-600 hover:bg-green-700">
+              {locationsLoading ? 'Loading...' : 'Add Food Item'}
             </Button>
           </div>
         </form>

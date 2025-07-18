@@ -12,6 +12,7 @@ import { FoodItem, FOOD_UNITS } from '@/types';
 import { StorageLocationSelect } from './StorageLocationSelect';
 import { AmountInput } from '@/components/ui/amount-input';
 import { TagInput } from '@/components/TagInput';
+import { useStorageLocations } from '@/hooks/useStorageLocations';
 
 interface VoiceRecordingEditFormProps {
   isOpen: boolean;
@@ -50,6 +51,7 @@ export const VoiceRecordingEditForm = ({
   analysisData,
 }: VoiceRecordingEditFormProps) => {
   const [items, setItems] = useState<EditableItem[]>([]);
+  const { loading: locationsLoading } = useStorageLocations();
 
   useEffect(() => {
     if (analysisData) {
@@ -274,6 +276,7 @@ export const VoiceRecordingEditForm = ({
                         <StorageLocationSelect
                           value={item.storageLocation}
                           onValueChange={(value) => updateItem(item.id, 'storageLocation', value)}
+                          loading={locationsLoading}
                         />
                       </div>
                     </div>
@@ -317,7 +320,7 @@ export const VoiceRecordingEditForm = ({
             <Button onClick={onClose} variant="outline" className="flex-1">
               Cancel
             </Button>
-            <Button onClick={handleSubmit} className="flex-1 bg-green-600 hover:bg-green-700">
+            <Button onClick={handleSubmit} className="flex-1 bg-green-600 hover:bg-green-700" disabled={locationsLoading}>
               Add {items.filter(item => item.name.trim()).length} Item{items.filter(item => item.name.trim()).length === 1 ? '' : 's'} to Inventory
             </Button>
           </div>

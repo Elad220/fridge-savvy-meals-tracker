@@ -13,6 +13,7 @@ import { TagInput } from '@/components/TagInput';
 import { FoodItem, MealPlan, MealPlanIngredient, FOOD_UNITS } from '@/types';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useStorageLocations } from '@/hooks/useStorageLocations';
 
 interface AddItemFormProps {
   type: 'inventory' | 'meals';
@@ -223,6 +224,8 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
       return updated;
     });
   };
+
+  const { loading: locationsLoading } = useStorageLocations();
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
@@ -541,8 +544,8 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
               <Button type="button" variant="outline" onClick={handleCloseDialog} className="flex-1">
                 Cancel
               </Button>
-              <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
-                {type === 'inventory' ? 'Add Food Item' : 'Add Meal Plan'}
+              <Button type="submit" disabled={locationsLoading}>
+                {locationsLoading ? 'Loading...' : (type === 'inventory' ? 'Add Food Item' : 'Add Meal Plan')}
               </Button>
             </div>
           </div>

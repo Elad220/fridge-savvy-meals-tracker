@@ -12,6 +12,7 @@ import { FoodItem, FOOD_UNITS } from '@/types';
 import { StorageLocationSelect } from './StorageLocationSelect';
 import { AmountInput } from '@/components/ui/amount-input';
 import { TagInput } from '@/components/TagInput';
+import { useStorageLocations } from '@/hooks/useStorageLocations';
 
 interface BulkPhotoAnalysisEditFormProps {
   isOpen: boolean;
@@ -46,6 +47,7 @@ interface EditableItem {
 
 export const BulkPhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData }: BulkPhotoAnalysisEditFormProps) => {
   const [items, setItems] = useState<EditableItem[]>([]);
+  const { loading: locationsLoading } = useStorageLocations();
 
   useEffect(() => {
     if (analysisData && analysisData.items) {
@@ -202,6 +204,7 @@ export const BulkPhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisD
                         <StorageLocationSelect
                           value={item.storageLocation}
                           onValueChange={(value) => updateItem(item.id, 'storageLocation', value)}
+                          loading={locationsLoading}
                         />
                       </div>
                     </div>
@@ -309,8 +312,8 @@ export const BulkPhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisD
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} disabled={items.length === 0}>
-              Add All Items
+            <Button onClick={handleSubmit} disabled={locationsLoading || items.length === 0}>
+              {locationsLoading ? 'Loading...' : 'Add All Items'}
             </Button>
           </div>
         </div>

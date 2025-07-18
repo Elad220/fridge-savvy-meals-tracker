@@ -11,15 +11,18 @@ interface StorageLocationSelectProps {
   onValueChange: (value: string) => void;
   required?: boolean;
   placeholder?: string;
+  loading?: boolean;
 }
 
 export const StorageLocationSelect = ({ 
   value, 
   onValueChange, 
   required = false,
-  placeholder = "Select storage location" 
+  placeholder = "Select storage location",
+  loading: loadingProp
 }: StorageLocationSelectProps) => {
-  const { storageLocations, addCustomLocation } = useStorageLocations();
+  const { storageLocations, addCustomLocation, loading: hookLoading } = useStorageLocations();
+  const loading = loadingProp !== undefined ? loadingProp : hookLoading;
   const [isAddingCustom, setIsAddingCustom] = useState(false);
   const [customLocationInput, setCustomLocationInput] = useState('');
 
@@ -114,16 +117,20 @@ export const StorageLocationSelect = ({
   return (
     <div>
       <Label htmlFor="storageLocation">Storage Location {required && '*'}</Label>
-      <Select value={value} onValueChange={handleSelectChange}>
+      <Select value={value} onValueChange={handleSelectChange} disabled={loading}>
         <SelectTrigger>
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={loading ? 'Loading locations...' : placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {storageLocations.map((location) => (
-            <SelectItem key={location} value={location}>
-              {location}
-            </SelectItem>
-          ))}
+          {loading ? (
+            <div className="px-4 py-2 text-muted-foreground text-xs">Loading...</div>
+          ) : (
+            storageLocations.map((location) => (
+              <SelectItem key={location} value={location}>
+                {location}
+              </SelectItem>
+            ))
+          )}
         </SelectContent>
       </Select>
     </div>

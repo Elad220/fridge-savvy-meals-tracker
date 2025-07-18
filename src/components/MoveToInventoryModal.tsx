@@ -11,6 +11,7 @@ import { FoodItem, FOOD_UNITS, MealPlanIngredient } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
+import { useStorageLocations } from '@/hooks/useStorageLocations';
 
 interface MoveToInventoryModalProps {
   isOpen: boolean;
@@ -53,6 +54,8 @@ export const MoveToInventoryModal = ({
     notes: initialData.notes ? `From meal plan: ${initialData.notes}` : '',
     freshnessDays: defaultFreshnessDays.toString()
   });
+
+  const { loading: locationsLoading } = useStorageLocations();
 
   // Reset form when modal opens with new data
   useEffect(() => {
@@ -116,7 +119,7 @@ export const MoveToInventoryModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md glass-card">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto glass-card">
         <DialogHeader>
           <DialogTitle>Add to Inventory</DialogTitle>
         </DialogHeader>
@@ -138,7 +141,7 @@ export const MoveToInventoryModal = ({
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <Label htmlFor="name">Food Name *</Label>
             <Input
@@ -254,8 +257,8 @@ export const MoveToInventoryModal = ({
               <Button type="button" variant="outline" onClick={onClose} className="flex-1">
                 Cancel
               </Button>
-              <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
-                Add to Inventory
+              <Button type="submit" disabled={locationsLoading}>
+                {locationsLoading ? 'Loading...' : 'Move to Inventory'}
               </Button>
             </div>
           </div>

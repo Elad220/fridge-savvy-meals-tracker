@@ -200,7 +200,6 @@ export const BulkPhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisD
                       </div>
                       
                       <div>
-                        <Label htmlFor={`storage-${item.id}`}>Storage Location</Label>
                         <StorageLocationSelect
                           value={item.storageLocation}
                           onValueChange={(value) => updateItem(item.id, 'storageLocation', value)}

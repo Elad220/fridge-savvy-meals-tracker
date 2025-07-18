@@ -400,7 +400,7 @@ class AIService {
     }
 
     // Create the prompt for voice analysis with dynamic language
-    const prompt = `Analyze this audio recording where the user is describing food items they want to add to their inventory. 
+    const prompt = `Analyze this audio recording where the user is describing food items they want to add to their inventory.
 
 The user is speaking about food items they've bought or want to track. Extract all the food items mentioned along with their quantities and details.
 
@@ -423,9 +423,10 @@ Important notes:
 - Extract ALL food items mentioned in the recording
 - If quantities are not clearly specified, use reasonable defaults (1 for single items, appropriate amounts for bulk items)
 - Choose the most appropriate unit from the provided list
-- For estimated_freshness_days, use typical shelf life for each item type:
+- If the user specifies an expiration date, use that date for estimated_freshness_days
+- If the user does not provide an expiration date, use estimated_freshness_days based on typical shelf life for each item type:
   - Fresh meat/fish: 1-3 days
-  - Dairy: 3-7 days  
+  - Dairy: 3-7 days
   - Fresh vegetables: 3-7 days
   - Fresh fruits: 3-14 days
   - Bread: 3-5 days

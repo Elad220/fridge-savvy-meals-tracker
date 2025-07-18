@@ -514,7 +514,18 @@ export const SavedRecipes = ({ isOpen, onClose, onAddMealPlan }: SavedRecipesPro
       </DialogContent>
       {showCookModal && mealPlanDraft && (
         <EditMealPlanForm
-          item={{ ...mealPlanDraft, id: '', userId: '' }}
+          // EditMealPlanForm expects a full MealPlan object, so we provide dummy id and userId.
+          // These will be stripped out before saving, and are not used in the form logic.
+          item={{
+            ...mealPlanDraft,
+            id: 'TEMP_ID', // Dummy value, not used
+            userId: 'TEMP_USER', // Dummy value, not used
+            // Defensive: ensure ingredients are present and quantities are numbers
+            ingredients: mealPlanDraft.ingredients?.map(ing => ({
+              ...ing,
+              quantity: typeof ing.quantity === 'number' ? ing.quantity : Number(ing.quantity) || 1,
+            })) || [],
+          }}
           onSubmit={handleCookSubmit}
           onClose={() => { setShowCookModal(false); setMealPlanDraft(null); }}
         />

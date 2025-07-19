@@ -135,12 +135,12 @@ const MultiProviderSettings = () => {
       // Provider has a token but isn\'t the active one
       variant = 'outline';
       label = 'Configured';
-      extraClass = 'text-blue-600 border-blue-600';
+      extraClass = 'text-blue-600 border-blue-600 bg-transparent';
     } else {
       // No token stored yet
       variant = 'outline';
       label = 'Not Set';
-      extraClass = 'text-red-600 border-red-600';
+      extraClass = 'text-red-600 border-red-600 bg-transparent';
     }
 
     const badgeProps: ComponentProps<typeof Badge> = {
@@ -231,7 +231,7 @@ const MultiProviderSettings = () => {
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-medium">{AI_PROVIDERS[provider].name}</span>
                         {isActive && (
-                          <Badge className={cn(badgeVariants({ variant: 'outline' }), 'text-green-600 border-green-600 text-xs')}>
+                          <Badge className={cn(badgeVariants({ variant: 'outline' }), 'text-green-600 border-green-600 bg-transparent text-xs')}>
                             Active
                           </Badge>
                         )}

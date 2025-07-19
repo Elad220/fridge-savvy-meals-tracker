@@ -135,15 +135,16 @@
 
   /* Glass morphism utilities */
   .glass {
-    background: rgba(var(--glass-bg));
+    background: linear-gradient(135deg, rgba(16,185,129,0.18) 0%, rgba(34,197,94,0.18) 50%, rgba(255,255,255,0.12) 100%);
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
-    border: 1px solid rgba(var(--glass-border));
-    box-shadow: var(--glass-shadow);
+    border: 1px solid rgba(16,185,129,0.18);
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.12);
   }
   
   .glass-card {
-    @apply glass rounded-xl border border-border/50 backdrop-blur-md;
+    @apply glass rounded-xl border border-green-400/20 p-3 md:p-4 backdrop-blur-md shadow-md;
+    transition: background 0.4s cubic-bezier(0.4,0,0.2,1), box-shadow 0.4s cubic-bezier(0.4,0,0.2,1);
   }
   
   .glass-button {

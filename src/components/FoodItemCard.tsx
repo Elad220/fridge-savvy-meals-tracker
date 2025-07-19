@@ -6,11 +6,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 interface FoodItemCardProps {
   item: FoodItem;
-  onRemove: () => void;
-  onEdit: () => void;
+  onRemove: (e: React.MouseEvent) => void;
+  onEdit: (e: React.MouseEvent) => void;
+  compact?: boolean;
+  isExpanded?: boolean;
 }
 
-export const FoodItemCard = ({ item, onRemove, onEdit }: FoodItemCardProps) => {
+export const FoodItemCard = ({ item, onRemove, onEdit, compact = true, isExpanded = false }: FoodItemCardProps) => {
   type StatusConfig = {
     bgColor: string;
     borderColor: string;
@@ -75,98 +77,102 @@ export const FoodItemCard = ({ item, onRemove, onEdit }: FoodItemCardProps) => {
   const config = statusConfig[status];
 
   return (
-    <div className={`glass-card p-4 transition-all duration-200 hover:scale-105 ${config.borderColor} border-2`}>
-      <div className="flex justify-between items-start mb-3">
-        <h3 className="font-semibold text-foreground text-lg">{item.name}</h3>
-        <span className={`${config.badgeColor} px-2 py-1 rounded-full text-xs font-medium`}>
+    <div className={`glass-card p-2 md:p-3 transition-all duration-200 hover:scale-105 ${config.borderColor} border-2 min-w-0 relative ${isExpanded ? 'ring-2 ring-green-400/50' : ''} h-[220px] flex flex-col`}> 
+      {!compact && (item.notes || (item.tags && item.tags.length > 0)) && (
+        <div className="absolute top-1 right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+      )}
+      <div className="flex justify-between items-start mb-2 flex-shrink-0 min-h-10">
+        <div className="flex items-center gap-1 max-w-[70%]">
+          {item.label === 'cooked meal' ? (
+            <Utensils className="w-3 h-3 text-amber-600 flex-shrink-0" />
+          ) : (
+            <Carrot className="w-3 h-3 text-green-600 flex-shrink-0" />
+          )}
+          <h3 className="font-semibold text-foreground text-sm leading-tight">{item.name}</h3>
+        </div>
+        <span className={`${config.badgeColor} px-1.5 py-0.5 rounded-full text-[10px] font-medium`}>
           {config.label}
         </span>
       </div>
 
-      <div className="space-y-2 mb-4">
-        <div className="flex items-center text-sm text-muted-foreground">
-          {item.label === 'cooked meal' ? (
-            <Utensils className="w-4 h-4 mr-2 text-amber-600" />
-          ) : (
-            <Carrot className="w-4 h-4 mr-2 text-green-600" />
-          )}
-          <span className="font-medium">
-            {item.label === 'cooked meal' ? 'Cooked Meal' : 'Raw Material'}
-          </span>
-        </div>
-        <div className="flex items-center text-sm text-muted-foreground">
-          <Calendar className="w-4 h-4 mr-2" />
+      <div className="space-y-1 mb-2 flex-shrink-0 h-14">
+        <div className="flex items-center text-xs text-muted-foreground">
+          <Calendar className="w-3 h-3 mr-1" />
           <span>
-            Eat by: {item.eatByDate.toLocaleDateString()}
+            {item.eatByDate.toLocaleDateString()}
             {daysUntilExpiry >= 0 ? (
-              <span className={`ml-2 ${config.textColor} font-medium`}>
-                ({daysUntilExpiry === 0 ? 'Today' : daysUntilExpiry === 1 ? 'Tomorrow' : `${daysUntilExpiry} days`})
+              <span className={`ml-1 ${config.textColor} font-medium`}>
+                ({daysUntilExpiry === 0 ? 'Today' : daysUntilExpiry === 1 ? 'Tomorrow' : `${daysUntilExpiry}d`})
               </span>
             ) : (
-              <span className="ml-2 text-red-600 dark:text-red-400 font-medium">
-                ({Math.abs(daysUntilExpiry)} days ago)
+              <span className="ml-1 text-red-600 dark:text-red-400 font-medium">
+                ({Math.abs(daysUntilExpiry)}d ago)
               </span>
             )}
           </span>
         </div>
-        
-        <div className="flex items-center text-sm text-muted-foreground">
-          <Package className="w-4 h-4 mr-2" />
+        <div className="flex items-center text-xs text-muted-foreground">
+          <Package className="w-3 h-3 mr-1" />
           <span>{item.amount} {item.unit}</span>
         </div>
-        
-        <div className="flex items-center text-sm text-muted-foreground">
-          <MapPin className="w-4 h-4 mr-2" />
+        <div className="flex items-center text-xs text-muted-foreground">
+          <MapPin className="w-3 h-3 mr-1" />
           <span>{item.storageLocation}</span>
         </div>
       </div>
 
-      {item.notes && (
-        <div className="mb-4 p-2 bg-background/50 rounded text-sm text-muted-foreground">
-          <strong>Notes:</strong> {item.notes}
-        </div>
-      )}
-
-      {item.tags && item.tags.length > 0 && (
-        <div className="mb-4">
-          <div className="flex flex-wrap gap-1">
-            {item.tags.map((tag, index) => (
-              <span
-                key={index}
-                className="inline-block px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-xs rounded-full"
-              >
-                {tag}
-              </span>
-            ))}
+      <div className="flex-1 min-h-0 overflow-y-auto max-h-20">
+        {item.notes && (
+          <div className="mb-2 p-1.5 bg-background/50 rounded text-xs text-muted-foreground">
+            <strong>Notes:</strong> {item.notes}
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="flex justify-between items-center">
+        {item.tags && item.tags.length > 0 && (
+          <div className="mb-2">
+            <div className="flex flex-wrap gap-1">
+              {item.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="inline-block px-1.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-[10px] rounded-full"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-between items-center mt-1 flex-shrink-0 h-10">
         <span className="text-xs text-muted-foreground">
-          Added: {item.dateCookedStored.toLocaleDateString()}
+          {item.dateCookedStored.toLocaleDateString()}
         </span>
-        
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           <Button
             variant="outline"
-            size="sm"
-            onClick={onEdit}
-            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/30"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(e);
+            }}
+            className="w-6 h-6 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/30"
+            title="Edit"
           >
-            <Edit className="w-4 h-4 mr-1" />
-            Edit
+            <Edit className="w-3 h-3" />
           </Button>
-          
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
                 variant="outline"
-                size="sm"
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950/30"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+                className="w-6 h-6 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950/30"
+                title="Remove"
               >
-                <Trash2 className="w-4 h-4 mr-1" />
-                Remove
+                <Trash2 className="w-3 h-3" />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -178,7 +184,10 @@ export const FoodItemCard = ({ item, onRemove, onEdit }: FoodItemCardProps) => {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={onRemove} className="bg-red-600 hover:bg-red-700">
+                <AlertDialogAction onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove(e);
+                }} className="bg-red-600 hover:bg-red-700">
                   Remove
                 </AlertDialogAction>
               </AlertDialogFooter>

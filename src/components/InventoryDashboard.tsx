@@ -7,7 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search as SearchIcon, Trash2, ExternalLink, X } from 'lucide-react';
+import { Search as SearchIcon, Trash2, ExternalLink, X, Calendar, Package, MapPin, Edit, Utensils, Carrot } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface InventoryDashboardProps {
   foodItems: FoodItem[];
@@ -39,6 +41,17 @@ export const InventoryDashboard = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isSelecting, setIsSelecting] = useState(false);
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
+
+  const getStatusConfig = (status: FreshnessStatus) => {
+    const statusConfig: Record<FreshnessStatus, { textColor: string }> = {
+      fresh: { textColor: 'text-green-600' },
+      'use-soon': { textColor: 'text-yellow-600' },
+      'use-or-throw': { textColor: 'text-orange-600' },
+      expired: { textColor: 'text-red-600' }
+    };
+    return statusConfig[status];
+  };
 
   const getFreshnessStatus = (eatByDate: Date): FreshnessStatus => {
     const today = new Date();
@@ -126,10 +139,10 @@ export const InventoryDashboard = ({
   };
 
   return (
-    <div className="space-y-4">{/* Quick stats overview - more compact */}
-      <div className="glass-card p-4 space-y-3">
+    <div className="space-y-2">{/* Quick stats overview - more compact */}
+      <div className="glass-card border-2 border-green-400/30 p-2 md:p-3 space-y-2 shadow-md">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-foreground">Quick Overview</h3>
+          <h3 className="text-base font-semibold text-foreground gradient-text">Quick Overview</h3>
           <Button
             variant="outline"
             size="sm"
@@ -139,43 +152,43 @@ export const InventoryDashboard = ({
               });
               window.dispatchEvent(event);
             }}
-            className="glass-button text-xs"
+            className="glass-button text-xs px-2 py-1"
           >
             <ExternalLink className="w-3 h-3 mr-1" />
             View Details
           </Button>
         </div>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-1">
           <div className="text-center">
-            <div className="text-xl font-bold text-green-600">{statusCounts.fresh}</div>
+            <div className="text-lg font-bold text-green-600">{statusCounts.fresh}</div>
             <div className="text-xs text-muted-foreground">Fresh</div>
           </div>
           <div className="text-center">
-            <div className="text-xl font-bold text-yellow-600">{statusCounts['use-soon']}</div>
+            <div className="text-lg font-bold text-yellow-600">{statusCounts['use-soon']}</div>
             <div className="text-xs text-muted-foreground">Use Soon</div>
           </div>
           <div className="text-center">
-            <div className="text-xl font-bold text-orange-600">{statusCounts['use-or-throw']}</div>
+            <div className="text-lg font-bold text-orange-600">{statusCounts['use-or-throw']}</div>
             <div className="text-xs text-muted-foreground">Critical</div>
           </div>
           <div className="text-center">
-            <div className="text-xl font-bold text-red-600">{statusCounts.expired}</div>
+            <div className="text-lg font-bold text-red-600">{statusCounts.expired}</div>
             <div className="text-xs text-muted-foreground">Expired</div>
           </div>
         </div>
-        <div className="text-center pt-2 border-t border-border/50">
-          <div className="text-2xl font-bold text-primary">{foodItems.length}</div>
-          <div className="text-sm text-muted-foreground">Total Items</div>
+        <div className="text-center pt-1 border-t border-green-300/30">
+          <div className="text-xl font-bold text-primary">{foodItems.length}</div>
+          <div className="text-xs text-muted-foreground">Total Items</div>
         </div>
       </div>
 
       {/* Bulk selection controls */}
-      <div className="flex flex-wrap gap-2 items-center">
+      <div className="flex flex-wrap gap-1 items-center">
         <Button
           variant="outline"
           size="sm"
           onClick={toggleSelectionMode}
-          className="flex items-center gap-2"
+          className="flex items-center gap-1 px-2 py-1"
         >
           <Checkbox checked={isSelecting} />
           {isSelecting ? 'Cancel Selection' : 'Select Items'}
@@ -187,6 +200,7 @@ export const InventoryDashboard = ({
               variant="outline"
               size="sm"
               onClick={() => handleSelectAll(selectedItems.size !== filteredAndSortedItems.length)}
+              className="px-2 py-1"
             >
               {selectedItems.size === filteredAndSortedItems.length ? 'Deselect All' : 'Select All'}
             </Button>
@@ -196,7 +210,7 @@ export const InventoryDashboard = ({
                 variant="destructive"
                 size="sm"
                 onClick={handleBulkDelete}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1 px-2 py-1"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete Selected ({selectedItems.size})
@@ -206,14 +220,14 @@ export const InventoryDashboard = ({
         )}
       </div>
 
-      <div className="glass-card p-2">
+      <div className="glass-card p-1">
         <div className="flex flex-row gap-1 items-center flex-wrap">
           <div className="relative flex-1 min-w-[150px]">
             <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground flex-shrink-0" />
             <Input
               type="search"
               placeholder="Search items..."
-              className="w-full bg-background pl-9 pr-9 py-1 text-sm"
+              className="w-full bg-background pl-8 pr-8 py-1 text-sm rounded-md"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -230,8 +244,8 @@ export const InventoryDashboard = ({
               </button>
             )}
           </div>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-28 py-1 text-sm">
+          <Select value={sortBy} onValueChange={v => setSortBy(v as 'eatByDate' | 'name' | 'storageLocation')}>
+            <SelectTrigger className="w-24 py-1 text-xs">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -240,8 +254,8 @@ export const InventoryDashboard = ({
               <SelectItem value="storageLocation">Storage Location</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={filterBy} onValueChange={setFilterBy}>
-            <SelectTrigger className="w-28 py-1 text-sm">
+          <Select value={filterBy} onValueChange={v => setFilterBy(v as FreshnessStatus | 'all')}>
+            <SelectTrigger className="w-24 py-1 text-xs">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -252,8 +266,8 @@ export const InventoryDashboard = ({
               <SelectItem value="expired">Expired</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={foodTypeFilter} onValueChange={setFoodTypeFilter}>
-            <SelectTrigger className="w-28 py-1 text-sm">
+          <Select value={foodTypeFilter} onValueChange={v => setFoodTypeFilter(v as 'all' | 'cooked meal' | 'raw material')}>
+            <SelectTrigger className="w-24 py-1 text-xs">
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
@@ -263,7 +277,7 @@ export const InventoryDashboard = ({
             </SelectContent>
           </Select>
           <Select value={tagFilter} onValueChange={setTagFilter}>
-            <SelectTrigger className="w-28 py-1 text-sm">
+            <SelectTrigger className="w-24 py-1 text-xs">
               <SelectValue placeholder="Tags" />
             </SelectTrigger>
             <SelectContent>
@@ -304,7 +318,7 @@ export const InventoryDashboard = ({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
           {filteredAndSortedItems.map((item) => (
             <div key={item.id} className="relative">
               {isSelecting && (
@@ -316,11 +330,159 @@ export const InventoryDashboard = ({
                   />
                 </div>
               )}
-              <FoodItemCard
-                item={item}
-                onRemove={() => onRemoveItem(item.id)}
-                onEdit={() => onEditItem(item)}
-              />
+              <div 
+                onClick={() => setExpandedCard(expandedCard === item.id ? null : item.id)} 
+                className="cursor-pointer relative"
+              >
+                <FoodItemCard
+                  item={item}
+                  onRemove={(e) => {
+                    e.stopPropagation();
+                    onRemoveItem(item.id);
+                  }}
+                  onEdit={(e) => {
+                    e.stopPropagation();
+                    onEditItem(item);
+                  }}
+                  compact={expandedCard !== item.id}
+                  isExpanded={expandedCard === item.id}
+                />
+              </div>
+              <Dialog open={expandedCard === item.id} onOpenChange={(open) => !open && setExpandedCard(null)}>
+                <DialogContent className="sm:max-w-md glass-card border-2 border-green-400/40">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center justify-between">
+                      <span className="text-lg font-semibold text-foreground">{item.name}</span>
+                      <span className={`${getStatusConfig(getFreshnessStatus(item.eatByDate)).textColor} px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30`}>
+                        {getFreshnessStatus(item.eatByDate) === 'fresh' ? 'Fresh' : 
+                         getFreshnessStatus(item.eatByDate) === 'use-soon' ? 'Use Soon' :
+                         getFreshnessStatus(item.eatByDate) === 'use-or-throw' ? 'Use or Throw' : 'Expired'}
+                      </span>
+                    </DialogTitle>
+                  </DialogHeader>
+                  
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center text-muted-foreground">
+                        {item.label === 'cooked meal' ? (
+                          <Utensils className="w-4 h-4 mr-2 text-amber-600" />
+                        ) : (
+                          <Carrot className="w-4 h-4 mr-2 text-green-600" />
+                        )}
+                        <span className="font-medium">
+                          {item.label === 'cooked meal' ? 'Cooked Meal' : 'Raw Material'}
+                        </span>
+                      </div>
+                      <div className="flex items-center text-muted-foreground">
+                        <Package className="w-4 h-4 mr-2" />
+                        <span>{item.amount} {item.unit}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        <span>
+                          Eat by: {item.eatByDate.toLocaleDateString()}
+                          {(() => {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const expiryDate = new Date(item.eatByDate);
+                            expiryDate.setHours(0, 0, 0, 0);
+                            const timeDiff = expiryDate.getTime() - today.getTime();
+                            const daysUntilExpiry = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                            const status = getFreshnessStatus(item.eatByDate);
+                            const config = getStatusConfig(status);
+                            
+                            return daysUntilExpiry >= 0 ? (
+                              <span className={`ml-2 ${config.textColor} font-medium`}>
+                                ({daysUntilExpiry === 0 ? 'Today' : daysUntilExpiry === 1 ? 'Tomorrow' : `${daysUntilExpiry} days`})
+                              </span>
+                            ) : (
+                              <span className="ml-2 text-red-600 dark:text-red-400 font-medium">
+                                ({Math.abs(daysUntilExpiry)} days ago)
+                              </span>
+                            );
+                          })()}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <MapPin className="w-4 h-4 mr-2" />
+                        <span>{item.storageLocation}</span>
+                      </div>
+                    </div>
+
+                    {item.notes && (
+                      <div className="p-3 bg-background/50 rounded-lg text-sm text-muted-foreground">
+                        <strong>Notes:</strong> {item.notes}
+                      </div>
+                    )}
+
+                    {item.tags && item.tags.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium text-foreground mb-2">Tags</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {item.tags.map((tag, index) => (
+                            <span
+                              key={index}
+                              className="inline-block px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm rounded-full"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center pt-3 border-t border-border/50">
+                      <span className="text-sm text-muted-foreground">
+                        Added: {item.dateCookedStored.toLocaleDateString()}
+                      </span>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setExpandedCard(null);
+                            onEditItem(item);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/30"
+                        >
+                          <Edit className="w-4 h-4 mr-1" />
+                          Edit
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950/30"
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Remove
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remove Food Item</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to remove "{item.name}" from your inventory? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => onRemoveItem(item.id)} className="bg-red-600 hover:bg-red-700">
+                                Remove
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           ))}
         </div>

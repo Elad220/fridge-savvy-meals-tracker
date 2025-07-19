@@ -51,21 +51,21 @@ export const DashboardWindow: React.FC<DashboardWindowProps> = ({
 
   const windowContent = (
     <div 
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-200/60 dark:bg-gray-900/60 backdrop-blur-sm transition-all duration-300 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-2 bg-gradient-to-br from-green-200/40 via-green-100/30 to-white/10 dark:from-green-900/30 dark:via-green-800/20 dark:to-gray-900/10 backdrop-blur-md transition-all duration-300 border-4 border-green-300/40 shadow-green-200/30 ${
         isMinimized ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className={`glass-card w-full max-w-4xl h-[80vh] flex flex-col transition-all duration-300 ${
+      <div className={`glass-card w-full max-w-3xl h-[75vh] flex flex-col transition-all duration-300 border-2 border-green-400/40 shadow-lg shadow-green-200/30 ${
         isMinimized ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
       }`}>
         {/* Window Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border/50">
+        <div className="flex items-center justify-between p-2 md:p-3 border-b border-green-300/30">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-red-500"></div>
             <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
             <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            <h2 className="ml-4 font-semibold text-foreground">Dashboard Analytics</h2>
+            <h2 className="ml-3 font-semibold text-foreground gradient-text">Dashboard Analytics</h2>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -88,44 +88,44 @@ export const DashboardWindow: React.FC<DashboardWindowProps> = ({
         </div>
 
         {/* Window Content */}
-        <div className="flex-1 p-6 overflow-auto space-y-6">
+        <div className="flex-1 p-3 md:p-4 overflow-auto space-y-4">
           {/* Status Overview */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-foreground">Inventory Overview</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="glass-card p-4 border-green-500/20">
-                <div className="text-2xl font-bold text-green-600">{statusCounts.fresh}</div>
-                <div className="text-sm text-green-600/80">Fresh Items</div>
+          <div className="space-y-2">
+            <h3 className="text-base font-semibold text-foreground gradient-text">Inventory Overview</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="glass-card p-2 border-green-500/30">
+                <div className="text-lg font-bold text-green-600">{statusCounts.fresh}</div>
+                <div className="text-xs text-green-600/80">Fresh</div>
               </div>
-              <div className="glass-card p-4 border-yellow-500/20">
-                <div className="text-2xl font-bold text-yellow-600">{statusCounts['use-soon']}</div>
-                <div className="text-sm text-yellow-600/80">Use Soon</div>
+              <div className="glass-card p-2 border-yellow-500/30">
+                <div className="text-lg font-bold text-yellow-600">{statusCounts['use-soon']}</div>
+                <div className="text-xs text-yellow-600/80">Use Soon</div>
               </div>
-              <div className="glass-card p-4 border-orange-500/20">
-                <div className="text-2xl font-bold text-orange-600">{statusCounts['use-or-throw']}</div>
-                <div className="text-sm text-orange-600/80">Use or Throw</div>
+              <div className="glass-card p-2 border-orange-500/30">
+                <div className="text-lg font-bold text-orange-600">{statusCounts['use-or-throw']}</div>
+                <div className="text-xs text-orange-600/80">Critical</div>
               </div>
-              <div className="glass-card p-4 border-red-500/20">
-                <div className="text-2xl font-bold text-red-600">{statusCounts.expired}</div>
-                <div className="text-sm text-red-600/80">Expired</div>
+              <div className="glass-card p-2 border-red-500/30">
+                <div className="text-lg font-bold text-red-600">{statusCounts.expired}</div>
+                <div className="text-xs text-red-600/80">Expired</div>
               </div>
             </div>
-            <div className="glass-card p-4 max-w-md mx-auto">
-              <div className="text-3xl font-bold text-primary text-center">{statusCounts.total}</div>
-              <div className="text-sm text-muted-foreground text-center">Total Items</div>
+            <div className="glass-card p-2 max-w-xs mx-auto mt-2">
+              <div className="text-2xl font-bold text-primary text-center">{statusCounts.total}</div>
+              <div className="text-xs text-muted-foreground text-center">Total Items</div>
             </div>
           </div>
 
           {/* Recent Actions */}
           <div>
-            <h3 className="text-lg font-semibold text-foreground mb-4">Recent Activity</h3>
+            <h3 className="text-base font-semibold text-foreground mb-2 gradient-text">Recent Activity</h3>
             <RecentActionsCard actions={recentActions} loading={historyLoading} />
           </div>
 
           {/* AI Recommendations */}
           {userId && (
             <div>
-              <h3 className="text-lg font-semibold text-foreground mb-4">AI Insights</h3>
+              <h3 className="text-base font-semibold text-foreground mb-2 gradient-text">AI Insights</h3>
               <AIRecommendations userId={userId} />
             </div>
           )}

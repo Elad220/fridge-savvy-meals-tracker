@@ -9,7 +9,7 @@ import { AmountInput } from '@/components/ui/amount-input';
 import { StorageLocationSelect } from '@/components/StorageLocationSelect';
 import { TagInput } from '@/components/TagInput';
 import { FoodItem, FOOD_UNITS } from '@/types';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { X, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useStorageLocations } from '@/hooks/useStorageLocations';

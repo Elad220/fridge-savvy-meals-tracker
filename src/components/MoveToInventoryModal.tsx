@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AmountInput } from '@/components/ui/amount-input';
 import { StorageLocationSelect } from '@/components/StorageLocationSelect';
 import { FoodItem, FOOD_UNITS, MealPlanIngredient } from '@/types';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
 import { useStorageLocations } from '@/hooks/useStorageLocations';

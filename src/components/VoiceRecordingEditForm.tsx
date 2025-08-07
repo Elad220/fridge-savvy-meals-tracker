@@ -36,7 +36,7 @@ interface EditableItem {
   itemType: 'cooked_meal' | 'raw_material';
   quantity: number;
   unit: string;
-  freshnesssDays: number;
+  freshnesssDays: number | '';
   storageLocation: string;
   notes: string;
   dateCookedStored: string;
@@ -78,10 +78,31 @@ export const VoiceRecordingEditForm = ({
     }
   }, [analysisData]);
 
+  const calculateEatByDate = (cookedDate: string, freshnessDays: number) => {
+    const cooked = new Date(cookedDate);
+    const eatBy = new Date(cooked);
+    eatBy.setDate(eatBy.getDate() + freshnessDays);
+    return eatBy.toISOString().split('T')[0];
+  };
+
   const updateItem = (id: string, field: keyof EditableItem, value: string | number) => {
-    setItems(prev => prev.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ));
+    setItems(prev => prev.map(item => {
+      if (item.id === id) {
+        const updatedItem = { ...item, [field]: value };
+        
+        // Auto-calculate eat by date when cooked date or freshness days change
+        if (field === 'dateCookedStored' || field === 'freshnesssDays') {
+          const freshnessDays = field === 'freshnesssDays' 
+            ? (typeof value === 'number' ? value : (value === '' ? 4 : parseInt(value as string) || 4))
+            : (typeof item.freshnesssDays === 'number' ? item.freshnesssDays : 4);
+          const cookedDate = field === 'dateCookedStored' ? value as string : item.dateCookedStored;
+          updatedItem.eatByDate = calculateEatByDate(cookedDate, freshnessDays);
+        }
+        
+        return updatedItem;
+      }
+      return item;
+    }));
   };
 
   const removeItem = (id: string) => {
@@ -137,7 +158,7 @@ export const VoiceRecordingEditForm = ({
       storageLocation: item.storageLocation,
       label: item.itemType === 'cooked_meal' ? 'cooked meal' : 'raw material',
       notes: item.notes,
-      freshnessDays: item.freshnesssDays,
+      freshnessDays: typeof item.freshnesssDays === 'number' ? item.freshnesssDays : 4,
       tags: item.tags.length > 0 ? item.tags : undefined,
     }));
 
@@ -266,8 +287,8 @@ export const VoiceRecordingEditForm = ({
                           type="number"
                           min="1"
                           max="365"
-                          value={item.freshnesssDays}
-                          onChange={(e) => updateItem(item.id, 'freshnesssDays', parseInt(e.target.value) || 4)}
+                           value={item.freshnesssDays || ''}
+                           onChange={(e) => updateItem(item.id, 'freshnesssDays', e.target.value === '' ? '' : parseInt(e.target.value) || 4)}
                           className="mt-1"
                         />
                       </div>

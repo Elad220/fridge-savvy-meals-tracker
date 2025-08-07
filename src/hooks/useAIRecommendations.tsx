@@ -240,7 +240,7 @@ export const useAIRecommendations = (userId: string | undefined) => {
         await supabase.from('ai_recommendations').upsert({
           user_id: userId,
           recommendation_type: 'comprehensive',
-          recommendations: newRecommendations,
+          recommendations: newRecommendations as any,
           generated_at: newRecommendations.generatedAt.toISOString(),
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
         });
@@ -333,7 +333,7 @@ export const useAIRecommendations = (userId: string | undefined) => {
         await supabase.from('ai_recommendations').upsert({
           user_id: userId,
           recommendation_type: 'comprehensive',
-          recommendations: newRecommendations,
+          recommendations: newRecommendations as any,
           generated_at: newRecommendations.generatedAt.toISOString(),
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         });

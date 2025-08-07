@@ -22,10 +22,12 @@ export interface FoodItem {
 }
 
 export interface MealPlanIngredient {
+  id?: string;
   name: string;
   quantity: number;
   unit: string;
   notes?: string;
+  [key: string]: unknown;
 }
 
 export interface MealPlan {
@@ -44,6 +46,7 @@ export interface RecipeIngredient {
   quantity: number;
   unit: string;
   notes?: string;
+  [key: string]: unknown;
 }
 
 export interface Recipe {
@@ -80,6 +83,33 @@ export interface CreateRecipeData {
 }
 
 export type FreshnessStatus = 'fresh' | 'use-soon' | 'use-or-throw' | 'expired';
+
+export interface AIRecommendations {
+  items?: Array<{
+    name: string;
+    reason: string;
+    urgency: 'low' | 'medium' | 'high';
+    category: string;
+  }>;
+  recipes?: Array<{
+    name: string;
+    description: string;
+    ingredients: RecipeIngredient[];
+    instructions: string[];
+    prepTime?: string;
+    cookTime?: string;
+    servings?: string;
+    difficulty?: 'Easy' | 'Medium' | 'Hard';
+  }>;
+  mealPlans?: Array<{
+    name: string;
+    plannedDate: string;
+    ingredients: MealPlanIngredient[];
+    preparationSteps: string[];
+  }>;
+  generatedAt: Date;
+  [key: string]: unknown;
+}
 
 // Common units for food items
 export const FOOD_UNITS = [

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Recipe, CreateRecipeData } from '@/types';
+import { Recipe, CreateRecipeData, RecipeIngredient } from '@/types';
 import { toast } from '@/hooks/use-toast';
 
 export const useRecipes = (userId: string | undefined) => {
@@ -60,15 +60,15 @@ export const useRecipes = (userId: string | undefined) => {
           user_id: userId,
           name: recipe.name,
           description: recipe.description || null,
-          ingredients: recipe.ingredients,
-          instructions: recipe.instructions,
+          ingredients: recipe.ingredients as any,
+          instructions: recipe.instructions as any,
           prep_time: recipe.prepTime || null,
           cook_time: recipe.cookTime || null,
           servings: recipe.servings || null,
           difficulty: recipe.difficulty || null,
           tags: recipe.tags || [],
           source: recipe.source || 'manual',
-          source_metadata: recipe.sourceMetadata || {},
+          source_metadata: recipe.sourceMetadata as any || {},
         })
         .select()
         .single();
@@ -77,15 +77,15 @@ export const useRecipes = (userId: string | undefined) => {
         id: data.id,
         name: data.name,
         description: data.description || undefined,
-        ingredients: data.ingredients || [],
-        instructions: data.instructions || [],
+        ingredients: Array.isArray(data.ingredients) ? data.ingredients as RecipeIngredient[] : [],
+        instructions: Array.isArray(data.instructions) ? data.instructions as string[] : [],
         prepTime: data.prep_time || undefined,
         cookTime: data.cook_time || undefined,
         servings: data.servings || undefined,
-        difficulty: data.difficulty || undefined,
+        difficulty: data.difficulty as 'Easy' | 'Medium' | 'Hard' | undefined,
         tags: data.tags || [],
-        source: data.source || undefined,
-        sourceMetadata: data.source_metadata || undefined,
+        source: data.source as 'manual' | 'generated' | 'imported' | undefined,
+        sourceMetadata: data.source_metadata as Record<string, unknown> | undefined,
         isFavorite: data.is_favorite,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
@@ -113,15 +113,15 @@ export const useRecipes = (userId: string | undefined) => {
         .update({
           name: updated.name,
           description: updated.description || null,
-          ingredients: updated.ingredients,
-          instructions: updated.instructions,
+          ingredients: updated.ingredients as any,
+          instructions: updated.instructions as any,
           prep_time: updated.prepTime || null,
           cook_time: updated.cookTime || null,
           servings: updated.servings || null,
           difficulty: updated.difficulty || null,
           tags: updated.tags || [],
           source: updated.source || 'manual',
-          source_metadata: updated.sourceMetadata || {},
+          source_metadata: updated.sourceMetadata as any || {},
           is_favorite: updated.isFavorite,
         })
         .eq('id', updated.id);

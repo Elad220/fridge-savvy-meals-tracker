@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { MealPlan } from '@/types';
+import { MealPlan, MealPlanIngredient } from '@/types';
 import { toast } from '@/hooks/use-toast';
 
 export const useMealPlans = (userId: string | undefined) => {
@@ -29,8 +29,8 @@ export const useMealPlans = (userId: string | undefined) => {
         plannedDate: plan.planned_date ? new Date(plan.planned_date) : undefined,
         destinationTime: plan.destination_time ? new Date(`${plan.planned_date}T${plan.destination_time}`) : undefined,
         notes: plan.notes || undefined,
-        ingredients: plan.ingredients || undefined,
-        preparationSteps: plan.preparation_steps || undefined,
+        ingredients: Array.isArray(plan.ingredients) ? plan.ingredients as MealPlanIngredient[] : undefined,
+        preparationSteps: Array.isArray(plan.preparation_steps) ? plan.preparation_steps as string[] : undefined,
         userId: plan.user_id,
       }));
 
@@ -59,8 +59,8 @@ export const useMealPlans = (userId: string | undefined) => {
           planned_date: plan.plannedDate ? plan.plannedDate.toISOString().split('T')[0] : null,
           destination_time: plan.destinationTime ? plan.destinationTime.toTimeString().slice(0, 8) : null,
           notes: plan.notes || null,
-          ingredients: plan.ingredients || [],
-          preparation_steps: plan.preparationSteps || [],
+          ingredients: plan.ingredients as any || [],
+          preparation_steps: plan.preparationSteps as any || [],
         })
         .select()
         .single();
@@ -73,8 +73,8 @@ export const useMealPlans = (userId: string | undefined) => {
         plannedDate: data.planned_date ? new Date(data.planned_date) : undefined,
         destinationTime: data.destination_time ? new Date(`${data.planned_date}T${data.destination_time}`) : undefined,
         notes: data.notes || undefined,
-        ingredients: data.ingredients || undefined,
-        preparationSteps: data.preparation_steps || undefined,
+        ingredients: Array.isArray(data.ingredients) ? data.ingredients as MealPlanIngredient[] : undefined,
+        preparationSteps: Array.isArray(data.preparation_steps) ? data.preparation_steps as string[] : undefined,
         userId: data.user_id,
       };
 
@@ -103,8 +103,8 @@ export const useMealPlans = (userId: string | undefined) => {
           planned_date: updatedPlan.plannedDate ? updatedPlan.plannedDate.toISOString().split('T')[0] : null,
           destination_time: updatedPlan.destinationTime ? updatedPlan.destinationTime.toTimeString().slice(0, 8) : null,
           notes: updatedPlan.notes || null,
-          ingredients: updatedPlan.ingredients || [],
-          preparation_steps: updatedPlan.preparationSteps || [],
+          ingredients: updatedPlan.ingredients as any || [],
+          preparation_steps: updatedPlan.preparationSteps as any || [],
         })
         .eq('id', updatedPlan.id);
 

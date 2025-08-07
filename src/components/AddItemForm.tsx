@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AmountInput } from '@/components/ui/amount-input';
 import { StorageLocationSelect } from '@/components/StorageLocationSelect';
 import { TagInput } from '@/components/TagInput';
-import { FoodItem, MealPlan, MealPlanIngredient, FOOD_UNITS } from '@/types';
+import { FoodItem, FoodItemLabel, MealPlan, MealPlanIngredient, FOOD_UNITS } from '@/types';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useStorageLocations } from '@/hooks/useStorageLocations';
@@ -160,7 +160,7 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
         await onSubmit(foodItem);
         
         // Track meal combination for cooked meals
-        if (formData.label === 'cooked meal' && ingredients.length > 0 && onMealCombinationUpdate) {
+        if (formData.label === 'cooked meal' as FoodItemLabel && ingredients.length > 0 && onMealCombinationUpdate) {
           onMealCombinationUpdate(formData.name, ingredients);
         }
       } else {
@@ -335,7 +335,7 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
                 </Select>
               </div>
 
-              {formData.label === 'cooked meal' && (
+              {formData.label === ('cooked meal' as FoodItemLabel) && (
                 <div>
                   <Label htmlFor="ingredients">Ingredients (Optional)</Label>
                   <div className="space-y-2">
@@ -429,10 +429,8 @@ export const AddItemForm = ({ type, onSubmit, onClose, onMealCombinationUpdate }
                           value={ingredient.quantity.toString()}
                           onChange={(value) => updateMealPlanIngredient(ingredient.id, 'quantity', parseFloat(value) || 0)}
                           placeholder="Amount"
-                          min="0"
-                          step="0.1"
                         />
-                        <Select 
+                        <Select
                           value={ingredient.unit} 
                           onValueChange={(value) => updateMealPlanIngredient(ingredient.id, 'unit', value)}
                         >

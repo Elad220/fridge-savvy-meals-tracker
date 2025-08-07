@@ -240,11 +240,9 @@ export const AddRecipeForm = ({ isOpen, onClose, onSubmit }: AddRecipeFormProps)
                 <div key={index} className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-start">
                   <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <AmountInput
-                      value={ingredient.quantity}
+                      value={ingredient.quantity.toString()}
                       onChange={(value) => handleUpdateIngredient(index, 'quantity', value)}
                       placeholder="Amount"
-                      min="0"
-                      step="0.1"
                     />
                     <Select value={ingredient.unit} onValueChange={(value) => handleUpdateIngredient(index, 'unit', value)}>
                       <SelectTrigger>

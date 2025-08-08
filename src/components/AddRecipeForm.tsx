@@ -18,8 +18,11 @@ interface AddRecipeFormProps {
   onSubmit: (recipe: CreateRecipeData) => void;
 }
 
-interface EditableRecipeIngredient extends Omit<RecipeIngredient, 'quantity'> {
-  quantity: string;
+interface EditableRecipeIngredient {
+  name: string;
+  quantity: string; // keep as string for controlled input
+  unit: string;
+  notes?: string;
 }
 
 export const AddRecipeForm = ({ isOpen, onClose, onSubmit }: AddRecipeFormProps) => {

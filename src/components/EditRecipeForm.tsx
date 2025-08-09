@@ -19,8 +19,11 @@ interface EditRecipeFormProps {
   onSubmit: (recipe: Recipe) => void;
 }
 
-interface EditableRecipeIngredient extends Omit<RecipeIngredient, 'quantity'> {
-  quantity: string;
+interface EditableRecipeIngredient {
+  name: string;
+  quantity: string; // keep as string for controlled input
+  unit: string;
+  notes?: string;
 }
 
 export const EditRecipeForm = ({ recipe, isOpen, onClose, onSubmit }: EditRecipeFormProps) => {
@@ -296,8 +299,8 @@ export const EditRecipeForm = ({ recipe, isOpen, onClose, onSubmit }: EditRecipe
                       value={ingredient.quantity}
                       onChange={(value) => handleUpdateIngredient(index, 'quantity', value)}
                       placeholder="Amount"
-                      min="0"
-                      step="0.1"
+                      min={0}
+                      step={0.1}
                     />
                     <Select value={ingredient.unit} onValueChange={(value) => handleUpdateIngredient(index, 'unit', value)}>
                       <SelectTrigger>

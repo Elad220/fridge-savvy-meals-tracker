@@ -228,7 +228,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, onBulkAnaly
       console.log('Analysis mode:', analysisMode);
 
       // Send all selected images for analysis based on mode
-      const functionName = analysisMode === 'bulk' ? 'analyze-photo-bulk' : 'analyze-photo';
+      const functionName = (analysisMode as string) === 'bulk' ? 'analyze-photo-bulk' : 'analyze-photo';
       const { data, error } = await supabase.functions.invoke(functionName, {
         body: {
           images: validImages.map(img => img.url), // Send array of all image URLs
@@ -249,7 +249,7 @@ export const PhotoAnalysis = ({ isOpen, onClose, onAnalysisComplete, onBulkAnaly
 
       console.log('Photo analysis result:', data);
       
-      if (analysisMode === 'bulk') {
+      if ((analysisMode as string) === 'bulk') {
         // Handle bulk analysis result
         if (data.items && Array.isArray(data.items)) {
           setBulkAnalysisResult(data);

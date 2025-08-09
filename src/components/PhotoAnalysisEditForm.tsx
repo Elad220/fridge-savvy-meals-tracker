@@ -193,8 +193,8 @@ export const PhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisData 
                 value={formData.amount}
                 onChange={(value) => handleInputChange('amount', value)}
                 placeholder="1"
-                min="0.1"
-                step="0.1"
+                min={0.1}
+                step={0.1}
                 required
               />
             </div>

@@ -286,8 +286,8 @@ export const MealPlanVoiceRecordingEditForm = ({
                       value={ingredient.quantity.toString()}
                       onChange={(value) => updateIngredient(ingredient.id, 'quantity', parseFloat(value) || 0)}
                       placeholder="Amount"
-                      min="0"
-                      step="0.1"
+                      min={0}
+                      step={0.1}
                     />
                     <Select 
                       value={ingredient.unit} 

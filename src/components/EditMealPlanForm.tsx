@@ -177,8 +177,8 @@ export const EditMealPlanForm = ({ item, onSubmit, onClose }: EditMealPlanFormPr
                       value={ingredient.quantity.toString()}
                       onChange={(value) => updateMealPlanIngredient(ingredient.id, 'quantity', parseFloat(value) || 0)}
                       placeholder="Amount"
-                      min="0"
-                      step="0.1"
+                      min={0}
+                      step={0.1}
                     />
                     <Select 
                       value={ingredient.unit} 

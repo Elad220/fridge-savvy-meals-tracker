@@ -215,8 +215,8 @@ export const BulkPhotoAnalysisEditForm = ({ isOpen, onClose, onSubmit, analysisD
                           value={item.quantity.toString()}
                           onChange={(value) => updateItem(item.id, 'quantity', parseFloat(value) || 0)}
                           placeholder="1"
-                          min="0.1"
-                          step="0.1"
+                          min={0.1}
+                          step={0.1}
                         />
                       </div>
                       

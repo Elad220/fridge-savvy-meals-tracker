@@ -1,6 +1,7 @@
 import { User } from '@/types';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { LogOut, Settings } from 'lucide-react';
 
 interface HeaderProps {

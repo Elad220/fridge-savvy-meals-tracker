@@ -184,15 +184,21 @@ export const InventoryDashboard = ({
 
       {/* Bulk selection controls */}
       <div className="flex flex-wrap gap-1 items-center">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleSelectionMode}
-          className="flex items-center gap-1 px-2 py-1"
-        >
-          <Checkbox checked={isSelecting} />
-          {isSelecting ? 'Cancel Selection' : 'Select Items'}
-        </Button>
+        <div className="flex items-center gap-1">
+          <Checkbox
+            checked={isSelecting}
+            onCheckedChange={(v) => setIsSelecting(Boolean(v))}
+            aria-label="Toggle selection mode"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleSelectionMode}
+            className="px-2 py-1"
+          >
+            {isSelecting ? 'Cancel Selection' : 'Select Items'}
+          </Button>
+        </div>
         
         {isSelecting && (
           <>

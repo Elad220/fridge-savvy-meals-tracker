@@ -16,7 +16,8 @@ export const Header = ({ user, onLogout, activeTab, onTabChange }: HeaderProps) 
     <header className="glass-card border-b shadow-lg sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-12 md:h-16">
-          <div className="flex items-center space-x-4 md:space-x-8">
+          <div className="flex items-center space-x-2 md:space-x-4">
+            <SidebarTrigger />
             <h1 className="text-lg md:text-xl font-bold text-green-600 cursor-pointer" onClick={() => onTabChange('inventory')}>
             Meal Tracker
             </h1>

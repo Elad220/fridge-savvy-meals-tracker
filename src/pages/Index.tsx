@@ -30,6 +30,8 @@ import { RecipeGenerator } from '@/components/RecipeGenerator';
 import { MealPlanVoiceRecordingButton } from '@/components/MealPlanVoiceRecordingButton';
 import { MealPlanVoiceRecording } from '@/components/MealPlanVoiceRecording';
 import { SavedRecipes } from '@/components/SavedRecipes';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/AppSidebar';
 
 const Index = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -1065,7 +1067,10 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex flex-col">
+    <SidebarProvider>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex w-full">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col">
       <Header
         user={headerUser}
         onLogout={handleLogout}
@@ -1214,7 +1219,9 @@ const Index = () => {
       </main>
 
       <Footer />
-    </div>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 };
 

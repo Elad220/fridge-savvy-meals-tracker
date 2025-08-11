@@ -34,10 +34,10 @@ export function AppSidebar() {
   };
 
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-muted text-primary font-medium" : "hover:bg-muted/50";
+    isActive ? "bg-primary/10 text-primary border border-primary/20 rounded-md font-medium" : "hover:bg-muted/60 rounded-md";
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="bg-sidebar/80 backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/70 border-r border-sidebar-border">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Main</SidebarGroupLabel>

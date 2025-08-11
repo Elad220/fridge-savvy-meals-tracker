@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Boxes, CalendarRange, Settings as SettingsIcon, LayoutDashboard } from "lucide-react";
+import { Boxes, CalendarRange, Settings as SettingsIcon, LayoutDashboard, LogOut } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -9,15 +9,17 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/hooks/useAuth";
 
 export function AppSidebar() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const activeTab = (params.get("tab") || "inventory") as "inventory" | "meals" | "settings";
   const { state } = useSidebar();
-
+  const { signOut } = useAuth();
   const items = [
     { title: "Dashboard", url: "/?tab=inventory", icon: LayoutDashboard },
     { title: "Inventory", url: "/?tab=inventory", icon: Boxes },
@@ -55,6 +57,18 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <button onClick={signOut} className={getNavCls({ isActive: false })} aria-label="Log out">
+                <LogOut className="mr-2 h-4 w-4" />
+                {state === "expanded" && <span>Logout</span>}
+              </button>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }

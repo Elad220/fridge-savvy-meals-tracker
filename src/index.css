@@ -34,7 +34,7 @@
     --input: 220 13% 91%;
     --ring: 142 86% 28%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
     /* Glass morphism tokens */
     --glass-bg: 255 255 255 / 0.2;
@@ -120,7 +120,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
 }
 

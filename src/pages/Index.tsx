@@ -80,8 +80,8 @@ const Index = () => {
 
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab === 'meals') {
-      setActiveTab('meals');
+    if (tab === 'inventory' || tab === 'meals' || tab === 'settings') {
+      setActiveTab(tab as 'inventory' | 'meals' | 'settings');
     } else {
       setActiveTab('inventory');
     }

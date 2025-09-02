@@ -55,10 +55,15 @@ export const TextToInventoryForm = ({ onSubmit, onClose, isOpen }: TextToInvento
 - amount (number): Quantity as a number
 - unit (string): One of: ${FOOD_UNITS.join(', ')}
 - storageLocation (string): Where to store it (fridge, freezer, pantry, counter)
-- label (string): Either "raw material" or "cooked meal"
+- label (string): Either "raw material" for uncooked ingredients OR "cooked meal" for prepared/cooked dishes
 - notes (string, optional): Any additional notes
 - tags (array of strings): Relevant tags like ingredients, meal type, etc.
 - freshnessDays (number): How many days the item stays fresh (1-30)
+
+IMPORTANT: 
+- Use "cooked meal" for prepared dishes, leftovers, cooked food, meals you made, etc.
+- Use "raw material" for uncooked ingredients, fresh produce, raw meat, etc.
+- Cooked meals typically have shorter freshness (1-4 days), raw materials vary more (1-30 days)
 
 Text to parse: "${inputText}"
 
@@ -207,7 +212,7 @@ Return only valid JSON array, no other text.`;
                 id="inputText"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Example: I bought 2 pounds of chicken breast, 1 bag of spinach, and made 4 servings of pasta sauce yesterday. Also got some bananas and a loaf of bread."
+                placeholder="Example: I bought 2 pounds of chicken breast, 1 bag of spinach, and made 4 servings of pasta sauce yesterday. I also cooked a large pot of chili and have 6 servings leftover. Got some bananas and a loaf of bread too."
                 className="min-h-32 resize-none"
                 disabled={isParsing}
               />

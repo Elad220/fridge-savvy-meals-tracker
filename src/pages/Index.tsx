@@ -9,6 +9,7 @@ import { useActionHistory } from '@/hooks/useActionHistory';
 import { AddItemForm } from '@/components/AddItemForm';
 import { EditItemForm } from '@/components/EditItemForm';
 import { EditMealPlanForm } from '@/components/EditMealPlanForm';
+import { TextToInventoryForm } from '@/components/TextToInventoryForm';
 import { InventoryDashboard } from '@/components/InventoryDashboard';
 import { MealPlanning } from '@/components/MealPlanning';
 import { Header } from '@/components/Header';
@@ -38,6 +39,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showTextToInventory, setShowTextToInventory] = useState(false);
   const [showPhotoAnalysis, setShowPhotoAnalysis] = useState(false);
   const [showVoiceRecording, setShowVoiceRecording] = useState(false);
   const [showMealPlanVoiceRecording, setShowMealPlanVoiceRecording] = useState(false);
@@ -75,6 +77,18 @@ const Index = () => {
     window.addEventListener('openDashboardWindow', handleOpenDashboardWindow as EventListener);
     return () => {
       window.removeEventListener('openDashboardWindow', handleOpenDashboardWindow as EventListener);
+    };
+  }, []);
+
+  // Text to inventory event listener
+  useEffect(() => {
+    const handleOpenTextToInventory = () => {
+      setShowTextToInventory(true);
+    };
+
+    window.addEventListener('openTextToInventory', handleOpenTextToInventory);
+    return () => {
+      window.removeEventListener('openTextToInventory', handleOpenTextToInventory);
     };
   }, []);
 
@@ -1145,6 +1159,14 @@ const Index = () => {
             onSubmit={activeTab === 'inventory' ? addFoodItem : addMealPlan}
             onClose={() => setShowAddForm(false)}
             onMealCombinationUpdate={updateMealCombination}
+          />
+        )}
+
+        {showTextToInventory && (
+          <TextToInventoryForm
+            onSubmit={addFoodItem}
+            onClose={() => setShowTextToInventory(false)}
+            isOpen={showTextToInventory}
           />
         )}
 

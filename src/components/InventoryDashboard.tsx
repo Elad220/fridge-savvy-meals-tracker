@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search as SearchIcon, Trash2, ExternalLink, X, Calendar, Package, MapPin, Edit, Utensils, Carrot } from 'lucide-react';
+import { Search as SearchIcon, Trash2, ExternalLink, X, Calendar, Package, MapPin, Edit, Utensils, Carrot, Sparkles } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -183,8 +183,8 @@ export const InventoryDashboard = ({
       </div>
 
       {/* Bulk selection controls */}
-      <div className="flex flex-wrap gap-1 items-center">
-        <div className="flex items-center gap-1">
+      <div className="flex flex-wrap gap-2 items-center justify-between">
+        <div className="flex items-center gap-2">
           <Checkbox
             checked={isSelecting}
             onCheckedChange={(v) => setIsSelecting(Boolean(v))}
@@ -194,35 +194,50 @@ export const InventoryDashboard = ({
             variant="outline"
             size="sm"
             onClick={toggleSelectionMode}
-            className="px-2 py-1"
+            className="px-3 py-1"
           >
             {isSelecting ? 'Cancel Selection' : 'Select Items'}
           </Button>
-        </div>
-        
-        {isSelecting && (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleSelectAll(selectedItems.size !== filteredAndSortedItems.length)}
-              className="px-2 py-1"
-            >
-              {selectedItems.size === filteredAndSortedItems.length ? 'Deselect All' : 'Select All'}
-            </Button>
-            
-            {selectedItems.size > 0 && (
+          
+          {isSelecting && (
+            <>
               <Button
-                variant="destructive"
+                variant="outline"
                 size="sm"
-                onClick={handleBulkDelete}
-                className="flex items-center gap-1 px-2 py-1"
+                onClick={() => handleSelectAll(selectedItems.size !== filteredAndSortedItems.length)}
+                className="px-3 py-1"
               >
-                <Trash2 className="w-4 h-4" />
-                Delete Selected ({selectedItems.size})
+                {selectedItems.size === filteredAndSortedItems.length ? 'Deselect All' : 'Select All'}
               </Button>
-            )}
-          </>
+              
+              {selectedItems.size > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleBulkDelete}
+                  className="flex items-center gap-1 px-3 py-1"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Selected ({selectedItems.size})
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+
+        {!isSelecting && onAddItem && (
+          <Button
+            variant="soft"
+            size="sm"
+            onClick={() => {
+              const event = new CustomEvent('openTextToInventory');
+              window.dispatchEvent(event);
+            }}
+            className="flex items-center gap-2 px-3 py-1"
+          >
+            <Sparkles className="w-4 h-4" />
+            Smart Add
+          </Button>
         )}
       </div>
 
